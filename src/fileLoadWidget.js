@@ -25,7 +25,7 @@
  */
 
 import igv from '../node_modules/igv/dist/igv.esm.js';
-import { DomUtils, UIUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
+import { DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
 
 class FileLoadWidget {
 
@@ -80,7 +80,7 @@ class FileLoadWidget {
         this.error_message.appendChild(DomUtils.div({ class: 'igv-flw-error-message'}));
 
         // error dismiss button
-        UIUtils.attachDialogCloseHandlerWithParent(this.error_message, () => {
+        igv.attachDialogCloseHandlerWithParent(this.error_message, () => {
             this.dismissErrorMessage();
         });
 
