@@ -1,0 +1,35 @@
+{
+  "name": "igv-widgets",
+  "version": "1.0.0",
+  "description": "Various UI modules to support igvjs",
+  "browser": "dist/igv-widgets.js",
+  "module": "dist/igv-widgets.js",
+  "files": [
+    "dist/**",
+    "src/**"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "build": "npx rollup --config",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igvteam/igv-widgets.git"
+  },
+  "keywords": [
+    "igv",
+    "ui"
+  ],
+  "author": "Douglass Turner <douglass.turner@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/igvteam/igv-widgets/issues"
+  },
+  "homepage": "https://github.com/igvteam/igv-widgets#readme",
+  "devDependencies": {
+    "data-modal": "github:igvteam/data-modal",
+    "igv-ui": "github:igvteam/igv-ui#dat",
+    "rollup": "^1.27.3"
+  }
+}
