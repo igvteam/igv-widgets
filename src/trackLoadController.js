@@ -28,8 +28,9 @@ import FileLoadWidget from './fileLoadWidget.js';
 import FileLoadManager from './fileLoadManager.js';
 import MultipleFileLoadController from "./multipleFileLoadController.js";
 
+// TODO: Where should these go?
 import {configureModal} from './utils.js';
-import * as app_google from "./app-google.js";
+import * as app_google from './app-google.js';
 
 class TrackLoadController {
 
