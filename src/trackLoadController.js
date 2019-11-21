@@ -26,7 +26,7 @@ import ModalTable from '../node_modules/data-modal/js/modalTable.js'
 import { AlertDialog, DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
 import FileLoadWidget from './fileLoadWidget.js';
 import FileLoadManager from './fileLoadManager.js';
-import MultipleFileLoadController from "./multipleFileLoadController.js";
+import MultipleFileLoadController from './multipleFileLoadController.js';
 
 // TODO: Where should these go?
 import {configureModal} from './utils.js';
@@ -71,14 +71,11 @@ class TrackLoadController {
 
         (async (genomeID) => {
 
-            const id_prefix = 'genome_specific_';
-
             const divider = this.dropdownMenu.querySelector('#igv-app-annotations-section');
 
-            const e = this.dropdownMenu.querySelector(`[id^=${ id_prefix }]`);
-            if (e) {
-                e.parentNode.removeChild(e);
-            }
+            const id_prefix = 'genome_specific_';
+            const elements = this.dropdownMenu.querySelectorAll(`[id*='${ id_prefix }']`);
+            elements.forEach(element => element.parentNode.removeChild(element));
 
             if (undefined === this.trackRegistryFile) {
                 const e = new Error("Error: Missing track registry file");
@@ -154,10 +151,6 @@ class TrackLoadController {
 
                             // $button.insertAfter($divider);
                             divider.parentNode.insertBefore(button, divider.nextSibling);
-
-                            button.addEventListener('click', () => {
-
-                            });
 
                             button.setAttribute('data-toggle', 'modal');
 
