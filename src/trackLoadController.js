@@ -24,7 +24,7 @@
 import igv from '../node_modules/igv/dist/igv.esm.js';
 import EncodeDataSource from '../node_modules/data-modal/js/encodeDataSource.js'
 import ModalTable from '../node_modules/data-modal/js/modalTable.js'
-import { AlertDialog, DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
+import { DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
 import FileLoadWidget from './fileLoadWidget.js';
 import FileLoadManager from './fileLoadManager.js';
 import MultipleFileLoadController from './multipleFileLoadController.js';
@@ -80,7 +80,7 @@ class TrackLoadController {
 
             if (undefined === this.trackRegistryFile) {
                 const e = new Error("Error: Missing track registry file");
-                AlertDialog.present(e.message);
+                igv.Alert.presentAlert(e.message);
                 throw e;
             }
 
@@ -99,7 +99,7 @@ class TrackLoadController {
                 try {
                     responses = await Promise.all( paths.map( path => fetch(path) ) )
                 } catch (e) {
-                    AlertDialog.present(e.message);
+                    igv.Alert.presentAlert(e.message);
                 }
 
                 if (responses.length > 0) {
@@ -108,7 +108,7 @@ class TrackLoadController {
                     try {
                         jsons = await Promise.all( responses.map( response => response.json() ) )
                     } catch (e) {
-                        AlertDialog.present(e.message);
+                        igv.Alert.presentAlert(e.message);
                     }
 
                     if (jsons.length > 0) {
@@ -126,7 +126,7 @@ class TrackLoadController {
                                 try {
                                     info = await igv.GtexUtils.getTissueInfo(json.datasetId);
                                 } catch (e) {
-                                    AlertDialog.present(e.message);
+                                    igv.Alert.presentAlert(e.message);
                                 } finally {
                                     if (info) {
                                         json.tracks = info.tissueInfo.map(tissue => igv.GtexUtils.trackConfiguration(tissue));
@@ -202,7 +202,7 @@ const getTrackRegistry = async trackRegistryFile => {
         response = await fetch(trackRegistryFile);
     } catch (e) {
         console.error(e);
-        AlertDialog.present(e.message);
+        igv.Alert.presentAlert(e.message);
     } finally {
 
         if (response) {
@@ -211,7 +211,7 @@ const getTrackRegistry = async trackRegistryFile => {
                 trackRegistry = await response.json();
             } catch (e) {
                 console.error(e);
-                AlertDialog.present(e.message);
+                igv.Alert.presentAlert(e.message);
             } finally {
                 return trackRegistry;
             }

@@ -22,7 +22,6 @@
  */
 
 import igv from '../node_modules/igv/dist/igv.esm.js';
-import { AlertDialog } from '../node_modules/igv-ui/dist/igv-ui.js';
 import { getExtension, getFilename, validIndexExtensionSet, isKnownFileExtension, isValidIndexExtension, getIndexObjectWithDataName } from './utils.js';
 
 const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
@@ -163,7 +162,7 @@ class MultipleFileLoadController {
 
         // bail if no files
         if (0 === jsonPaths.length && 0 === remainingPaths.length) {
-            AlertDialog.present("ERROR: No valid data files submitted");
+            igv.Alert.presentAlert("ERROR: No valid data files submitted");
             return;
         }
 
