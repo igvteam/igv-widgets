@@ -24,7 +24,9 @@
  * THE SOFTWARE.
  */
 
+import igv from '../node_modules/igv/dist/igv.esm.js';
 import { DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
+
 class FileLoadWidget {
 
     constructor({ widgetParent, dataTitle, indexTitle, mode, fileLoadManager, dataOnly, doURL }) {

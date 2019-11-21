@@ -21,6 +21,7 @@
  *
  */
 
+import igv from '../node_modules/igv/dist/igv.esm.js';
 import { AlertDialog } from '../node_modules/igv-ui/dist/igv-ui.js';
 import { getExtension, getFilename, validIndexExtensionSet, isKnownFileExtension, isValidIndexExtension, getIndexObjectWithDataName } from './utils.js';
 
