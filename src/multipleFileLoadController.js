@@ -21,8 +21,14 @@
  *
  */
 
-import igv from '../node_modules/igv/dist/igv.esm.js';
 import { getExtension, getFilename, validIndexExtensionSet, isKnownFileExtension, isValidIndexExtension, getIndexObjectWithDataName } from './utils.js';
+
+// TODO: igvjs dependencies
+import {isFilePath} from "./igvjs/util/fileUtils.js";
+import google from "./igvjs/google/googleUtils.js";
+import igvxhr from "./igvjs/igvxhr.js";
+import Alert from "./igvjs/ui/alert.js";
+import {inferFileFormat, inferTrackTypes} from "./igvjs/util/trackUtils.js";
 
 const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
 
@@ -93,10 +99,10 @@ class MultipleFileLoadController {
         let googleDrivePaths = [];
         for (let path of paths) {
 
-            if (igv.isFilePath(path)) {
+            if (isFilePath(path)) {
                 tmp.push(path);
             } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-                const fileInfo = await igv.google.getDriveFileInfo(path);
+                const fileInfo = await google.getDriveFileInfo(path);
                 googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
             } else {
                 tmp.push(path);
@@ -115,7 +121,7 @@ class MultipleFileLoadController {
             jsonPromises = jsonPaths
                 .map((path) => {
                     let url = (path.google_url || path);
-                    return { name: getFilename(path), promise: igv.xhr.loadJson(url) }
+                    return { name: getFilename(path), promise: igvxhr.loadJson(url) }
                 });
 
             // validate JSON
@@ -140,7 +146,7 @@ class MultipleFileLoadController {
                 } else {
                     let o = {};
                     o.filename = getFilename(path);
-                    if (true === igv.isFilePath(path)) {
+                    if (true === isFilePath(path)) {
                         o.file = path;
                     } else {
                         o.url = path;
@@ -162,7 +168,7 @@ class MultipleFileLoadController {
 
         // bail if no files
         if (0 === jsonPaths.length && 0 === remainingPaths.length) {
-            igv.Alert.presentAlert("ERROR: No valid data files submitted");
+            Alert.presentAlert("ERROR: No valid data files submitted");
             return;
         }
 
@@ -174,7 +180,7 @@ class MultipleFileLoadController {
             let path = xmlPaths.pop();
             let o = {};
             o.filename = getFilename(path);
-            if (true === igv.isFilePath(path)) {
+            if (true === isFilePath(path)) {
                 o.file = path;
             } else {
                 o.url = path.google_url || path;
@@ -441,7 +447,7 @@ class MultipleFileLoadController {
             {
                 name: dataKey,
                 filename:dataKey,
-                format: igv.inferFileFormat(dataKey),
+                format: inferFileFormat(dataKey),
                 url: dataValue,
                 indexURL: getIndexURL(indexPaths[ dataKey ])
             };
@@ -455,7 +461,7 @@ class MultipleFileLoadController {
             }
         }
 
-        igv.inferTrackTypes(config);
+        inferTrackTypes(config);
 
         return config;
 
@@ -502,7 +508,7 @@ class MultipleFileLoadController {
     }
 
     static trackPathValidator(extension) {
-        return igv.knownFileExtensions.has(extension) || validIndexExtensionSet.has(extension);
+        return knownFileExtensions.has(extension) || validIndexExtensionSet.has(extension);
     }
 
 }

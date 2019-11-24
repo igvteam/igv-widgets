@@ -26,6 +26,9 @@
 
 import { DomUtils, UIUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
 
+// TODO: igvjs dependencies
+import {guid} from "./igvjs/util/domUtils.js";
+
 class FileLoadWidget {
 
     constructor({ widgetParent, dataTitle, indexTitle, mode, fileLoadManager, dataOnly, doURL }) {
@@ -201,7 +204,7 @@ class FileLoadWidget {
         const file_chooser_container = DomUtils.div({ class: 'igv-flw-file-chooser-container'});
         parent.appendChild(file_chooser_container);
 
-        const str = `${ id }${ igv.guid() }`;
+        const str = `${ id }${ guid() }`;
 
         const label = DomUtils.create('label');
         label.setAttribute('for', str);

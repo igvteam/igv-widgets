@@ -24,7 +24,8 @@
  * THE SOFTWARE.
  */
 
-import igv from '../node_modules/igv/dist/igv.esm.js';
+// TODO: igvjs dependencies
+import {isFilePath} from "./igvjs/util/fileUtils.js";
 
 class FileLoadManager {
 
@@ -81,7 +82,7 @@ class FileLoadManager {
 }
 
 function itemName (item) {
-    return igv.isFilePath(item) ? item.name : item;
+    return isFilePath(item) ? item.name : item;
 }
 
 export default FileLoadManager;

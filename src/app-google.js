@@ -21,7 +21,9 @@
  *
  */
 
-import igv from '../node_modules/igv/dist/igv.esm.js';
+// TODO: igvjs dependencies
+import oauth from "./igvjs/oauth.js";
+import Alert from "./igvjs/ui/alert.js";
 
 let picker;
 
@@ -112,7 +114,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 if (multipleFileSelection) {
                     picker = new google.picker.PickerBuilder()
                         .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(igv.oauth.google.access_token)
+                        .setOAuthToken(oauth.google.access_token)
                         .addView(view)
                         .addView(teamView)
                         .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
@@ -126,7 +128,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 } else {
                     picker = new google.picker.PickerBuilder()
                         .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(igv.oauth.google.access_token)
+                        .setOAuthToken(oauth.google.access_token)
                         .addView(view)
                         .addView(teamView)
                         .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
@@ -142,7 +144,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 picker.setVisible(true);
 
             } else {
-                igv.Alert.presentAlert("Sign into Google before using picker");
+                Alert.presentAlert("Sign into Google before using picker");
             }
         })
         .catch(function (error) {
@@ -177,7 +179,7 @@ function signInHandler() {
 
             authResponse = user.getAuthResponse();
 
-            igv.setGoogleOauthToken(authResponse["access_token"]);
+            oauth.setToken(authResponse["access_token"]);
 
             return authResponse["access_token"];
         })
@@ -185,8 +187,8 @@ function signInHandler() {
 
 function getAccessToken() {
 
-    if (igv.oauth.google.access_token) {
-        return Promise.resolve(igv.oauth.google.access_token);
+    if (oauth.google.access_token) {
+        return Promise.resolve(oauth.google.access_token);
     } else {
         return signInHandler();
     }
