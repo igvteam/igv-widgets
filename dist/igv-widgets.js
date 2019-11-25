@@ -9012,6 +9012,55 @@ class ModalTable {
 
 let picker;
 
+function init(clientId) {
+
+    let scope,
+        config;
+
+    scope =
+        [
+            'https://www.googleapis.com/auth/devstorage.read_only',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'https://www.googleapis.com/auth/drive.readonly'
+        ];
+
+    config =
+        {
+            'clientId': clientId,
+            'scope': scope.join(' ')
+        };
+
+    return gapi.client.init(config)
+}
+
+function postInit() {
+    let callback,
+        onerror,
+        config;
+
+    gapi.auth2
+        .getAuthInstance()
+        .isSignedIn
+        .listen(updateSignInStatus);
+
+    callback = () => {
+        console.log('Google Picker library loaded successfully');
+    };
+
+    onerror = () => {
+        console.log('Error loading Google Picker library');
+        alert('Error loading Google Picker library');
+    };
+
+    config =
+        {
+            callback: callback,
+            onerror: onerror
+        };
+
+    gapi.load('picker', config);
+
+}
 const createFilePickerHandler = () => {
 
     return (multipleFileLoadController, multipleFileSelection) => {
@@ -9125,6 +9174,17 @@ function getAccessToken() {
         return signInHandler();
     }
 }
+function updateSignInStatus(signInStatus) {
+    // do nothing
+}
+
+var appGoogle = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    init: init,
+    postInit: postInit,
+    createDropdownButtonPicker: createDropdownButtonPicker,
+    createFilePickerHandler: createFilePickerHandler
+});
 
 const GtexUtils = {
 
@@ -9464,4 +9524,4 @@ const trackLoadMultipleFileLoadConfigurator = ({ browser, modal, localFileInput,
 
 };
 
-export { Alert, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, utils as Widgets, igvxhr, oauth, trackLoadControllerConfigurator };
+export { Alert, FileLoadManager, FileLoadWidget, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, utils as Widgets, igvxhr, oauth, trackLoadControllerConfigurator };

@@ -6,4 +6,5 @@ import Alert from "./igvjs/ui/alert.js";
 import oauth from "./igvjs/oauth.js";
 import igvxhr from "./igvjs/igvxhr.js";
 import * as Widgets from './utils.js';
-export { oauth, igvxhr, Alert, Widgets, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
+import * as GoogleWidgets from './app-google.js';
+export { oauth, igvxhr, Alert, GoogleWidgets, Widgets, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
