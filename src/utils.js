@@ -21,6 +21,8 @@
  *
  */
 
+import {knownFileExtensions} from "./igvjs/util/trackUtils.js";
+
 let validIndexExtensionSet = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
 
 let isValidIndexExtension = (path) => {
@@ -75,16 +77,16 @@ let getIndexObjectWithDataName = (name) => {
 
 let isKnownFileExtension = (extension) => {
     let fasta = new Set(['fa', 'fasta']);
-    let union = new Set([...(igv.knownFileExtensions), ...fasta]);
+    let union = new Set([...(knownFileExtensions), ...fasta]);
     return union.has(extension);
 };
 
 let getFilename = (path) => {
-    return path.google_url ? path.name : igv.getFilename(path);
+    return path.google_url ? path.name : getFilename(path);
 };
 
 let getExtension = (path) => {
-    return igv.getExtension({url: path.google_url ? path.name : path});
+    return getExtension({url: path.google_url ? path.name : path});
 };
 
 let isJSON = (thang) => {
