@@ -7388,9 +7388,9 @@ const options = {
 let alertDialog;
 
 const Alert = {
-    init($root) {
+    init(root) {
         if (!alertDialog) {
-            alertDialog = new AlertDialog($root);
+            alertDialog = new AlertDialog(root);
         }
     },
 
