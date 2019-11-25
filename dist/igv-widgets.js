@@ -1701,6 +1701,17 @@ let indexLookup = (dataSuffix) => {
 
 };
 
+var utils = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    validIndexExtensionSet: validIndexExtensionSet,
+    isValidIndexExtension: isValidIndexExtension,
+    getIndexObjectWithDataName: getIndexObjectWithDataName,
+    isKnownFileExtension: isKnownFileExtension,
+    getFilename: getFilename$1,
+    getExtension: getExtension,
+    configureModal: configureModal
+});
+
 /*
  * The MIT License (MIT)
  *
@@ -9484,4 +9495,4 @@ const trackLoadMultipleFileLoadConfigurator = ({ browser, modal, localFileInput,
 
 };
 
-export { FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator };
+export { FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, utils as Widgets, trackLoadControllerConfigurator };
