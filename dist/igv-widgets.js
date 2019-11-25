@@ -9495,4 +9495,4 @@ const trackLoadMultipleFileLoadConfigurator = ({ browser, modal, localFileInput,
 
 };
 
-export { FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, utils as Widgets, trackLoadControllerConfigurator };
+export { Alert, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, utils as Widgets, trackLoadControllerConfigurator };
