@@ -5,6 +5,7 @@ import TrackLoadController, { trackLoadControllerConfigurator } from './trackLoa
 import Alert from "./igvjs/ui/alert.js";
 import oauth from "./igvjs/oauth.js";
 import igvxhr from "./igvjs/igvxhr.js";
-import * as Widgets from './utils.js';
+import * as Utils from './utils.js';
 import * as GoogleWidgets from './app-google.js';
-export { oauth, igvxhr, Alert, GoogleWidgets, Widgets, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
+import * as FileUtils from './igvjs/util/fileUtils.js';
+export { oauth, igvxhr, Alert, FileUtils, GoogleWidgets, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }

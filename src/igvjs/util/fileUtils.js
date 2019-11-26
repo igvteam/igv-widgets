@@ -1,12 +1,12 @@
 
 
-function getExtension(config) {
+function getExtension(url) {
 
-    if (undefined === config.url) {
+    if (undefined === url) {
         return undefined;
     }
 
-    let path = isFilePath(config.url) ? config.url.name : config.url;
+    let path = (isFilePath(url) || url.google_url) ? url.name : url;
     let filename = path.toLowerCase();
 
     //Strip parameters -- handle local files later
@@ -35,22 +35,23 @@ function getExtension(config) {
 
 function getFilename (path) {
 
-    var index, filename;
-
-    if (path instanceof File) {
+    if (path.google_url || path instanceof File) {
         return path.name;
-    }
-    else {
-        index = path.lastIndexOf("/");
-        filename = index < 0 ? path : path.substr(index + 1);
+    } else {
+
+        let index = path.lastIndexOf("/");
+        let filename = index < 0 ? path : path.substr(index + 1);
 
         //Strip parameters -- handle local files later
         index = filename.indexOf("?");
         if (index > 0) {
             filename = filename.substr(0, index);
         }
+
         return filename;
+
     }
+
 }
 
 function isFilePath (path) {

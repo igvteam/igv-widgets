@@ -1,3 +1,30 @@
+function getExtension(url) {
+
+    if (undefined === url) {
+        return undefined;
+    }
+
+    let path = (isFilePath(url) || url.google_url) ? url.name : url;
+    let filename = path.toLowerCase();
+
+    //Strip parameters -- handle local files later
+    let index = filename.indexOf("?");
+    if (index > 0) {
+        filename = filename.substr(0, index);
+    }
+
+    //Strip aux extensions .gz, .tab, and .txt
+    if (filename.endsWith(".gz")) {
+        filename = filename.substr(0, filename.length - 3);
+    } else if (filename.endsWith(".txt") || filename.endsWith(".tab") || filename.endsWith(".bgz")) {
+        filename = filename.substr(0, filename.length - 4);
+    }
+
+    index = filename.lastIndexOf(".");
+
+    return index < 0 ? filename : filename.substr(1 + index);
+}
+
 /**
  * Return the filename from the path.   Example
  *   https://foo.com/bar.bed?param=2   => bar.bed
@@ -6,27 +33,35 @@
 
 function getFilename (path) {
 
-    var index, filename;
-
-    if (path instanceof File) {
+    if (path.google_url || path instanceof File) {
         return path.name;
-    }
-    else {
-        index = path.lastIndexOf("/");
-        filename = index < 0 ? path : path.substr(index + 1);
+    } else {
+
+        let index = path.lastIndexOf("/");
+        let filename = index < 0 ? path : path.substr(index + 1);
 
         //Strip parameters -- handle local files later
         index = filename.indexOf("?");
         if (index > 0) {
             filename = filename.substr(0, index);
         }
+
         return filename;
+
     }
+
 }
 
 function isFilePath (path) {
     return (path instanceof File);
 }
+
+var fileUtils = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    getExtension: getExtension,
+    getFilename: getFilename,
+    isFilePath: isFilePath
+});
 
 /*
  * The MIT License (MIT)
@@ -1662,14 +1697,6 @@ let isKnownFileExtension = (extension) => {
     return union.has(extension);
 };
 
-let getFilename$1 = (path) => {
-    return path.google_url ? path.name : getFilename$1(path);
-};
-
-let getExtension = (path) => {
-    return getExtension({url: path.google_url ? path.name : path});
-};
-
 let configureModal = (fileLoadWidget, modal, okHandler) => {
     let dismiss;
 
@@ -1766,8 +1793,6 @@ var utils = /*#__PURE__*/Object.freeze({
     isValidIndexExtension: isValidIndexExtension,
     getIndexObjectWithDataName: getIndexObjectWithDataName,
     isKnownFileExtension: isKnownFileExtension,
-    getFilename: getFilename$1,
-    getExtension: getExtension,
     configureModal: configureModal
 });
 
@@ -8295,7 +8320,7 @@ class MultipleFileLoadController {
             jsonPromises = jsonPaths
                 .map((path) => {
                     let url = (path.google_url || path);
-                    return { name: getFilename$1(path), promise: igvxhr.loadJson(url) }
+                    return { name: getFilename(path), promise: igvxhr.loadJson(url) }
                 });
 
             // validate JSON
@@ -8319,7 +8344,7 @@ class MultipleFileLoadController {
                     this.browser.loadSession({ url:path.google_url, filename:path.name });
                 } else {
                     let o = {};
-                    o.filename = getFilename$1(path);
+                    o.filename = getFilename(path);
                     if (true === isFilePath(path)) {
                         o.file = path;
                     } else {
@@ -8353,7 +8378,7 @@ class MultipleFileLoadController {
         if (xmlPaths.length > 0) {
             let path = xmlPaths.pop();
             let o = {};
-            o.filename = getFilename$1(path);
+            o.filename = getFilename(path);
             if (true === isFilePath(path)) {
                 o.file = path;
             } else {
@@ -8596,7 +8621,7 @@ class MultipleFileLoadController {
 
         markup.push('<div> Invalid Files </div>');
 
-        markup = markup.concat(paths.map(path => `<div><span> ${ getFilename$1(path) }</span></div>`));
+        markup = markup.concat(paths.map(path => `<div><span> ${ getFilename(path) }</span></div>`));
 
         this.modal.querySelector('.modal-title').textContent = this.modalTitle;
         const modal_body = this.modal.querySelector('.modal-body');
@@ -8691,7 +8716,7 @@ function createDataPathDictionary(paths) {
     return paths
         .filter((path) => (isKnownFileExtension( getExtension(path) )))
         .reduce((accumulator, path) => {
-            accumulator[ getFilename$1(path) ] = (path.google_url || path);
+            accumulator[ getFilename(path) ] = (path.google_url || path);
             return accumulator;
         }, {});
 
@@ -8702,7 +8727,7 @@ function createIndexPathCandidateDictionary (paths) {
     return paths
         .filter((path) => isValidIndexExtension( getExtension(path) ))
         .reduce(function(accumulator, path) {
-            accumulator[ getFilename$1(path) ] = (path.google_url || path);
+            accumulator[ getFilename(path) ] = (path.google_url || path);
             return accumulator;
         }, {});
 
@@ -9524,4 +9549,4 @@ const trackLoadMultipleFileLoadConfigurator = ({ browser, modal, localFileInput,
 
 };
 
-export { Alert, FileLoadManager, FileLoadWidget, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, utils as Widgets, igvxhr, oauth, trackLoadControllerConfigurator };
+export { Alert, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, utils as Utils, igvxhr, oauth, trackLoadControllerConfigurator };
