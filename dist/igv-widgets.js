@@ -1432,7 +1432,7 @@ class FileLoadWidget {
  * THE SOFTWARE.
  */
 
-const knownFileExtensions$1 = new Set([
+const knownFileExtensions = new Set([
 
     "narrowpeak",
     "broadpeak",
@@ -1578,7 +1578,7 @@ function inferFileFormat(fn) {
             return "bigbed";
 
         default:
-            if (knownFileExtensions$1.has(ext)) {
+            if (knownFileExtensions.has(ext)) {
                 return ext;
             } else {
                 return undefined;
@@ -1693,7 +1693,7 @@ let getIndexObjectWithDataName = (name) => {
 
 let isKnownFileExtension = (extension) => {
     let fasta = new Set(['fa', 'fasta']);
-    let union = new Set([...(knownFileExtensions$1), ...fasta]);
+    let union = new Set([...(knownFileExtensions), ...fasta]);
     return union.has(extension);
 };
 
