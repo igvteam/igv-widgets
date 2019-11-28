@@ -9737,6 +9737,10 @@ async function getApiKey$1() {
 
 let urlShortenerList = [];
 
+const isURLShortenerSet = () => {
+    return urlShortenerList.length > 0;
+};
+
 const setURLShortenerList = config => {
 
     for (let c of config) {
@@ -9775,6 +9779,7 @@ const getShortener = shortener => {
 
 var urlShortener = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    isURLShortenerSet: isURLShortenerSet,
     setURLShortenerList: setURLShortenerList,
     getShortURL: getShortURL
 });

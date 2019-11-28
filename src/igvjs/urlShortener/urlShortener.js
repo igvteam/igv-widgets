@@ -10,6 +10,10 @@ import Alert from "../ui/alert.js";
 
 let urlShortenerList = [];
 
+const isURLShortenerSet = () => {
+    return urlShortenerList.length > 0;
+};
+
 const setURLShortenerList = config => {
 
     for (let c of config) {
@@ -46,4 +50,4 @@ const getShortener = shortener => {
     }
 };
 
-export { setURLShortenerList, getShortURL }
+export { isURLShortenerSet, setURLShortenerList, getShortURL }
