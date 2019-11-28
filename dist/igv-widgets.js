@@ -9549,4 +9549,234 @@ const trackLoadMultipleFileLoadConfigurator = ({ browser, modal, localFileInput,
 
 };
 
-export { Alert, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, utils as Utils, igvxhr, oauth, trackLoadControllerConfigurator };
+class TinyURL {
+
+    constructor({endpoint}) {
+        this.endpoint = endpoint || "https://2et6uxfezb.execute-api.us-east-1.amazonaws.com/dev/tinyurl/";
+    }
+
+    async shortenURL(url) {
+        const enc = encodeURIComponent(url);
+        const response = await fetch(`${this.endpoint}${enc}`);
+        if(response.ok) {
+            return response.text();
+        }
+        else {
+            throw new Error(response.statusText);
+        }
+    }
+}
+
+/*
+ *  The MIT License (MIT)
+ *
+ * Copyright (c) 2016-2017 The Regents of the University of California
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
+const GoogleURL = function ({ apiKey, hostname }) {
+    this.api = "https://www.googleapis.com/urlshortener/v1/url";
+    this.apiKey = apiKey;
+    this.hostname = hostname || "goo.gl";
+};
+
+GoogleURL.prototype.shortenURL = function (url) {
+
+    var self = this;
+
+    return getApiKey.call(this)
+
+        .then(function (key) {
+
+            var endpoint = self.api + "?key=" + key;
+
+            return igvxhr.loadJson(endpoint,
+                {
+                    sendData: JSON.stringify({"longUrl": url}),
+                    contentType: "application/json"
+                })
+        })
+        .then(function (json) {
+            return json.id;
+        })
+};
+
+
+GoogleURL.prototype.expandURL = function (url) {
+
+    var self = this;
+    return getApiKey.call(this)
+
+        .then(function (apiKey) {
+
+            var endpoint;
+
+            if (url.includes("goo.gl")) {
+
+                endpoint = self.api + "?shortUrl=" + url + "&key=" + apiKey;
+
+                return igvxhr.loadJson(endpoint, {contentType: "application/json"})
+                    .then(function (json) {
+                        return json.longUrl;
+                    })
+            } else {
+                // Not a google url or no api key
+                return Promise.resolve(url);
+            }
+        })
+};
+
+async function getApiKey() {
+
+    var self = this;
+
+    if (typeof self.apiKey === "string") {
+        return self.apiKey
+    } else if (typeof self.apiKey === "function") {
+        return await self.apiKey();
+    } else {
+        throw new Error("Unknown apiKey type: " + this.apiKey);
+    }
+}
+
+var BitlyURL = function ({ apiKey, hostname }) {
+    this.api = "https://api-ssl.bitly.com";
+    this.apiKey = apiKey;
+    this.hostname = hostname || "bit.ly";
+    this.devIP = "192.168.1.11";   // For development, replace with your IP address. Bitly will not shorten localhost !
+};
+
+
+BitlyURL.prototype.shortenURL = async function (url) {
+
+    var self = this;
+
+    if(url.length > 2048) {
+        return url;
+    }
+
+    if (url.startsWith("http://localhost")) url = url.replace("localhost", this.devIP);  // Dev hack
+
+    try {
+        const key = await getApiKey$1.call(this);
+
+        var endpoint = self.api + "/v3/shorten?access_token=" + key + "&longUrl=" + encodeURIComponent(url);
+
+        const json = await igvxhr.loadJson(endpoint, {});
+
+        // TODO check status code
+        if (500 === json.status_code) {
+            alert("Error shortening URL: " + json.status_txt);
+            return url
+        } else {
+            return json.data.url;
+        }
+    } catch (e) {
+        alert("Error shortening URL: " + e);
+        return url
+    }
+
+};
+
+
+BitlyURL.prototype.expandURL = function (url) {
+
+    var self = this;
+
+    return getApiKey$1.call(this)
+
+        .then(function (key) {
+
+            var endpoint = self.api + "/v3/expand?access_token=" + key + "&shortUrl=" + encodeURIComponent(url);
+
+            return igvxhr.loadJson(endpoint, {})
+        })
+
+        .then(function (json) {
+
+            var longUrl = json.data.expand[0].long_url;
+
+            // Fix some Bitly "normalization"
+            longUrl = longUrl.replace("{", "%7B").replace("}", "%7D");
+
+            return longUrl;
+
+        })
+};
+
+async function getApiKey$1() {
+
+    var self = this;
+
+    if (typeof self.apiKey === "string") {
+        return self.apiKey
+    }
+    else if (typeof self.apiKey === "function") {
+        return await self.apiKey();
+    }
+    else {
+        throw new Error("Unknown apiKey type: " + this.apiKey);
+    }
+}
+
+let urlShortenerList = [];
+
+const setURLShortenerList = config => {
+
+    for (let c of config) {
+        urlShortenerList.push(getShortener(c));
+    }
+
+};
+
+const getShortURL = async url =>  {
+    return urlShortenerList.length > 0 ? await urlShortenerList[0].shortenURL(url) : url;
+};
+
+const getShortener = shortener => {
+
+    const { provider } = shortener;
+    if (provider) {
+        if (provider === "tinyURL") {
+            return new TinyURL(shortener);
+        }
+        if (provider === "google") {
+            return new GoogleURL(shortener);
+        } else if (provider === "bitly") {
+            return new BitlyURL(shortener);
+        } else {
+            Alert.presentAlert(`Unknown url shortener provider: ${ provider}`);
+        }
+    } else {
+        // Custom
+        if (typeof shortener.shortenURL === "function") {
+            return shortener;
+        } else {
+            Alert.presentAlert("URL shortener object must define functions 'shortenURL'");
+        }
+    }
+};
+
+var urlShortener = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    setURLShortenerList: setURLShortenerList,
+    getShortURL: getShortURL
+});
+
+export { Alert, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, urlShortener as URLShortener, utils as Utils, igvxhr, oauth, trackLoadControllerConfigurator };

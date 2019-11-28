@@ -10,16 +10,16 @@ import Alert from "../ui/alert.js";
 
 let urlShortenerList = [];
 
-const getShortURL = async url =>  {
-    return urlShortenerList.length > 0 ? await urlShortenerList[0].shortenURL(url) : url;
-};
-
-const setURLShortener = config => {
+const setURLShortenerList = config => {
 
     for (let c of config) {
         urlShortenerList.push(getShortener(c));
     }
 
+};
+
+const getShortURL = async url =>  {
+    return urlShortenerList.length > 0 ? await urlShortenerList[0].shortenURL(url) : url;
 };
 
 const getShortener = shortener => {
@@ -46,4 +46,4 @@ const getShortener = shortener => {
     }
 };
 
-export { getShortURL }
+export { setURLShortenerList, getShortURL }

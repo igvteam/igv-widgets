@@ -8,4 +8,6 @@ import igvxhr from "./igvjs/igvxhr.js";
 import * as Utils from './utils.js';
 import * as GoogleWidgets from './app-google.js';
 import * as FileUtils from './igvjs/util/fileUtils.js';
-export { oauth, igvxhr, Alert, FileUtils, GoogleWidgets, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
+import * as URLShortener from './igvjs/urlShortener/urlShortener.js';
+
+export { oauth, igvxhr, Alert, URLShortener, FileUtils, GoogleWidgets, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
