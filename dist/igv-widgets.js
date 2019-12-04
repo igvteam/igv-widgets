@@ -1407,6 +1407,108 @@ class FileLoadWidget {
 
 }
 
+const FileFormats = {
+
+    gwascatalog: {
+        fields: [
+            'bin',
+            'chr',
+            'start',
+            'end',
+            'name',
+            'pubMedID',
+            'author',
+            'pubDate',
+            'journal',
+            'title',
+            'trait',
+            'initSample',
+            'replSample',
+            'region',
+            'genes',
+            'riskAllele',
+            'riskAlFreq',
+            'pValue',
+            'pValueDesc',
+            'orOrBeta',
+            'ci95',
+            'platform',
+            'cnv'
+        ]
+    },
+
+    wgrna: {
+        fields:
+            [
+                'bin',
+                'chr',
+                'start',
+                'end',
+                'name',
+                'score',
+                'strand',
+                'thickStart',
+                'thickEnd',
+                'type'
+            ]
+    },
+
+    cpgislandext: {
+        fields:
+
+            [
+                'bin',
+                'chr',
+                'start',
+                'end',
+                'name',
+                'length',
+                'cpgNum',
+                'gcNum',
+                'perCpg',
+                'perGc',
+                'obsExp'
+            ]
+    },
+
+    clinVarMain: {
+        fields: [
+            'chr1',
+            'start',
+            'end',
+            'name',
+            'score',
+            'strand',
+            'thickStart',
+            'thickEnd',
+            'reserved',
+            'blockCount',  // Number of blocks
+            'blockSizes',  // Comma separated list of block sizes
+            'chromStarts', // Start positions relative to chromStart
+            'origName',    // NM_198053.2(CD247):c.462C>T (p.Asp154=)	ClinVar Variation Report
+            'clinSign',    // Likely benign	Clinical significance
+            'reviewStatus', // 	based on: criteria provided,single submitter	Review Status
+            'type',         // single nucleotide variant	Type of Variant
+            'geneId', 	    // CD247	Gene Symbol
+            'snpId',       //	181656780	dbSNP ID
+            'nsvId',       //		dbVar ID
+            'rcvAcc',      //	RCV000642347	ClinVar Allele Submission
+            'testedInGtr', //	N	Genetic Testing Registry
+            'phenotypeList', //	Immunodeficiency due to defect in cd3-zeta	Phenotypes
+            'phenotype', //	MedGen:C1857798, OMIM:610163	Phenotype identifiers
+            'origin', //	germline	Data origin
+            'assembly', //	GRCh37	Genome assembly
+            'cytogenetic', //	1q24.2	Cytogenetic status
+            'hgvsCod', //	NM_198053.2:c.462C>T	Nucleotide HGVS
+            'hgvsProt', //	NP_932170.1:p.Asp154=	Protein HGVS
+            'numSubmit', //	1	Number of submitters
+            'lastEval', //	Dec 19,2017	Last evaluation
+            'guidelines', //		Guidelines
+            'otherIds'
+        ]
+    }
+};
+
 /*
  * The MIT License (MIT)
  *
@@ -1464,6 +1566,39 @@ const knownFileExtensions = new Set([
     "rmsk",
     "cram"
 ]);
+
+/**
+ * Return a custom format object with the given name.
+ * @param name
+ * @returns {*}
+ */
+function getFormat(name) {
+
+    // if (igv.browser && igv.browser.formats && igv.browser.format[name]) {
+    //     return expandFormat(igv.browser.formats[name]);
+    // } else
+    if (FileFormats && FileFormats[name]) {
+        return expandFormat(FileFormats[name]);
+    } else {
+        return undefined;
+    }
+
+    function expandFormat(format) {
+
+        const fields = format.fields;
+        const keys = ['chr', 'start', 'end'];
+
+        for (let i = 0; i < fields.length; i++) {
+            for (let key of keys) {
+                if (key === fields[i]) {
+                    format[key] = i;
+                }
+            }
+        }
+
+        return format;
+    }
+}
 
 function inferTrackTypes(config) {
 
@@ -1587,6 +1722,22 @@ function inferFileFormat(fn) {
 
 }
 
+function inferIndexPath(url, extension) {
+
+    var idx;
+
+    if (url instanceof File) {
+        throw new Error("Cannot infer an index path for a local File.  Please select explicitly")
+    }
+
+    if (url.includes("?")) {
+        idx = url.indexOf("?");
+        return url.substring(0, idx) + "." + extension + url.substring(idx);
+    } else {
+        return url + "." + extension;
+    }
+}
+
 function translateDeprecatedTypes(config) {
 
     if (config.featureType) {  // Translate deprecated "feature" type
@@ -1615,6 +1766,39 @@ function translateDeprecatedTypes(config) {
         config.format = config.format || "aed";
     }
 }
+
+/**
+ * Parse a locus string and return a range object.  Locus string is of the form chr:start-end.  End is optional
+ *
+ */
+function parseLocusString(string) {
+
+    const t1 = string.split(":");
+    const t2 = t1[1].split("-");
+
+    const range = {
+        chr: t1[0],
+        start: Number.parseInt(t2[0].replace(/,/g, '')) - 1
+    };
+
+    if (t2.length > 1) {
+        range.end = Number.parseInt(t2[1].replace(/,/g, ''));
+    } else {
+        range.end = range.start + 1;
+    }
+
+    return range;
+}
+
+var trackUtils = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    knownFileExtensions: knownFileExtensions,
+    getFormat: getFormat,
+    inferTrackTypes: inferTrackTypes,
+    inferFileFormat: inferFileFormat,
+    inferIndexPath: inferIndexPath,
+    parseLocusString: parseLocusString
+});
 
 /*
  *  The MIT License (MIT)
@@ -9784,4 +9968,4 @@ var urlShortener = /*#__PURE__*/Object.freeze({
     getShortURL: getShortURL
 });
 
-export { Alert, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, urlShortener as URLShortener, utils as Utils, igvxhr, oauth, trackLoadControllerConfigurator };
+export { Alert, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, appGoogle as GoogleWidgets, MultipleFileLoadController, TrackLoadController, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, igvxhr, oauth, trackLoadControllerConfigurator };
