@@ -26,7 +26,7 @@
 import $ from "../vendor/jquery-1.12.4.js";
 import { makeDraggable } from "./draggable.js";
 import {createIcon} from "../igv-icons.js";
-import {guid} from "../util/domUtils.js";
+import { DomUtils } from '../../../node_modules/igv-ui/dist/igv-ui.js';
 
 const GenericContainer = function ({$parent, width, height, closeHandler}) {
 
@@ -34,7 +34,7 @@ const GenericContainer = function ({$parent, width, height, closeHandler}) {
         $header,
         $fa;
 
-    this.namespace = '.generic_container_' + guid();
+    this.namespace = '.generic_container_' + DomUtils.guid();
 
     let $container = $('<div>', {class: 'igv-generic-container'});
     $parent.append($container);

@@ -13,7 +13,6 @@ import * as TrackUtils from './igvjs/util/trackUtils.js';
 import * as GoogleWidgets from './app-google.js';
 import * as FileUtils from './igvjs/util/fileUtils.js';
 import * as URLShortener from './igvjs/urlShortener/urlShortener.js';
-import * as DOMUtils from './igvjs/util/domUtils.js';
 import * as IGVIcons from './igvjs/igv-icons.js';
 
-export { GenericContainer, makeDraggable, oauth, igvxhr, Alert, IGVIcons, DOMUtils, StringUtils, TrackUtils, URLShortener, FileUtils, GoogleWidgets, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
+export { GenericContainer, makeDraggable, oauth, igvxhr, Alert, IGVIcons, StringUtils, TrackUtils, URLShortener, FileUtils, GoogleWidgets, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
