@@ -24,7 +24,7 @@
  * THE SOFTWARE.
  */
 
-import $ from "../vendor/jquery-1.12.4.js";
+import $ from '../vendor/jquery-1.12.4.js';
 
 /**
  * Make the target element movable by clicking and dragging on the handle.  This is not a general purprose function,

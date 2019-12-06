@@ -28,7 +28,6 @@ import FileLoadWidget from './fileLoadWidget.js';
 import FileLoadManager from './fileLoadManager.js';
 import MultipleFileLoadController from './multipleFileLoadController.js';
 
-// TODO: igvjs dependencies
 import {configureModal} from './utils.js';
 import * as app_google from './app-google.js';
 import Alert from "./igvjs/ui/alert.js";
