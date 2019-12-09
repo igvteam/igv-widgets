@@ -169,7 +169,7 @@ class TrackLoadController {
                                         markup += `<div>${ description }</div>`;
                                     }
 
-                                    this.modal.querySelector('#igv-app-generic-track-select-modal-label').innerHTML = markup;
+                                    this.modal.querySelector('.modal-title').innerHTML = markup;
 
                                     configureModalSelectList(this.browser, this.modal, tracks, this.modalDismissHandler);
 
