@@ -1,6 +1,55 @@
 import $ from './igvjs/vendor/jquery-1.12.4.js';
 import { DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
+import {appleCrayonPalette} from "./igvjs/util/colorPalletes.js";
+import IGVColor from "./igvjs/igv-color.js";
 
+function createColorSwatchSelector($genericContainer, colorHandler, defaultColor) {
+
+    let appleColors = Object.values(appleCrayonPalette);
+
+    if (defaultColor && !(typeof defaultColor === 'function')) {
+
+        // Remove 'snow' color.
+        appleColors.splice(11, 1);
+
+        // Add default color.
+        appleColors.unshift(IGVColor.rgbToHex(defaultColor));
+    }
+
+    for (let color of appleColors) {
+
+        let $swatch = $('<div>', {class: 'igv-color-swatch'});
+        $genericContainer.append($swatch);
+
+        $swatch.css('background-color', color);
+
+        if ('white' === color) {
+            // do nothing
+            console.log('-');
+        } else {
+
+            $swatch.hover(() => {
+                    $swatch.get(0).style.borderColor = color;
+                },
+                () => {
+                    $swatch.get(0).style.borderColor = 'white';
+                });
+
+            $swatch.on('click.trackview', (event) => {
+                event.stopPropagation();
+                colorHandler(color);
+            });
+
+            $swatch.on('touchend.trackview', (event) => {
+                event.stopPropagation();
+                colorHandler(color);
+            });
+
+        }
+
+    }
+
+}
 
 /**
  * Translate the mouse coordinates for the event to the coordinates for the given target element
@@ -26,5 +75,5 @@ function translateMouseCoordinates(e, target) {
     return {x: posx, y: posy}
 }
 
-export { translateMouseCoordinates }
+export { translateMouseCoordinates, createColorSwatchSelector }
 
