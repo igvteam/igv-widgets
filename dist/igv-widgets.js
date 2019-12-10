@@ -9627,7 +9627,7 @@ const GtexUtils = {
 
 class TrackLoadController {
 
-    constructor({browser, trackRegistryFile, modal, encodeModalTable, dropdownMenu, genericTrackSelectModal, uberFileLoader, modalDismissHandler}) {
+    constructor({browser, trackRegistryFile, urlModal, encodeModalTable, dropdownMenu, selectModal, uberFileLoader, modalDismissHandler}) {
 
         let urlConfig;
 
@@ -9635,11 +9635,11 @@ class TrackLoadController {
         this.trackRegistryFile = trackRegistryFile;
         this.encodeModalTable = encodeModalTable;
         this.dropdownMenu = dropdownMenu;
-        this.modal = genericTrackSelectModal;
+        this.selectModal = selectModal;
 
         urlConfig =
             {
-                widgetParent: modal.querySelector('.modal-body'),
+                widgetParent: urlModal.querySelector('.modal-body'),
                 dataTitle: undefined,
                 indexTitle: undefined,
                 mode: 'url',
@@ -9649,7 +9649,7 @@ class TrackLoadController {
             };
 
         this.urlWidget = new FileLoadWidget(urlConfig);
-        configureModal(this.urlWidget, modal, (fileLoadWidget) => {
+        configureModal(this.urlWidget, urlModal, (fileLoadWidget) => {
             uberFileLoader.ingestPaths( fileLoadWidget.retrievePaths() );
             return true;
         });
@@ -9751,7 +9751,7 @@ class TrackLoadController {
                                 button.setAttribute('data-target', `#${ this.encodeModalTable.$modal.get(0).id }`);
                             } else {
 
-                                button.setAttribute('data-target', `#${ this.modal.id }`);
+                                button.setAttribute('data-target', `#${ this.selectModal.id }`);
 
                                 button.addEventListener('click', () => {
 
@@ -9761,9 +9761,9 @@ class TrackLoadController {
                                         markup += `<div>${ description }</div>`;
                                     }
 
-                                    this.modal.querySelector('.modal-title').innerHTML = markup;
+                                    this.selectModal.querySelector('.modal-title').innerHTML = markup;
 
-                                    configureModalSelectList(this.browser, this.modal, tracks, this.modalDismissHandler);
+                                    configureSelectModal(this.browser, this.selectModal, tracks, this.modalDismissHandler);
 
                                 });
 
@@ -9817,16 +9817,16 @@ const getTrackRegistry = async trackRegistryFile => {
 
 };
 
-const configureModalSelectList = (browser, modal, configurations, modalDismissHandler) => {
+const configureSelectModal = (browser, selectModal, configurations, modalDismissHandler) => {
 
     let select,
         option;
 
-    const e = modal.querySelector('select');
+    const e = selectModal.querySelector('select');
     e.parentNode.removeChild(e);
 
     select = domUtils.create('select', { class: 'form-control' });
-    modal.querySelector('.form-group').appendChild(select);
+    selectModal.querySelector('.form-group').appendChild(select);
 
     option = domUtils.create('option');
     option.setAttribute('text', 'Select...');
@@ -9866,7 +9866,7 @@ const configureModalSelectList = (browser, modal, configurations, modalDismissHa
 
 };
 
-const trackLoadControllerConfigurator = ({browser, trackRegistryFile, multipleFileLoadConfig, modalDismissHandler }) => {
+const trackLoadControllerConfigurator = ({browser, trackRegistryFile, urlModal, dropdownMenu, selectModal, multipleFileLoadConfig, modalDismissHandler }) => {
 
     const encodeModalTableConfig =
         {
@@ -9880,10 +9880,18 @@ const trackLoadControllerConfigurator = ({browser, trackRegistryFile, multipleFi
     return {
         browser,
         trackRegistryFile,
-        modal: document.querySelector('#igv-app-track-from-url-modal'),
+
+        // modal: document.querySelector('#igv-app-track-from-url-modal'),
+        urlModal,
+
         encodeModalTable: new ModalTable(encodeModalTableConfig),
-        dropdownMenu: document.querySelector('#igv-app-track-dropdown-menu'),
-        genericTrackSelectModal: document.querySelector('#igv-app-generic-track-select-modal'),
+
+        // dropdownMenu: document.querySelector('#igv-app-track-dropdown-menu'),
+        dropdownMenu,
+
+        // genericTrackSelectModal: document.querySelector('#igv-app-generic-track-select-modal'),
+        selectModal,
+
         uberFileLoader: new MultipleFileLoadController(trackLoadMultipleFileLoadConfigurator(multipleFileLoadConfig)),
         modalDismissHandler
     }
