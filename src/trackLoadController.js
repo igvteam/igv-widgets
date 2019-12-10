@@ -290,18 +290,10 @@ export const trackLoadControllerConfigurator = ({browser, trackRegistryFile, url
     return {
         browser,
         trackRegistryFile,
-
-        // modal: document.querySelector('#igv-app-track-from-url-modal'),
         urlModal,
-
         encodeModalTable: new ModalTable(encodeModalTableConfig),
-
-        // dropdownMenu: document.querySelector('#igv-app-track-dropdown-menu'),
         dropdownMenu,
-
-        // genericTrackSelectModal: document.querySelector('#igv-app-generic-track-select-modal'),
         selectModal,
-
         uberFileLoader: new MultipleFileLoadController(trackLoadMultipleFileLoadConfigurator(multipleFileLoadConfig)),
         modalDismissHandler
     }
