@@ -9664,7 +9664,7 @@ class TrackLoadController {
 
         (async (genomeID) => {
 
-            const divider = this.dropdownMenu.querySelector('#igv-app-annotations-section');
+            const divider = this.dropdownMenu.querySelector('.dropdown-divider');
 
             const id_prefix = 'genome_specific_';
             const elements = this.dropdownMenu.querySelectorAll(`[id*='${ id_prefix }']`);
