@@ -29,7 +29,7 @@ import FileLoadManager from './fileLoadManager.js';
 import MultipleFileLoadController from './multipleFileLoadController.js';
 
 import {configureModal} from './utils.js';
-import * as app_google from './app-google.js';
+import * as app_google from './googleFilePicker.js';
 import Alert from "./igvjs/ui/alert.js";
 import GtexUtils from "./igvjs/gtex/gtexUtils.js";
 

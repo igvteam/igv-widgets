@@ -218,4 +218,4 @@ function updateSignInStatus(signInStatus) {
 };
 
 
-export {init, postInit, createDropdownButtonPicker, createFilePickerHandler };
+export { init, postInit, createDropdownButtonPicker, createFilePickerHandler };

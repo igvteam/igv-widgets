@@ -7614,15 +7614,15 @@ const igvxhr = {
                 return new Promise(function (fullfill, reject) {
 
                     // Various Google tansformations
-                    if (google$1.isGoogleURL(url)) {
+                    if (GoogleUtils.isGoogleURL(url)) {
                         if (url.startsWith("gs://")) {
-                            url = google$1.translateGoogleCloudURL(url);
-                        } else if (google$1.isGoogleStorageURL(url)) {
+                            url = GoogleUtils.translateGoogleCloudURL(url);
+                        } else if (GoogleUtils.isGoogleStorageURL(url)) {
                             if (!url.includes("altMedia=")) {
                                 url += (url.includes("?") ? "&altMedia=true" : "?altMedia=true");
                             }
                         }
-                        url = google$1.addApiKey(url);
+                        url = GoogleUtils.addApiKey(url);
                     }
 
 
@@ -7686,7 +7686,7 @@ const igvxhr = {
                             }
                         } else if ((typeof gapi !== "undefined") &&
                             ((xhr.status === 404 || xhr.status === 401) &&
-                                google$1.isGoogleURL(url)) &&
+                                GoogleUtils.isGoogleURL(url)) &&
                             !options.retries) {
 
                             options.retries = 1;
@@ -7895,7 +7895,7 @@ function isAmazonV4Signed(url) {
 function getOauthToken(url) {
     const host = parseUri(url).host;
     let token = oauth.getToken(host);
-    if (!token && google$1.isGoogleURL(url)) {
+    if (!token && GoogleUtils.isGoogleURL(url)) {
         token = oauth.google.access_token;
     }
     return token;
@@ -7918,7 +7918,7 @@ function mapUrl(url) {
     if (url.includes("//www.dropbox.com")) {
         return url.replace("//www.dropbox.com", "//dl.dropboxusercontent.com");
     } else if (url.includes("//drive.google.com")) {
-        return google$1.driveDownloadURL(url);
+        return GoogleUtils.driveDownloadURL(url);
     } else if (url.includes("//www.broadinstitute.org/igvdata")) {
         return url.replace("//www.broadinstitute.org/igvdata", "//data.broadinstitute.org/igvdata");
     } else if (url.includes("//igvdata.broadinstitute.org")) {
@@ -8143,7 +8143,7 @@ function buildOptions (config, options) {
  * THE SOFTWARE.
  */
 
-const google$1 = {
+const GoogleUtils = {
 
         fileInfoCache: {},
 
@@ -8364,7 +8364,7 @@ class MultipleFileLoadController {
             if (isFilePath(path)) {
                 tmp.push(path);
             } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-                const fileInfo = await google$1.getDriveFileInfo(path);
+                const fileInfo = await GoogleUtils.getDriveFileInfo(path);
                 googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
             } else {
                 tmp.push(path);
@@ -9570,7 +9570,7 @@ function updateSignInStatus(signInStatus) {
     // do nothing
 }
 
-var appGoogle = /*#__PURE__*/Object.freeze({
+var googleFilePicker = /*#__PURE__*/Object.freeze({
     __proto__: null,
     init: init,
     postInit: postInit,
@@ -22844,4 +22844,4 @@ var widgetUtils = /*#__PURE__*/Object.freeze({
     createColorSwatchSelector: createColorSwatchSelector
 });
 
-export { Alert, EventBus, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, GenericContainer, appGoogle as GoogleWidgets, IGVColor, igvIcons as IGVIcons, IGVMath, MultipleFileLoadController, stringUtils as StringUtils, TrackLoadController, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, widgetUtils as WidgetUtils, google$1 as google, igvxhr, makeDraggable, oauth, trackLoadControllerConfigurator };
+export { Alert, EventBus, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, GenericContainer, googleFilePicker as GoogleFilePicker, GoogleUtils, IGVColor, igvIcons as IGVIcons, IGVMath, MultipleFileLoadController, stringUtils as StringUtils, TrackLoadController, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, widgetUtils as WidgetUtils, igvxhr, makeDraggable, oauth, trackLoadControllerConfigurator };

@@ -27,7 +27,7 @@ import igvxhr from "../igvxhr.js";
 import Zlib from "../vendor/zlib_and_gzip.js";
 import {buildOptions} from "../util/igvUtils.js";
 
-const google = {
+const GoogleUtils = {
 
         fileInfoCache: {},
 
@@ -153,6 +153,6 @@ const google = {
         }
     }
 
-export default google;
+export default GoogleUtils;
 
 
