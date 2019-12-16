@@ -14,10 +14,11 @@ import * as GoogleFilePicker from './googleFilePicker.js';
 import IGVColor from "./igvjs/igv-color.js";
 import IGVMath from "./igvjs/igv-math.js";
 import * as Utils from './utils.js';
+import * as IGVUtils from './igvjs/util/igvUtils.js'
 import * as StringUtils from './igvjs/util/stringUtils.js';
 import * as TrackUtils from './igvjs/util/trackUtils.js';
 import * as FileUtils from './igvjs/util/fileUtils.js';
 import * as URLShortener from './igvjs/urlShortener/urlShortener.js';
 import * as IGVIcons from './igvjs/igv-icons.js';
 import * as WidgetUtils from './widgetUtils.js'
-export { GenericContainer, makeDraggable, GoogleUtils, oauth, igvxhr, EventBus, Alert, IGVColor, IGVMath, WidgetUtils, IGVIcons, StringUtils, TrackUtils, URLShortener, FileUtils, GoogleFilePicker, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
+export { GenericContainer, makeDraggable, GoogleUtils, oauth, igvxhr, EventBus, Alert, IGVColor, IGVMath, WidgetUtils, IGVIcons, IGVUtils, StringUtils, TrackUtils, URLShortener, FileUtils, GoogleFilePicker, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
