@@ -29,7 +29,7 @@
  * License - https://fontawesome.com/license (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
  */
 
-import $ from './vendor/jquery-1.12.4.js';
+import $ from './vendor/jquery-3.3.1.slim.js';
 
 function createWrappedIcon(name, color) {
 

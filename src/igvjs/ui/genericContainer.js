@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  */
 
-import $ from '../vendor/jquery-1.12.4.js';
+import $ from '../vendor/jquery-3.3.1.slim.js';
 import { DomUtils } from '../../../node_modules/igv-ui/dist/igv-ui.js';
 import { makeDraggable } from "./draggable.js";
 import {createIcon} from "../igv-icons.js";

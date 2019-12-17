@@ -1,4 +1,4 @@
-import $ from './igvjs/vendor/jquery-1.12.4.js';
+import $ from './igvjs/vendor/jquery-3.3.1.slim.js';
 import { DomUtils } from '../node_modules/igv-ui/dist/igv-ui.js';
 import {appleCrayonPalette} from "./igvjs/util/colorPalletes.js";
 import IGVColor from "./igvjs/igv-color.js";
