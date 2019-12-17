@@ -8511,7 +8511,7 @@ class MultipleFileLoadController {
 
             // validate JSON
             const jsons = await Promise.all(jsonPromises.map(task => task.promise));
-            const booleans = jsons.map(json => self.jsonFileValidator(json));
+            const booleans = jsons.map(json => this.jsonFileValidator(json));
             const invalids = booleans
                 .map((boolean, index) => { return { isValid: boolean, path: jsonPaths[ index ] } })
                 .filter(o => false === o.isValid);
@@ -8523,7 +8523,7 @@ class MultipleFileLoadController {
 
             // Handle Session file. There can only be ONE.
             const json = jsons.pop();
-            if (true === MultipleFileLoadController.sessionJSONValidator(json)) {
+            if (true === this.jsonFileValidator(json)) {
                 let path = jsonPaths.pop();
 
                 if (path.google_url) {
