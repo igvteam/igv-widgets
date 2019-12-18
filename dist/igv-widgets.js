@@ -8519,31 +8519,33 @@ class MultipleFileLoadController {
             if (invalids.length > 0) {
                 this.presentModalWithInvalidFiles(invalids.map(o => o.path));
                 return;
-            }
-
-            // Handle Session file. There can only be ONE.
-            const json = jsons.pop();
-            if (true === this.jsonFileValidator(json)) {
-                let path = jsonPaths.pop();
-
-                if (path.google_url) {
-                    this.browser.loadSession({ url:path.google_url, filename:path.name });
-                } else {
-                    let o = {};
-                    o.filename = getFilename(path);
-                    if (true === isFilePath(path)) {
-                        o.file = path;
-                    } else {
-                        o.url = path;
-                    }
-                    this.browser.loadSession(o);
-                }
-
+            } else {
+                // Handle Session file. There can only be ONE.
+                this.browser.loadSessionObject(jsons[ 0 ]);
                 return;
             }
 
+            // if (true === this.jsonFileValidator(jsons[ 0 ])) {
+            //     let path = jsonPaths.pop();
+            //
+            //     if (path.google_url) {
+            //         this.browser.loadSession({ url:path.google_url, filename:path.name });
+            //     } else {
+            //         let o = {};
+            //         o.filename = getFilename(path);
+            //         if (true === isFilePath(path)) {
+            //             o.file = path;
+            //         } else {
+            //             o.url = path;
+            //         }
+            //         this.browser.loadSession(o);
+            //     }
+            //
+            //     return;
+            // }
+
             // non-JSON paths
-            remainingPaths = paths.filter((path) => ('json' !== getExtension(path)) );
+            // remainingPaths = paths.filter((path) => ('json' !== getExtension(path)) )
 
         } else {
 
