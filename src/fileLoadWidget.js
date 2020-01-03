@@ -120,8 +120,10 @@ class FileLoadWidget {
     }
 
     present() {
-        document.querySelectorAll('.igv-flw-input-row').forEach(div => {
-            div.querySelector('input').value = undefined;
+
+        // clear input elements
+        this.container.querySelectorAll('.igv-flw-input-row').forEach(div => {
+            div.querySelector('input').value = '';
         });
 
         DomUtils.show(this.container);
@@ -132,10 +134,16 @@ class FileLoadWidget {
         this.dismissErrorMessage();
 
         // this.container.querySelector('input').value = undefined;
+
         const e = this.container.querySelector('.igv-flw-local-file-name-container');
         if (e) {
             DomUtils.hide(e);
         }
+
+        // clear input elements
+        this.container.querySelectorAll('.igv-flw-input-row').forEach(div => {
+            div.querySelector('input').value = '';
+        });
 
         this.fileLoadManager.reset();
 
