@@ -8,6 +8,7 @@ import EventBus from './jb/eventBus.js';
 import Alert from "./igvjs/ui/alert.js";
 import oauth from "./igvjs/oauth.js";
 import igvxhr from "./igvjs/igvxhr.js";
+import GtexUtils from "./igvjs/gtex/gtexUtils.js";
 import GoogleUtils from "./igvjs/google/googleUtils.js";
 import * as GoogleFilePicker from './googleFilePicker.js';
 
@@ -21,4 +22,4 @@ import * as FileUtils from './igvjs/util/fileUtils.js';
 import * as URLShortener from './igvjs/urlShortener/urlShortener.js';
 import * as IGVIcons from './igvjs/igv-icons.js';
 import * as WidgetUtils from './widgetUtils.js'
-export { GenericContainer, makeDraggable, GoogleUtils, oauth, igvxhr, EventBus, Alert, IGVColor, IGVMath, WidgetUtils, IGVIcons, IGVUtils, StringUtils, TrackUtils, URLShortener, FileUtils, GoogleFilePicker, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }
+export { GenericContainer, makeDraggable, GtexUtils, GoogleUtils, oauth, igvxhr, EventBus, Alert, IGVColor, IGVMath, WidgetUtils, IGVIcons, IGVUtils, StringUtils, TrackUtils, URLShortener, FileUtils, GoogleFilePicker, Utils, FileLoadManager, FileLoadWidget, MultipleFileLoadController, TrackLoadController, trackLoadControllerConfigurator }

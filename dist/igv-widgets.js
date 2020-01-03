@@ -20201,4 +20201,4 @@ var widgetUtils = /*#__PURE__*/Object.freeze({
     createColorSwatchSelector: createColorSwatchSelector
 });
 
-export { Alert, EventBus, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, GenericContainer, googleFilePicker as GoogleFilePicker, GoogleUtils, IGVColor, igvIcons as IGVIcons, IGVMath, igvUtils as IGVUtils, MultipleFileLoadController, stringUtils as StringUtils, TrackLoadController, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, widgetUtils as WidgetUtils, igvxhr, makeDraggable, oauth, trackLoadControllerConfigurator };
+export { Alert, EventBus, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, GenericContainer, googleFilePicker as GoogleFilePicker, GoogleUtils, GtexUtils, IGVColor, igvIcons as IGVIcons, IGVMath, igvUtils as IGVUtils, MultipleFileLoadController, stringUtils as StringUtils, TrackLoadController, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, widgetUtils as WidgetUtils, igvxhr, makeDraggable, oauth, trackLoadControllerConfigurator };
