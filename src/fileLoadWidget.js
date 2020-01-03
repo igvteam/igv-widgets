@@ -105,6 +105,11 @@ class FileLoadWidget {
             }
         }
 
+        // clear input elements
+        this.container.querySelectorAll('.igv-flw-input-row').forEach(div => {
+            div.querySelector('input').value = '';
+        });
+
         return paths;
 
     }
@@ -120,20 +125,12 @@ class FileLoadWidget {
     }
 
     present() {
-
-        // clear input elements
-        this.container.querySelectorAll('.igv-flw-input-row').forEach(div => {
-            div.querySelector('input').value = '';
-        });
-
         DomUtils.show(this.container);
     }
 
     dismiss() {
 
         this.dismissErrorMessage();
-
-        // this.container.querySelector('input').value = undefined;
 
         const e = this.container.querySelector('.igv-flw-local-file-name-container');
         if (e) {
