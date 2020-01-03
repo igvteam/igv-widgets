@@ -8424,1082 +8424,6 @@ const GoogleUtils = {
  *
  */
 
-const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
-
-class MultipleFileLoadController {
-
-    constructor ({ browser, modal, modalTitle, localFileInput, multipleFileSelection, dropboxButton, googleDriveButton, googleFilePickerHandler, configurationHandler, jsonFileValidator, pathValidator, fileLoadHandler, modalPresentationHandler }) {
-
-        this.browser = browser;
-
-        this.modal = modal;
-
-        this.modalTitle = modalTitle;
-
-        localFileInput.addEventListener('change', async () => {
-
-            if (true === MultipleFileLoadController.isValidLocalFileInput(localFileInput)) {
-                await this.ingestPaths( Array.from(localFileInput.files) );
-                localFileInput.value = '';
-            }
-
-        });
-
-        dropboxButton.addEventListener('click', () => {
-
-            const obj =
-                {
-                    success: (dbFiles) => (this.ingestPaths(dbFiles.map((dbFile) => dbFile.link))),
-                    cancel: () => {},
-                    linkType: "preview",
-                    multiselect: multipleFileSelection,
-                    folderselect: false,
-                };
-
-            Dropbox.choose( obj );
-
-        });
-
-
-        if (googleDriveButton && googleFilePickerHandler) {
-
-            googleDriveButton.addEventListener('click', () => {
-                googleFilePickerHandler(this, multipleFileSelection);
-            });
-
-        }
-
-        this.configurationHandler = configurationHandler;
-        this.jsonFileValidator = jsonFileValidator;
-
-        this.pathValidator = pathValidator;
-        this.fileLoadHander = fileLoadHandler;
-        this.modalPresentationHandler = modalPresentationHandler;
-    }
-
-    async ingestSessionJSONPath(paths) {
-
-        const path = paths[ 0 ];
-        const json = await igvxhr.loadJson((path.google_url || path));
-
-        // TODO: Implement this.SessionHandler(json)
-        this.SessionHandler(json);
-    }
-
-    async ingestTrackJSONPath(paths) {
-
-    }
-
-    async ingestGenomeJSONPath(paths) {
-
-    }
-
-    async ingestPaths(paths) {
-
-        let self = this,
-            dataPaths,
-            indexPathCandidates,
-            indexPaths,
-            indexPathNameSet,
-            indexPathNamesLackingDataPaths,
-            jsonPromises,
-            configurations;
-
-        // handle Google Drive paths (not already handled via Google Drive Picker)
-        let tmp = [];
-        let googleDrivePaths = [];
-        for (let path of paths) {
-
-            if (isFilePath(path)) {
-                tmp.push(path);
-            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-                const fileInfo = await GoogleUtils.getDriveFileInfo(path);
-                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
-            } else {
-                tmp.push(path);
-            }
-        }
-
-        paths = tmp.concat(googleDrivePaths);
-
-        // isolate JSON paths
-        let jsonPaths = paths.filter(path => 'json' === getExtension(path) );
-
-
-        if (jsonPaths.length > 0) {
-            // TODO: Implement this.JSONIngestionHandler(jsonPaths)
-            this.JSONIngestionHandler(jsonPaths);
-            return;
-        }
-
-        // TODO: Are we still supporting XML based session files.
-        // Isolate XML paths. We only care about one and we assume it is a session path
-        let xmlPaths = paths.filter(path => 'xml' === getExtension(path) );
-
-        if (xmlPaths.length > 0) {
-            let path = xmlPaths.pop();
-            let o = {};
-            o.filename = getFilename(path);
-            if (true === isFilePath(path)) {
-                o.file = path;
-            } else {
-                o.url = path.google_url || path;
-            }
-            this.browser.loadSession(o);
-
-            return;
-        }
-
-        // validate data paths (non-JSON)
-        let extensions = paths.map(path => getExtension(path));
-
-        if (extensions.length > 0) {
-            let results = extensions.map((extension) => self.pathValidator( extension ));
-
-            if (results.length > 0) {
-
-                let invalid = results
-                    .map((boolean, index) => { return { isValid: boolean, path: remainingPaths[ index ] } })
-                    .filter(obj => false === obj.isValid);
-
-                if (invalid.length > 0) {
-                    this.presentModalWithInvalidFiles(invalid.map(o => o.path));
-                    return;
-                }
-
-            }
-        }
-
-        // isolate data paths in dictionary
-        dataPaths = createDataPathDictionary(remainingPaths);
-
-        // isolate index path candidates in dictionary
-        indexPathCandidates = createIndexPathCandidateDictionary(remainingPaths);
-
-        // identify index paths that are
-        // 1) present
-        // 2) names of missing index paths for later error reporting
-        indexPaths = getIndexPaths(dataPaths, indexPathCandidates);
-
-        indexPathNameSet = new Set();
-        for (let key in indexPaths) {
-            if (indexPaths.hasOwnProperty(key)) {
-                indexPaths[ key ]
-                    .forEach(function (obj) {
-                        if (obj) {
-                            indexPathNameSet.add( obj.name );
-                        }
-                    });
-            }
-        }
-
-        indexPathNamesLackingDataPaths = Object
-            .keys(indexPathCandidates)
-            .reduce((accumulator, key) => {
-
-                if (false === indexPathNameSet.has(key)) {
-                    accumulator.push(key);
-                }
-
-                return accumulator;
-            }, []);
-
-        configurations = Object
-            .keys(dataPaths)
-            .reduce((accumulator, key) => {
-
-                if (false === dataPathIsMissingIndexPath(key, indexPaths) ) {
-                    accumulator.push( self.configurationHandler(key, dataPaths[key], indexPaths) );
-                }
-
-                return accumulator;
-            }, []);
-
-        if (jsonPaths.length > 0) {
-
-            this.jsonRetrievalSerial(jsonPromises, configurations, dataPaths, indexPaths, indexPathNamesLackingDataPaths);
-
-        } else {
-
-            if (configurations.length > 0) {
-                this.fileLoadHander( configurations );
-            }
-
-            this.presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, new Set());
-        }
-
-    }
-
-    jsonRetrievalParallel(retrievalTasks, configurations, dataPaths, indexPaths, indexPathNamesLackingDataPaths) {
-        let self = this;
-
-        Promise
-            .all(retrievalTasks.map((task) => (task.promise)))
-            .then(function (list) {
-
-                if (list && list.length > 0) {
-                    let jsonConfigurations;
-
-                    jsonConfigurations = list
-                        .reduce(function(accumulator, item) {
-
-                            if (true === Array.isArray(item)) {
-                                item.forEach(function (config) {
-                                    accumulator.push(config);
-                                });
-                            } else {
-                                accumulator.push(item);
-                            }
-
-                            return accumulator;
-                        }, []);
-
-                    configurations.push.apply(configurations, jsonConfigurations);
-                    self.fileLoadHander(configurations);
-
-                    self.presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, new Set());
-                } else {
-                    self.presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, new Set());
-                }
-
-            })
-            .catch(function (error) {
-                console.log(error);
-                self.presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, new Set());
-            });
-
-    }
-
-    jsonRetrievalSerial(retrievalTasks, configurations, dataPaths, indexPaths, indexPathNamesLackingDataPaths) {
-
-        let self = this,
-            taskSet,
-            successSet,
-            jsonConfigurations;
-
-        taskSet = new Set(retrievalTasks.map(task => task.name));
-        successSet = new Set();
-        jsonConfigurations = [];
-        retrievalTasks
-            .reduce((promiseChain, task) => {
-
-                return promiseChain
-                    .then((chainResults) => {
-                        let promise;
-
-                        promise = task.promise;
-
-                        return promise
-                            .then((currentResult) => {
-
-                                successSet.add(task.name);
-                                jsonConfigurations = [...chainResults, currentResult];
-                                return jsonConfigurations;
-                            })
-                    })
-            }, Promise.resolve([]))
-            .then(ignore => {
-
-                self.jsonConfigurator(dataPaths, indexPaths, indexPathNamesLackingDataPaths, jsonConfigurations, configurations, taskSet, successSet);
-
-            })
-            .catch(function (error) {
-
-                self.jsonConfigurator(dataPaths, indexPaths, indexPathNamesLackingDataPaths, jsonConfigurations, configurations, taskSet, successSet);
-
-            });
-
-    }
-
-    presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, jsonFailureNameSet) {
-
-        let markup = Object.keys(dataPaths)
-            .filter(name => { return true === dataPathIsMissingIndexPath(name, indexPaths) })
-            .map(name => `'<div><span>${ name }</span> ERROR: index file must also be selected</div>`);
-
-        if (indexPathNamesLackingDataPaths.length > 0) {
-            markup = markup.concat(indexPathNamesLackingDataPaths.map(name => `<div><span>${ name }</span> ERROR: data file must also be selected</div>`));
-        }
-
-        if (jsonFailureNameSet.size > 0) {
-            markup = markup.concat(jsonFailureNameSet.map(name => `<div><span>${ name }</span> problems parsing JSON</div>`));
-        }
-
-        if (markup.length > 0) {
-
-            markup.unshift('<div> The following files were not loaded ...</div>');
-            this.modal.querySelector('.modal-title').textContent = this.modalTitle;
-
-            const modal_body = this.modal.querySelector('.modal-body');
-            modal_body.innerHTML = "";
-            modal_body.innerHTML = markup.join('');
-
-            this.modalPresentationHandler();
-        }
-    }
-
-    jsonConfigurator(dataPaths, indexPaths, indexPathNamesLackingDataPaths, jsonConfigurations, configurations, taskSet, successSet) {
-        let self = this,
-            failureSet;
-
-        if (jsonConfigurations.length > 0) {
-            let reduction;
-
-            reduction = jsonConfigurations
-                .reduce(function(accumulator, item) {
-
-                    if (true === Array.isArray(item)) {
-                        item.forEach(function (config) {
-                            accumulator.push(config);
-                        });
-                    } else {
-                        accumulator.push(item);
-                    }
-
-                    return accumulator;
-                }, []);
-
-            configurations.push.apply(configurations, reduction);
-            self.fileLoadHander(configurations);
-
-            failureSet = [...taskSet].filter(x => !successSet.has(x));
-            self.presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, failureSet);
-
-        } else {
-
-            if (configurations.length > 0) {
-                self.fileLoadHander(configurations);
-            }
-
-            failureSet = [...taskSet].filter(x => !successSet.has(x));
-            self.presentModalWithFileLoadingErrors(dataPaths, indexPaths, indexPathNamesLackingDataPaths, failureSet);
-        }
-    }
-
-    presentModalWithInvalidFiles(paths) {
-
-        let markup = [];
-
-        markup.push('<div> Invalid Files </div>');
-
-        markup = markup.concat(paths.map(path => `<div><span> ${ getFilename(path) }</span></div>`));
-
-        this.modal.querySelector('.modal-title').textContent = this.modalTitle;
-        const modal_body = this.modal.querySelector('.modal-body');
-        modal_body.innerHTML = '';
-        modal_body.innerHTML = markup.join('');
-
-        this.modalPresentationHandler();
-    }
-
-    static isValidLocalFileInput(input) {
-        return (input.files && input.files.length > 0);
-    }
-
-    //
-    static trackConfigurator(dataKey, dataValue, indexPaths) {
-        let config;
-
-
-
-        config =
-            {
-                name: dataKey,
-                filename:dataKey,
-                format: inferFileFormat(dataKey),
-                url: dataValue,
-                indexURL: getIndexURL(indexPaths[ dataKey ])
-            };
-
-        const indexURL = getIndexURL(indexPaths[ dataKey ]);
-        if(indexURL) {
-            config.indexURL = indexURL;
-        } else {
-            if(indexableFormats.has(config.format)) {
-                config.indexed = false;
-            }
-        }
-
-        inferTrackTypes(config);
-
-        return config;
-
-    }
-
-    static genomeConfigurator(dataKey, dataValue, indexPaths) {
-
-        let config;
-
-        config =
-            {
-                fastaURL: dataValue,
-                indexURL: getIndexURL(indexPaths[ dataKey ])
-            };
-
-        return config;
-
-    }
-
-    static sessionConfigurator(dataKey, dataValue, indexPaths) {
-        return { session: dataValue };
-    }
-
-    //
-    static genomeJSONValidator(json) {
-        let candidateSet = new Set(Object.keys(json));
-        return candidateSet.has('fastaURL');
-    }
-
-    static sessionJSONValidator(json) {
-        let candidateSet = new Set(Object.keys(json));
-        return candidateSet.has('genome') || candidateSet.has('reference');
-    }
-
-    static trackJSONValidator(json) {
-        let candidateSet = new Set(Object.keys(json));
-        return candidateSet.has('url');
-    }
-
-    //
-    static genomePathValidator(extension) {
-        let referenceSet = new Set(['fai', 'fa', 'fasta']);
-        return referenceSet.has(extension);
-    }
-
-    static trackPathValidator(extension) {
-        return knownFileExtensions.has(extension) || validIndexExtensionSet.has(extension);
-    }
-
-}
-
-function createDataPathDictionary(paths) {
-
-    return paths
-        .filter((path) => (isKnownFileExtension( getExtension(path) )))
-        .reduce((accumulator, path) => {
-            accumulator[ getFilename(path) ] = (path.google_url || path);
-            return accumulator;
-        }, {});
-
-}
-
-function createIndexPathCandidateDictionary (paths) {
-
-    return paths
-        .filter((path) => isValidIndexExtension( getExtension(path) ))
-        .reduce(function(accumulator, path) {
-            accumulator[ getFilename(path) ] = (path.google_url || path);
-            return accumulator;
-        }, {});
-
-}
-
-function getIndexURL(indexValue) {
-
-    if (indexValue) {
-
-        if        (indexValue[ 0 ]) {
-            return indexValue[ 0 ].path;
-        } else if (indexValue[ 1 ]) {
-            return indexValue[ 1 ].path;
-        } else {
-            return undefined;
-        }
-
-    } else {
-        return undefined;
-    }
-
-}
-
-function getIndexPaths(dataPathNames, indexPathCandidates) {
-    let list,
-        indexPaths;
-
-    // add info about presence and requirement (or not) of an index path
-    list = Object
-        .keys(dataPathNames)
-        .map(function (dataPathName) {
-            let indexObject;
-
-            // assess the data files need/requirement for index files
-            indexObject  = getIndexObjectWithDataName(dataPathName);
-
-            // identify the presence/absence of associated index files
-            for (let p in indexObject) {
-                if (indexObject.hasOwnProperty(p)) {
-                    indexObject[ p ].missing = (undefined === indexPathCandidates[ p ]);
-                }
-            }
-
-            return indexObject;
-        })
-        .filter(function (indexObject) {
-
-            // prune optional AND missing index files
-            if (1 === Object.keys(indexObject).length) {
-
-                let obj;
-
-                obj = indexObject[ Object.keys(indexObject)[ 0 ] ];
-                if( true === obj.missing &&  true === obj.isOptional) {
-                    return false;
-                } else if (false === obj.missing && false === obj.isOptional) {
-                    return true;
-                } else if ( true === obj.missing && false === obj.isOptional) {
-                    return true;
-                } else /*( false === obj.missing && true === obj.isOptional)*/ {
-                    return true;
-                }
-
-            } else {
-                return true;
-            }
-
-        });
-
-    indexPaths = list
-        .reduce(function(accumulator, indexObject) {
-
-            for (let key in indexObject) {
-
-                if (indexObject.hasOwnProperty(key)) {
-                    let value;
-
-                    value = indexObject[ key ];
-
-                    if (undefined === accumulator[ value.data ]) {
-                        accumulator[ value.data ] = [];
-                    }
-
-                    accumulator[ value.data ].push(((false === value.missing) ? { name: key, path: indexPathCandidates[ key ] } : undefined));
-                }
-            }
-
-            return accumulator;
-        }, {});
-
-    return indexPaths;
-}
-
-function dataPathIsMissingIndexPath(dataName, indexPaths) {
-    let status,
-        aa;
-
-    // if index for data is not in indexPaths it has been culled
-    // because it is optional AND missing
-    if (undefined === indexPaths[ dataName ]) {
-
-        status = false;
-    }
-
-    else if (indexPaths && indexPaths[ dataName ]) {
-
-        aa = indexPaths[ dataName ][ 0 ];
-        if (1 === indexPaths[ dataName ].length) {
-            status = (undefined === aa);
-        } else /* BAM Track with two naming conventions */ {
-            let bb;
-            bb = indexPaths[ dataName ][ 1 ];
-            if (aa || bb) {
-                status = false;
-            } else {
-                status = true;
-            }
-        }
-
-    } else {
-        status = true;
-    }
-
-    return status;
-
-}
-
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2016-2017 The Regents of the University of California
- * Author: Jim Robinson
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-const getDataWrapper = function (data) {
-
-    if (typeof(data) == 'string' || data instanceof String) {
-        return new StringDataWrapper(data);
-    } else {
-        return new ByteArrayDataWrapper(data);
-    }
-};
-
-
-// Data might be a string, or an UInt8Array
-var StringDataWrapper = function (string) {
-    this.data = string;
-    this.ptr = 0;
-};
-
-StringDataWrapper.prototype.nextLine = function () {
-    //return this.split(/\r\n|\n|\r/gm);
-    var start = this.ptr,
-        idx = this.data.indexOf('\n', start);
-
-    if (idx > 0) {
-        this.ptr = idx + 1;   // Advance pointer for next line
-        return idx === start ? undefined : this.data.substring(start, idx).trim();
-    }
-    else {
-        // Last line
-        this.ptr = this.data.length;
-        return (start >= this.data.length) ? undefined : this.data.substring(start).trim();
-    }
-};
-
-// For use in applications where whitespace carries meaning
-// Returns "" for an empty row (not undefined like nextLine), since this is needed in AED
-StringDataWrapper.prototype.nextLineNoTrim = function () {
-    var start = this.ptr,
-        idx = this.data.indexOf('\n', start),
-        data = this.data;
-
-    if (idx > 0) {
-        this.ptr = idx + 1;   // Advance pointer for next line
-        if (idx > start && data.charAt(idx - 1) === '\r') {
-            // Trim CR manually in CR/LF sequence
-            return data.substring(start, idx - 1);
-        }
-        return data.substring(start, idx);
-    }
-    else {
-        var length = data.length;
-        this.ptr = length;
-        // Return undefined only at the very end of the data
-        return (start >= length) ? undefined : data.substring(start);
-    }
-};
-
-var ByteArrayDataWrapper = function (array) {
-    this.data = array;
-    this.length = this.data.length;
-    this.ptr = 0;
-};
-
-ByteArrayDataWrapper.prototype.nextLine = function () {
-
-    var c, result;
-    result = "";
-
-    if (this.ptr >= this.length) return undefined;
-
-    for (var i = this.ptr; i < this.length; i++) {
-        c = String.fromCharCode(this.data[i]);
-        if (c === '\r') continue;
-        if (c === '\n') break;
-        result = result + c;
-    }
-
-    this.ptr = i + 1;
-    return result;
-};
-
-// The ByteArrayDataWrapper does not do any trimming by default, can reuse the function
-ByteArrayDataWrapper.prototype.nextLineNoTrim = ByteArrayDataWrapper.prototype.nextLine;
-
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2019 The Regents of the University of California
- * Author: Jim Robinson
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-const columns = [
-    'Biosample',
-    'Target',
-    'Assay Type',
-    'Output Type',
-    'Bio Rep',
-    'Tech Rep',
-    'Format',
-    'Experiment',
-    'Accession',
-    'Lab'
-];
-
-class EncodeDataSource {
-
-    constructor(genomeId, filter, suffix) {
-        this.genomeId = genomeId;
-        this.filter = filter;
-        this.suffix = suffix || ".txt";
-    };
-
-    async tableData() {
-        return this.fetchData()
-    };
-
-    async tableColumns() {
-        return columns;
-    };
-
-    async fetchData() {
-
-        const id = canonicalId(this.genomeId);
-        const url = "https://s3.amazonaws.com/igv.org.app/encode/" + id + this.suffix;
-        const response = await fetch(url);
-        const data = await response.text();
-        const records = parseTabData(data, this.filter);
-        records.sort(encodeSort);
-        return records
-    }
-
-    static supportsGenome(genomeId) {
-        const knownGenomes = new Set(["ce10", "ce11", "dm3", "dm6", "GRCh38", "hg19", "mm9", "mm10"]);
-        const id = canonicalId(genomeId);
-        return knownGenomes.has(id)
-    }
-
-}
-
-function parseTabData(data, filter) {
-
-    var dataWrapper,
-        line;
-
-    dataWrapper = getDataWrapper(data);
-
-    let records = [];
-
-    dataWrapper.nextLine();  // Skip header
-    while (line = dataWrapper.nextLine()) {
-
-        let tokens = line.split("\t");
-        let record = {
-            "Assembly": tokens[1],
-            "ExperimentID": tokens[0],
-            "Experiment": tokens[0].substr(13).replace("/", ""),
-            "Biosample": tokens[2],
-            "Assay Type": tokens[3],
-            "Target": tokens[4],
-            "Format": tokens[8],
-            "Output Type": tokens[7],
-            "Lab": tokens[9],
-            "url": "https://www.encodeproject.org" + tokens[10],
-            "Bio Rep": tokens[5],
-            "Tech Rep": tokens[6],
-            "Accession": tokens[11]
-        };
-        record["name"] = constructName(record);
-
-        if (filter === undefined || filter(record)) {
-            records.push(record);
-        }
-    }
-
-    return records;
-}
-
-function constructName(record) {
-
-    let name = record["Cell Type"] || "";
-
-    if (record["Target"]) {
-        name += " " + record["Target"];
-    }
-    if (record["Assay Type"].toLowerCase() !== "chip-seq") {
-        name += " " + record["Assay Type"];
-    }
-    if (record["Bio Rep"]) {
-        name += " " + record["Bio Rep"];
-    }
-    if (record["Tech Rep"]) {
-        name += (record["Bio Rep"] ? ":" : " 0:") + record["Tech Rep"];
-    }
-
-    name += " " + record["Output Type"];
-
-    name += " " + record["Experiment"];
-
-    return name
-
-}
-
-function encodeSort(a, b) {
-    var aa1,
-        aa2,
-        cc1,
-        cc2,
-        tt1,
-        tt2;
-
-    aa1 = a['Assay Type'];
-    aa2 = b['Assay Type'];
-    cc1 = a['Biosample'];
-    cc2 = b['Biosample'];
-    tt1 = a['Target'];
-    tt2 = b['Target'];
-
-    if (aa1 === aa2) {
-        if (cc1 === cc2) {
-            if (tt1 === tt2) {
-                return 0;
-            } else if (tt1 < tt2) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else if (cc1 < cc2) {
-            return -1;
-        } else {
-            return 1;
-        }
-    } else {
-        if (aa1 < aa2) {
-            return -1;
-        } else {
-            return 1;
-        }
-    }
-}
-
-function canonicalId(genomeId) {
-
-    switch(genomeId) {
-        case "hg38":
-            return "GRCh38"
-        case "CRCh37":
-            return "hg19"
-        case "GRCm38":
-            return "mm10"
-        case "NCBI37":
-            return "mm9"
-        case "WBcel235":
-            return "ce11"
-        case "WS220":
-            return "ce10"
-        default:
-            return genomeId
-    }
-
-}
-
-class ModalTable {
-
-    constructor(args) {
-
-        this.datasource = args.datasource;
-        this.selectHandler = args.selectHandler;
-
-        const id = args.id;
-        const title = args.title || '';
-        const parent = args.parent ? $(args.parent) : $('body');
-        const html = `
-        <div id="${id}" class="modal fade">
-        
-            <div class="modal-dialog modal-xl">
-        
-                <div class="modal-content">
-        
-                    <div class="modal-header">
-                        <div class="modal-title">${title}</div>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-        
-                    <div class="modal-body">
-        
-                        <div id="${id}-spinner" class="spinner-border" style="display: none;">
-                            <!-- spinner -->
-                        </div>
-        
-                        <div id="${id}-datatable-container">
-        
-                        </div>
-                    </div>
-        
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">OK</button>
-                    </div>
-        
-                </div>
-        
-            </div>
-        
-        </div>
-    `;
-        const $m = $(html);
-        parent.append($m);
-
-        this.$modal = $m;
-        this.$datatableContainer = $m.find(`#${id}-datatable-container`);
-        this.$spinner = $m.find(`#${id}-spinner`);
-        const $okButton = $m.find('.modal-footer button:nth-child(2)');
-
-        $m.on('shown.bs.modal', (e) => {
-            this.buildTable();
-        });
-
-        $m.on('hidden.bs.modal', (e) => {
-            $(e.relatedTarget).find('tr.selected').removeClass('selected');
-        });
-
-        $okButton.on('click', (e) => {
-            const selected = this.getSelectedTableRowsData.call(this, this.$dataTable.$('tr.selected'));
-            if (selected && this.selectHandler) {
-                this.selectHandler(selected);
-            }
-        });
-    }
-
-    remove() {
-        this.$modal.remove();
-    }
-
-    setDatasource(datasource) {
-        this.datasource = datasource;
-        this.$datatableContainer.empty();
-        this.$table = undefined;
-    }
-
-    async buildTable () {
-
-        if (!this.$table && this.datasource) {
-
-            this.$table = $('<table cellpadding="0" cellspacing="0" border="0" class="display"></table>');
-            this.$datatableContainer.append(this.$table);
-
-            try {
-                this.startSpinner();
-                const datasource = this.datasource;
-                const tableData = await datasource.tableData();
-                const tableColumns = await datasource.tableColumns();
-                const columnFormat = tableColumns.map(c => ({title: c, data: c}));
-                const config =
-                    {
-                        data: tableData,
-                        columns: columnFormat,
-                        autoWidth: false,
-                        paging: true,
-                        scrollX: true,
-                        scrollY: '400px',
-                        scroller: true,
-                        scrollCollapse: true
-                    };
-
-                this.tableData = tableData;
-                this.$dataTable = this.$table.dataTable(config);
-                this.$table.api().columns.adjust().draw();   // Don't try to simplify this, you'll break it
-
-                this.$table.find('tbody').on('click', 'tr', function () {
-
-                    if ($(this).hasClass('selected')) {
-                        $(this).removeClass('selected');
-                    } else {
-                        $(this).addClass('selected');
-                    }
-
-                });
-
-            } catch (e) {
-
-            } finally {
-                this.stopSpinner();
-            }
-        }
-    }
-
-
-    getSelectedTableRowsData($rows) {
-        const tableData = this.tableData;
-        const result = [];
-        if ($rows.length > 0) {
-            $rows.removeClass('selected');
-            const api = this.$table.api();
-            $rows.each(function () {
-                const index = api.row(this).index();
-                result.push(tableData[index]);
-            });
-        }
-        return result
-    }
-
-
-    startSpinner () {
-        if (this.$spinner)
-            this.$spinner.show();
-    }
-
-
-    stopSpinner () {
-        if (this.$spinner)
-            this.$spinner.hide();
-    }
-
-
-}
-
-/*
- *  The MIT License (MIT)
- *
- * Copyright (c) 2016-2017 The Regents of the University of California
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial
- * portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
 let picker;
 
 function init(clientId) {
@@ -9676,234 +8600,96 @@ var googleFilePicker = /*#__PURE__*/Object.freeze({
     createFilePickerHandler: createFilePickerHandler
 });
 
-const GtexUtils = {
+class FileLoad {
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton }) {
 
-    getTissueInfo: function (datasetId, baseURL) {
-        datasetId = datasetId || 'gtex_v8';
-        baseURL = baseURL || 'https://gtexportal.org/rest/v1';
-        let url = baseURL + '/dataset/tissueInfo?datasetId=' + datasetId;
-        return igvxhr.loadJson(url, {})
-    },
+        localFileInput.addEventListener('change', async () => {
 
-    //https://gtexportal.org/rest/v1/association/singleTissueEqtlByLocation?chromosome=7&start=98358766&end=101523798&tissueName=Liver&datasetId=gtex_v7
-    //https://gtexportal.org/rest/v1/association/singleTissueEqtlByLocation?chromosome=7&start=98358766&end=101523798&tissueSiteDetailId=Liver&datasetId=gtex_v8
-    trackConfiguration: function (tissueSummary, baseURL) {
-        baseURL = baseURL || 'https://gtexportal.org/rest/v1';
-        return {
-            type: "eqtl",
-            sourceType: "gtex-ws",
-            url: baseURL + '/association/singleTissueEqtlByLocation',
-            tissueSiteDetailId: tissueSummary.tissueSiteDetailId,
-            name: (tissueSummary.tissueSiteDetailId.split('_').join(' ')),
-            visibilityWindow: 250000
-        }
-    }
-};
+            if (true === FileLoad.isValidLocalFileInput(localFileInput)) {
+                await this.loadPaths( Array.from(localFileInput.files) );
+                localFileInput.value = '';
+            }
 
-/*
- *  The MIT License (MIT)
- *
- * Copyright (c) 2016-2017 The Regents of the University of California
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial
- * portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
-class TrackLoadController {
-
-    constructor({browser, trackRegistryFile, urlModal, encodeModalTable, dropdownMenu, selectModal, uberFileLoader, modalDismissHandler}) {
-
-        let urlConfig;
-
-        this.browser = browser;
-        this.trackRegistryFile = trackRegistryFile;
-        this.encodeModalTable = encodeModalTable;
-        this.dropdownMenu = dropdownMenu;
-        this.selectModal = selectModal;
-
-        urlConfig =
-            {
-                widgetParent: urlModal.querySelector('.modal-body'),
-                dataTitle: undefined,
-                indexTitle: undefined,
-                mode: 'url',
-                fileLoadManager: new FileLoadManager(),
-                dataOnly: undefined,
-                doURL: undefined
-            };
-
-        this.urlWidget = new FileLoadWidget(urlConfig);
-        configureModal(this.urlWidget, urlModal, (fileLoadWidget) => {
-            uberFileLoader.ingestPaths( fileLoadWidget.retrievePaths() );
-            return true;
         });
 
-        this.modalDismissHandler = modalDismissHandler;
+        dropboxButton.addEventListener('click', () => {
 
-        this.updateTrackMenus(browser.genome.id);
+            const config =
+                {
+                    success: dbFiles => this.loadPaths( dbFiles.map(dbFile => dbFile.link) ),
+                    cancel: () => {},
+                    linkType: 'preview',
+                    multiselect: true,
+                    folderselect: false,
+                };
+
+            Dropbox.choose( config );
+
+        });
+
+
+        if (false === googleEnabled) {
+            domUtils.hide(googleDriveButton.parentElement);
+        }
+
+        if (true === googleEnabled && googleDriveButton) {
+
+            googleDriveButton.addEventListener('click', () => {
+
+                createDropdownButtonPicker(true, responses => {
+
+                    const paths = responses
+                        .map(({ name, url: google_url }) => {
+                            return { filename: name, name, google_url };
+                        });
+
+                    this.loadPaths(paths);
+                });
+
+            });
+
+        }
 
     }
 
-    updateTrackMenus(genomeID) {
+    async loadPaths(paths) {
+        console.log('FileLoad: loadPaths(...)');
+    }
 
-        (async (genomeID) => {
+    async processPaths(paths) {
 
-            const divider = this.dropdownMenu.querySelector('.dropdown-divider');
+        let tmp = [];
+        let googleDrivePaths = [];
+        for (let path of paths) {
 
-            const id_prefix = 'genome_specific_';
-            const elements = this.dropdownMenu.querySelectorAll(`[id*='${ id_prefix }']`);
-            elements.forEach(element => element.parentNode.removeChild(element));
-
-            if (undefined === this.trackRegistryFile) {
-                const e = new Error("Error: Missing track registry file");
-                Alert.presentAlert(e.message);
-                throw e;
+            if (isFilePath(path)) {
+                tmp.push(path);
+            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
+                const fileInfo = await GoogleUtils.getDriveFileInfo(path);
+                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
+            } else {
+                tmp.push(path);
             }
+        }
 
-            const trackRegistry = await getTrackRegistry(this.trackRegistryFile);
+        return tmp.concat(googleDrivePaths);
 
-            if (trackRegistry) {
+    }
 
-                const paths = trackRegistry[ genomeID ];
+    static isValidLocalFileInput(input) {
+        return (input.files && input.files.length > 0);
+    }
 
-                if (undefined === paths) {
-                    console.warn(`There are no tracks in the track registry for genome ${ genomeID }`);
-                    return;
-                }
+    static getIndexURL(indexValue) {
 
-                let responses = [];
-                try {
-                    responses = await Promise.all( paths.map( path => fetch(path) ) );
-                } catch (e) {
-                    Alert.presentAlert(e.message);
-                }
+        if (indexValue) {
 
-                if (responses.length > 0) {
-
-                    let jsons = [];
-                    try {
-                        jsons = await Promise.all( responses.map( response => response.json() ) );
-                    } catch (e) {
-                        Alert.presentAlert(e.message);
-                    }
-
-                    if (jsons.length > 0) {
-
-                        let buttonConfigurations = [];
-
-                        for (let json of jsons) {
-
-                            if ('ENCODE' === json.type) {
-                                const datasource = new EncodeDataSource(json.genomeID);
-                                this.encodeModalTable.setDatasource(datasource);
-                                buttonConfigurations.push(json);
-                            } else if ('GTEX' === json.type) {
-                                let info = undefined;
-                                try {
-                                    info = await GtexUtils.getTissueInfo(json.datasetId);
-                                } catch (e) {
-                                    Alert.presentAlert(e.message);
-                                } finally {
-                                    if (info) {
-                                        json.tracks = info.tissueInfo.map(tissue => GtexUtils.trackConfiguration(tissue));
-                                        buttonConfigurations.push(json);
-                                    }
-                                }
-                            } else {
-                                buttonConfigurations.push(json);
-                            }
-
-                        }
-
-                        buttonConfigurations = buttonConfigurations.reverse();
-                        for (let config of buttonConfigurations) {
-
-                            const { label, type, description, tracks } = config;
-
-                            const button = domUtils.create('button', { class: 'dropdown-item' });
-                            button.setAttribute('type', 'button');
-                            button.id = id_prefix + label.toLowerCase().split(' ').join('_');
-
-                            button.textContent = `${ label } ...`;
-
-                            // $button.insertAfter($divider);
-                            divider.parentNode.insertBefore(button, divider.nextSibling);
-
-                            button.setAttribute('data-toggle', 'modal');
-
-                            if ('ENCODE' === type) {
-                                button.setAttribute('data-target', `#${ this.encodeModalTable.$modal.get(0).id }`);
-                            } else {
-
-                                button.setAttribute('data-target', `#${ this.selectModal.id }`);
-
-                                button.addEventListener('click', () => {
-
-                                    let markup = `<div>${ label }</div>`;
-
-                                    if (description) {
-                                        markup += `<div>${ description }</div>`;
-                                    }
-
-                                    this.selectModal.querySelector('.modal-title').innerHTML = markup;
-
-                                    configureSelectModal(this.browser, this.selectModal, tracks, this.modalDismissHandler);
-
-                                });
-
-
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-
-
-        })(genomeID);
-
-    };
-
-}
-
-const getTrackRegistry = async trackRegistryFile => {
-
-    let response = undefined;
-
-    try {
-        response = await fetch(trackRegistryFile);
-    } catch (e) {
-        console.error(e);
-        Alert.presentAlert(e.message);
-    } finally {
-
-        if (response) {
-            let trackRegistry = undefined;
-            try {
-                trackRegistry = await response.json();
-            } catch (e) {
-                console.error(e);
-                Alert.presentAlert(e.message);
-            } finally {
-                return trackRegistry;
+            if        (indexValue[ 0 ]) {
+                return indexValue[ 0 ].path;
+            } else if (indexValue[ 1 ]) {
+                return indexValue[ 1 ].path;
+            } else {
+                return undefined;
             }
 
         } else {
@@ -9912,107 +8698,424 @@ const getTrackRegistry = async trackRegistryFile => {
 
     }
 
+    static getIndexPaths(dataPathNames, indexPathCandidates) {
 
-};
+        // add info about presence and requirement (or not) of an index path
+        const list = Object.keys(dataPathNames)
+            .map(function (dataPathName) {
+                let indexObject;
 
-const configureSelectModal = (browser, selectModal, configurations, modalDismissHandler) => {
+                // assess the data files need/requirement for index files
+                indexObject  = getIndexObjectWithDataName(dataPathName);
 
-    let select,
-        option;
+                // identify the presence/absence of associated index files
+                for (let p in indexObject) {
+                    if (indexObject.hasOwnProperty(p)) {
+                        indexObject[ p ].missing = (undefined === indexPathCandidates[ p ]);
+                    }
+                }
 
-    const e = selectModal.querySelector('select');
-    e.parentNode.removeChild(e);
+                return indexObject;
+            })
+            .filter(function (indexObject) {
 
-    select = domUtils.create('select', { class: 'form-control' });
-    selectModal.querySelector('.form-group').appendChild(select);
+                // prune optional AND missing index files
+                if (1 === Object.keys(indexObject).length) {
 
-    option = domUtils.create('option');
-    option.setAttribute('text', 'Select...');
-    option.setAttribute('selected', 'selected');
-    option.value = undefined;
+                    let obj;
 
-    select.appendChild(option);
+                    obj = indexObject[ Object.keys(indexObject)[ 0 ] ];
+                    if( true === obj.missing &&  true === obj.isOptional) {
+                        return false;
+                    } else if (false === obj.missing && false === obj.isOptional) {
+                        return true;
+                    } else if ( true === obj.missing && false === obj.isOptional) {
+                        return true;
+                    } else /*( false === obj.missing && true === obj.isOptional)*/ {
+                        return true;
+                    }
 
-    configurations.forEach((configuration, key) => {
+                } else {
+                    return true;
+                }
 
-        const { name } = configuration;
+            });
 
-        select[ key ] = new Option(name, name, false, false);
+        return list.reduce(function(accumulator, indexObject) {
 
-        select[ key ].setAttribute('data-track', JSON.stringify(configuration));
+            for (let key in indexObject) {
 
+                if (indexObject.hasOwnProperty(key)) {
+                    let value;
 
-    });
+                    value = indexObject[ key ];
 
+                    if (undefined === accumulator[ value.data ]) {
+                        accumulator[ value.data ] = [];
+                    }
 
-    select.addEventListener('change', () => {
+                    accumulator[ value.data ].push(((false === value.missing) ? { name: key, path: indexPathCandidates[ key ] } : undefined));
+                }
+            }
 
-        let selectedOption = select.options[ select.selectedIndex ];
-        const value = selectedOption.value;
+            return accumulator;
+        }, {});
 
-        if ('' === value) ; else {
+    }
 
-            selectedOption.removeAttribute('selected');
+}
 
-            const configuration = JSON.parse(selectedOption.getAttribute('data-track'));
-            browser.loadTrack(configuration);
+const referenceSet = new Set(['fai', 'fa', 'fasta']);
+const dataSet = new Set(['fa', 'fasta']);
+const indexSet = new Set(['fai']);
+
+const errorString = 'ERROR: Load either: 1) single XML file 2). single JSON file. 3) data file (.fa or .fasta ) & index file (.fai).';
+class GenomeFileLoad extends FileLoad {
+
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+        this.loadHandler = loadHandler;
+    }
+
+    async loadPaths(paths) {
+
+        let list = await this.processPaths(paths);
+
+        if (1 === list.length) {
+
+            const path = list[ 0 ];
+            if ('json' === getExtension(path)) {
+                const json = await igvxhr.loadJson((path.google_url || path));
+                this.loadHandler(json);
+            } else if ('xml' === getExtension(path)) {
+
+                const key = true === isFilePath(path) ? 'file' : 'url';
+                const o = {};
+                o[ key ] = path;
+
+                this.loadHandler(o);
+            } else {
+                Alert.presentAlert(`${ errorString }`);
+            }
+
+        } else if (2 === list.length) {
+
+            let [ a, b ] = list.map(path => {
+                return getExtension(path)
+            });
+
+            if (false === GenomeFileLoad.extensionValidator(a, b)) {
+                Alert.presentAlert(`${ errorString }`);
+                return;
+            }
+
+            const [ dataPath, indexPath ] = GenomeFileLoad.retrieveDataPathAndIndexPath(list);
+
+            await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
+
+        } else {
+            Alert.presentAlert(`${ errorString }`);
         }
 
-        modalDismissHandler();
+    };
 
-    });
+    static retrieveDataPathAndIndexPath(list) {
 
-};
+        let [ a, b ] = list.map(path => {
+            return getExtension(path)
+        });
 
-const trackLoadControllerConfigurator = ({browser, trackRegistryFile, urlModal, dropdownMenu, selectModal, multipleFileLoadConfig, modalDismissHandler }) => {
+        if (dataSet.has(a) && indexSet.has(b)) {
+            return [ list[ 0 ], list[ 1 ] ];
+        } else {
+            return [ list[ 1 ], list[ 0 ] ];
+        }
 
-    const encodeModalTableConfig =
-        {
-            id: "igv-app-encode-modal",
-            title: "ENCODE",
-            selectHandler: async trackConfigurations => {
-                await browser.loadTrackList( trackConfigurations );
+    };
+
+    static extensionValidator(a, b) {
+        if (dataSet.has(a) && indexSet.has(b)) {
+            return true;
+        } else {
+            return dataSet.has(b) && indexSet.has(a);
+        }
+    }
+
+    static pathValidator(extension) {
+        return referenceSet.has(extension);
+    }
+
+    static configurationHandler(dataKey, dataValue, indexPaths) {
+        return { fastaURL: dataValue, indexURL: FileLoad.getIndexURL(indexPaths[ dataKey ]) };
+    }
+
+}
+
+class SessionFileLoad extends FileLoad {
+
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+        this.loadHandler = loadHandler;
+    }
+
+    async loadPaths(paths) {
+
+        let list = await this.processPaths(paths);
+
+        const path = list[ 0 ];
+        if ('json' === getExtension(path)) {
+            const json = await igvxhr.loadJson((path.google_url || path));
+            this.loadHandler(json);
+        } else if ('xml' === getExtension(path)) {
+
+            const key = true === isFilePath(path) ? 'file' : 'url';
+            const o = {};
+            o[ key ] = path;
+
+            this.loadHandler(o);
+        }
+
+    };
+
+}
+
+const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
+
+class TrackFileLoad extends FileLoad {
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+        this.loadHandler = loadHandler;
+    }
+
+    async loadPaths(paths) {
+
+        let list = await this.processPaths(paths);
+
+        let configurations = [];
+
+        // isolate JSON paths
+        let jsonPaths = list.filter(path => 'json' === getExtension(path) );
+        if (jsonPaths.length > 0) {
+            const promises = jsonPaths
+                .map(path => {
+                    let url = (path.google_url || path);
+                    return { promise: igvxhr.loadJson(url) }
+                });
+
+
+            const jsons = await Promise.all(promises.map(task => task.promise));
+            configurations.push(...jsons);
+
+        }
+
+        let remainingPaths = list.filter(path => 'json' !== getExtension(path) );
+
+        if (remainingPaths.length > 0) {
+
+            // isolate data paths
+            let dataPaths = TrackFileLoad.createDataPathDictionary(remainingPaths);
+            if (0 === Object.keys(dataPaths).length) {
+                Alert.presentAlert('ERROR: Must provide data file(s)');
+                return;
             }
-        };
 
-    return {
-        browser,
-        trackRegistryFile,
-        urlModal,
-        encodeModalTable: new ModalTable(encodeModalTableConfig),
-        dropdownMenu,
-        selectModal,
-        uberFileLoader: new MultipleFileLoadController(trackLoadMultipleFileLoadConfigurator(multipleFileLoadConfig)),
-        modalDismissHandler
+            // isolate index path candidates
+            let indexPathCandidates = TrackFileLoad.createIndexPathCandidateDictionary(remainingPaths);
+
+            // identify index paths that are
+            // 1) present
+            // 2) names of missing index paths for later error reporting
+            let indexPaths = FileLoad.getIndexPaths(dataPaths, indexPathCandidates);
+
+            TrackFileLoad.trackConfigurator(dataPaths, indexPaths, configurations);
+
+            const str = TrackFileLoad.getErrorString(dataPaths, indexPaths, indexPathCandidates);
+            if (str) {
+                Alert.presentAlert(str);
+            }
+
+        }
+
+        if (configurations.length > 0) {
+            this.loadHandler(configurations);
+        }
+
+
     }
 
-};
+    static createDataPathDictionary(paths) {
 
-const trackLoadMultipleFileLoadConfigurator = ({ browser, modal, localFileInput, dropboxButton, googleEnabled, googleDriveButton, modalPresentationHandler }) => {
+        return paths
+            .filter(path => isKnownFileExtension( getExtension(path) ))
+            .reduce((accumulator, path) => {
+                accumulator[ getFilename(path) ] = (path.google_url || path);
+                return accumulator;
+            }, {});
 
-    if (false === googleEnabled) {
-        domUtils.hide(googleDriveButton.parentElement);
     }
 
-    return {
-        browser,
-        modal,
-        modalTitle: 'Track File Error',
-        localFileInput,
-        multipleFileSelection: true,
-        dropboxButton,
-        googleDriveButton: googleEnabled ? googleDriveButton : undefined,
-        googleFilePickerHandler: googleEnabled ? createFilePickerHandler() : undefined,
-        configurationHandler: MultipleFileLoadController.trackConfigurator,
-        jsonFileValidator: MultipleFileLoadController.trackJSONValidator,
-        pathValidator: MultipleFileLoadController.trackPathValidator,
-        fileLoadHandler: (configurations) => {
-            browser.loadTrackList(configurations);
-        },
-        modalPresentationHandler
+    static createIndexPathCandidateDictionary(paths) {
+
+        return paths
+            .filter(path => isValidIndexExtension( getExtension(path) ))
+            .reduce((accumulator, path) => {
+                accumulator[ getFilename(path) ] = (path.google_url || path);
+                return accumulator;
+            }, {});
+
     }
 
-};
+    static trackConfigurator(dataPaths, indexPaths, configurations) {
+
+        for (let key of Object.keys(dataPaths)) {
+
+            if (false === TrackFileLoad.IndexPathIsMissing(key, indexPaths)) {
+
+                let config =
+                    {
+                        name: key,
+                        filename:key,
+                        format: inferFileFormat(key),
+                        url: dataPaths[ key ]
+                    };
+
+                const indexURL = FileLoad.getIndexURL(indexPaths[ key ]);
+
+                if(indexURL) {
+                    config.indexURL = indexURL;
+                } else {
+                    if(indexableFormats.has(config.format)) {
+                        config.indexed = false;
+                    }
+                }
+
+                inferTrackTypes(config);
+
+                configurations.push(config);
+            }
+        }
+
+    }
+
+    static jsonConfigurator(jsonConfigurations) {
+
+        if (jsonConfigurations.length > 0) {
+            let reduction;
+
+            reduction = jsonConfigurations
+                .reduce(function(accumulator, item) {
+
+                    if (true === Array.isArray(item)) {
+                        item.forEach(function (config) {
+                            accumulator.push(config);
+                        });
+                    } else {
+                        accumulator.push(item);
+                    }
+
+                    return accumulator;
+                }, []);
+
+            self.fileLoadHander(configurations);
+
+
+        }
+    }
+
+    static jsonRetrievalSerial(tasks, configurations) {
+
+        let jsonConfigurations = [];
+
+        tasks
+            .reduce((promiseChain, task) => {
+
+                return promiseChain
+                    .then((chainResults) => {
+
+                        let { promise } = task;
+
+                        return promise
+                            .then((currentResult) => {
+                                jsonConfigurations = [...chainResults, currentResult];
+                                return jsonConfigurations;
+                            })
+                    })
+            }, Promise.resolve([]))
+            .then(() => {
+                configurations.push(...jsonConfigurations);
+                TrackFileLoad.jsonConfigurator(configurations);
+            })
+            .catch(error => {
+                Alert.presentAlert(error.message);
+            });
+
+    }
+
+    static IndexPathIsMissing(dataName, indexPaths) {
+        let status,
+            aa;
+
+        // if index for data is not in indexPaths it has been culled
+        // because it is optional AND missing
+        if (undefined === indexPaths[ dataName ]) {
+            status = false;
+        }
+
+        else if (indexPaths && indexPaths[ dataName ]) {
+
+            aa = indexPaths[ dataName ][ 0 ];
+            if (1 === indexPaths[ dataName ].length) {
+                status = (undefined === aa);
+            } else /* BAM Track with two naming conventions */ {
+                let bb;
+                bb = indexPaths[ dataName ][ 1 ];
+                if (aa || bb) {
+                    status = false;
+                } else {
+                    status = true;
+                }
+            }
+
+        } else {
+            status = true;
+        }
+
+        return status;
+
+    }
+
+    static getErrorString(dataPaths, indexPaths, indexPathCandidates) {
+
+        let errorStrings = [];
+
+        for (let dataKey of Object.keys(dataPaths)) {
+            if (true === TrackFileLoad.IndexPathIsMissing(dataKey, indexPaths)) {
+                errorStrings.push(`Index file missing for ${ dataKey }`);
+            }
+        }
+
+        let indexPathNameSet = new Set();
+        for (let key in indexPaths) {
+            if (indexPaths.hasOwnProperty(key)) {
+                indexPaths[ key ].forEach(function (obj) {
+                    if (obj) {
+                        indexPathNameSet.add( obj.name );
+                    }
+                });
+            }
+        }
+
+        for (let key of Object.keys(indexPathCandidates)) {
+            if (false === indexPathNameSet.has(key)) {
+                errorStrings.push(`Data file is missing for ${ name }`);
+            }
+
+        }
+
+        return errorStrings.length > 0 ? errorStrings.join(' ') : undefined;
+    }
+
+}
 
 /*!
  * jQuery JavaScript Library v3.3.1 -ajax,-ajax/jsonp,-ajax/load,-ajax/parseXML,-ajax/script,-ajax/var/location,-ajax/var/nonce,-ajax/var/rquery,-ajax/xhr,-manipulation/_evalUrl,-event/ajax,-effects,-effects/Tween,-effects/animatedSelector
@@ -18178,7 +17281,7 @@ jQuery.isNumeric = function (obj) {
         !isNaN(obj - parseFloat(obj));
 };
 
-const $$1 = jQuery;
+const $ = jQuery;
 
 /*
  * The MIT License (MIT)
@@ -18218,7 +17321,7 @@ let dragData;   // Its assumed we are only dragging one element at a time.
 
 function makeDraggable(target, handle) {
 
-    $$1(handle).on('mousedown' + namespace, dragStart.bind(target));
+    $(handle).on('mousedown' + namespace, dragStart.bind(target));
 
 }
 
@@ -18241,10 +17344,10 @@ function dragStart(event) {
             dy: styleY - event.screenY
         };
 
-    $$1(document).on('mousemove' + namespace, dragFunction);
-    $$1(document).on('mouseup' + namespace, dragEndFunction);
-    $$1(document).on('mouseleave' + namespace, dragEndFunction);
-    $$1(document).on('mouseexit' + namespace, dragEndFunction);
+    $(document).on('mousemove' + namespace, dragFunction);
+    $(document).on('mouseup' + namespace, dragEndFunction);
+    $(document).on('mouseleave' + namespace, dragEndFunction);
+    $(document).on('mouseexit' + namespace, dragEndFunction);
 
 }
 
@@ -18286,7 +17389,7 @@ function dragEnd(event) {
     this.style.left = styleX + "px";
     this.style.top = styleY + "px";
 
-    $$1(document).off(namespace);
+    $(document).off(namespace);
     dragData = undefined;
 }
 
@@ -18323,15 +17426,15 @@ function dragEnd(event) {
 
 function createCheckbox(name, initialState) {
 
-    let $container = $$1('<div>', {class: 'igv-trackgear-popover-check-container'});
+    let $container = $('<div>', {class: 'igv-trackgear-popover-check-container'});
 
-    let $div = $$1('<div>');
+    let $div = $('<div>');
     $container.append($div);
 
     let $svg = iconMarkup$1('check', (true === initialState ? '#444' : 'transparent'));
     $div.append($svg);
 
-    let $label = $$1('<div>'/*, { class: 'igv-some-label-class' }*/);
+    let $label = $('<div>'/*, { class: 'igv-some-label-class' }*/);
     $label.text(name);
     $container.append($label);
 
@@ -18339,7 +17442,7 @@ function createCheckbox(name, initialState) {
 }
 
 function createIcon$1(name, color) {
-    return $$1(iconMarkup$1(name, color));
+    return $(iconMarkup$1(name, color));
 }
 
 function iconMarkup$1(name, color) {
@@ -18896,7 +17999,7 @@ const GenericContainer = function ({$parent, width, height, closeHandler}) {
 
     this.namespace = '.generic_container_' + domUtils.guid();
 
-    let $container = $$1('<div>', {class: 'igv-generic-container'});
+    let $container = $('<div>', {class: 'igv-generic-container'});
     $parent.append($container);
     this.$container = $container;
 
@@ -18913,11 +18016,11 @@ const GenericContainer = function ({$parent, width, height, closeHandler}) {
     this.$container.offset({left: this.origin.x, top: this.origin.y});
 
     // header
-    $header = $$1('<div>');
+    $header = $('<div>');
     this.$container.append($header);
 
     // close button
-    let $div = $$1('<i>');
+    let $div = $('<i>');
     $header.append($div);
 
     $div.append(createIcon$1("times"));
@@ -19032,6 +18135,30 @@ EventBus.prototype.release = function () {
         this.post(event);
     }
     this.stack = [];
+};
+
+const GtexUtils = {
+
+    getTissueInfo: function (datasetId, baseURL) {
+        datasetId = datasetId || 'gtex_v8';
+        baseURL = baseURL || 'https://gtexportal.org/rest/v1';
+        let url = baseURL + '/dataset/tissueInfo?datasetId=' + datasetId;
+        return igvxhr.loadJson(url, {})
+    },
+
+    //https://gtexportal.org/rest/v1/association/singleTissueEqtlByLocation?chromosome=7&start=98358766&end=101523798&tissueName=Liver&datasetId=gtex_v7
+    //https://gtexportal.org/rest/v1/association/singleTissueEqtlByLocation?chromosome=7&start=98358766&end=101523798&tissueSiteDetailId=Liver&datasetId=gtex_v8
+    trackConfiguration: function (tissueSummary, baseURL) {
+        baseURL = baseURL || 'https://gtexportal.org/rest/v1';
+        return {
+            type: "eqtl",
+            sourceType: "gtex-ws",
+            url: baseURL + '/association/singleTissueEqtlByLocation',
+            tissueSiteDetailId: tissueSummary.tissueSiteDetailId,
+            name: (tissueSummary.tissueSiteDetailId.split('_').join(' ')),
+            visibilityWindow: 250000
+        }
+    }
 };
 
 /*
@@ -20138,7 +19265,7 @@ function createColorSwatchSelector($genericContainer, colorHandler, defaultColor
 
     for (let color of appleColors) {
 
-        let $swatch = $$1('<div>', {class: 'igv-color-swatch'});
+        let $swatch = $('<div>', {class: 'igv-color-swatch'});
         $genericContainer.append($swatch);
 
         $swatch.css('background-color', color);
@@ -20179,7 +19306,7 @@ function createColorSwatchSelector($genericContainer, colorHandler, defaultColor
  */
 function translateMouseCoordinates(e, target) {
 
-    var $target = $$1(target),
+    var $target = $(target),
         posx,
         posy;
 
@@ -20201,4 +19328,4 @@ var widgetUtils = /*#__PURE__*/Object.freeze({
     createColorSwatchSelector: createColorSwatchSelector
 });
 
-export { Alert, EventBus, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, GenericContainer, googleFilePicker as GoogleFilePicker, GoogleUtils, GtexUtils, IGVColor, igvIcons as IGVIcons, IGVMath, igvUtils as IGVUtils, MultipleFileLoadController, stringUtils as StringUtils, TrackLoadController, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, widgetUtils as WidgetUtils, igvxhr, makeDraggable, oauth, trackLoadControllerConfigurator };
+export { Alert, EventBus, FileLoad, FileLoadManager, FileLoadWidget, fileUtils as FileUtils, GenericContainer, GenomeFileLoad, googleFilePicker as GoogleFilePicker, GoogleUtils, GtexUtils, IGVColor, igvIcons as IGVIcons, IGVMath, igvUtils as IGVUtils, SessionFileLoad, stringUtils as StringUtils, TrackFileLoad, trackUtils as TrackUtils, urlShortener as URLShortener, utils as Utils, widgetUtils as WidgetUtils, igvxhr, makeDraggable, oauth };
