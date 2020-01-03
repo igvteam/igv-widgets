@@ -83,6 +83,23 @@ class MultipleFileLoadController {
         this.modalPresentationHandler = modalPresentationHandler;
     }
 
+    async ingestSessionJSONPath(paths) {
+
+        const path = paths[ 0 ];
+        const json = await igvxhr.loadJson((path.google_url || path));
+
+        // TODO: Implement this.SessionHandler(json)
+        this.SessionHandler(json);
+    }
+
+    async ingestTrackJSONPath(paths) {
+
+    }
+
+    async ingestGenomeJSONPath(paths) {
+
+    }
+
     async ingestPaths(paths) {
 
         let self = this,
@@ -114,69 +131,16 @@ class MultipleFileLoadController {
         // isolate JSON paths
         let jsonPaths = paths.filter(path => 'json' === getExtension(path) );
 
-        let remainingPaths;
+
         if (jsonPaths.length > 0) {
-
-            // accumulate JSON retrieval Promises
-            jsonPromises = jsonPaths
-                .map((path) => {
-                    let url = (path.google_url || path);
-                    return { name: getFilename(path), promise: igvxhr.loadJson(url) }
-                });
-
-            // validate JSON
-            const jsons = await Promise.all(jsonPromises.map(task => task.promise));
-            const booleans = jsons.map(json => this.jsonFileValidator(json));
-            const invalids = booleans
-                .map((boolean, index) => { return { isValid: boolean, path: jsonPaths[ index ] } })
-                .filter(o => false === o.isValid);
-
-            if (invalids.length > 0) {
-                this.presentModalWithInvalidFiles(invalids.map(o => o.path));
-                return;
-            } else {
-                // Handle Session file. There can only be ONE.
-                this.browser.loadSessionObject(jsons[ 0 ]);
-                return;
-            }
-
-            // if (true === this.jsonFileValidator(jsons[ 0 ])) {
-            //     let path = jsonPaths.pop();
-            //
-            //     if (path.google_url) {
-            //         this.browser.loadSession({ url:path.google_url, filename:path.name });
-            //     } else {
-            //         let o = {};
-            //         o.filename = getFilename(path);
-            //         if (true === isFilePath(path)) {
-            //             o.file = path;
-            //         } else {
-            //             o.url = path;
-            //         }
-            //         this.browser.loadSession(o);
-            //     }
-            //
-            //     return;
-            // }
-
-            // non-JSON paths
-            // remainingPaths = paths.filter((path) => ('json' !== getExtension(path)) )
-
-        } else {
-
-            // there are no JSON paths
-            remainingPaths = paths;
-        }
-
-        // bail if no files
-        if (0 === jsonPaths.length && 0 === remainingPaths.length) {
-            Alert.presentAlert("ERROR: No valid data files submitted");
+            // TODO: Implement this.JSONIngestionHandler(jsonPaths)
+            this.JSONIngestionHandler(jsonPaths);
             return;
         }
 
-
+        // TODO: Are we still supporting XML based session files.
         // Isolate XML paths. We only care about one and we assume it is a session path
-        let xmlPaths = remainingPaths.filter(path => 'xml' === getExtension(path) );
+        let xmlPaths = paths.filter(path => 'xml' === getExtension(path) );
 
         if (xmlPaths.length > 0) {
             let path = xmlPaths.pop();
@@ -193,7 +157,7 @@ class MultipleFileLoadController {
         }
 
         // validate data paths (non-JSON)
-        let extensions = remainingPaths.map(path => getExtension(path));
+        let extensions = paths.map(path => getExtension(path));
 
         if (extensions.length > 0) {
             let results = extensions.map((extension) => self.pathValidator( extension ));
