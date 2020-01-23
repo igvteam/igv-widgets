@@ -24,7 +24,7 @@ class GenomeFileLoad extends FileLoad {
 
             const path = list[ 0 ];
             if ('json' === FileUtils.getExtension(path)) {
-                const json = await igv.xhr.loadJson((path.google_url || path));
+                const json = await this.igvxhr.loadJson((path.google_url || path));
                 this.loadHandler(json);
             } else if ('xml' === FileUtils.getExtension(path)) {
 

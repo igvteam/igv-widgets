@@ -8,7 +8,7 @@ const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"
 
 class TrackFileLoad extends FileLoad {
     constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr, google }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, google });
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, igvxhr, google });
         this.loadHandler = loadHandler;
     }
 
@@ -24,7 +24,7 @@ class TrackFileLoad extends FileLoad {
             const promises = jsonPaths
                 .map(path => {
                     let url = (path.google_url || path);
-                    return { promise: igv.xhr.loadJson(url) }
+                    return { promise: this.igvxhr.loadJson(url) }
                 });
 
 
