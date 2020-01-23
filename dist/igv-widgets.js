@@ -1372,7 +1372,7 @@ class GenomeFileLoad extends FileLoad {
 
             const path = list[ 0 ];
             if ('json' === getExtension(path)) {
-                const json = await igv.igvxhr.loadJson((path.google_url || path));
+                const json = await igv.xhr.loadJson((path.google_url || path));
                 this.loadHandler(json);
             } else if ('xml' === getExtension(path)) {
 
@@ -1451,7 +1451,7 @@ class SessionFileLoad extends FileLoad {
 
         const path = list[ 0 ];
         if ('json' === getExtension(path)) {
-            const json = await igv.igvxhr.loadJson((path.google_url || path));
+            const json = await igv.xhr.loadJson((path.google_url || path));
             this.loadHandler(json);
         } else if ('xml' === getExtension(path)) {
 
@@ -1486,7 +1486,7 @@ class TrackFileLoad extends FileLoad {
             const promises = jsonPaths
                 .map(path => {
                     let url = (path.google_url || path);
-                    return { promise: igv.igvxhr.loadJson(url) }
+                    return { promise: igv.xhr.loadJson(url) }
                 });
 
 

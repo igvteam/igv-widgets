@@ -24,7 +24,7 @@ class TrackFileLoad extends FileLoad {
             const promises = jsonPaths
                 .map(path => {
                     let url = (path.google_url || path);
-                    return { promise: igv.igvxhr.loadJson(url) }
+                    return { promise: igv.xhr.loadJson(url) }
                 });
 
 
