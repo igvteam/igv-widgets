@@ -82,7 +82,7 @@ const createDropdownButtonPicker = async (multipleFileSelection, filePickerHandl
     try {
         accessToken = await getAccessToken();
     } catch (e) {
-        Alert.presentAlert("Cannot retrieve access token.");
+        Alert.presentAlert(e.message);
     }
 
     if (accessToken) {
@@ -130,8 +130,6 @@ const createDropdownButtonPicker = async (multipleFileSelection, filePickerHandl
 
             KGooglePicker.setVisible(true);
 
-        } else {
-            Alert.presentAlert("Sign into Google before using picker");
         }
 
     }
@@ -151,12 +149,21 @@ const signInHandler = async () => {
     options.setPrompt('select_account');
     options.setScope(scope);
 
-    const user = await gapi.auth2.getAuthInstance().signIn(options);
+    let user = undefined;
+    try {
+        user = await gapi.auth2.getAuthInstance().signIn(options);
+    } catch (e) {
+        Alert.presentAlert(e.message);
+    }
 
-    const { access_token } = user.getAuthResponse();
-    KGooglePickerOauth.setToken(access_token);
+    if (user) {
+        const { access_token } = user.getAuthResponse();
+        KGooglePickerOauth.setToken(access_token);
+        return access_token;
+    } else {
+        return undefined;
+    }
 
-    return access_token;
 }
 
 const getAccessToken = async () => {
@@ -164,7 +171,9 @@ const getAccessToken = async () => {
     if (KGooglePickerOauth.google.access_token) {
         return KGooglePickerOauth.google.access_token;
     } else {
-        return await signInHandler();
+
+        const result = await signInHandler();
+        return result;
     }
 }
 
