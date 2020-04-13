@@ -77,7 +77,7 @@ function postInit() {
 
     gapi.load('picker', config);
 
-};
+}
 
 const createFilePickerHandler = () => {
 
