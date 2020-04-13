@@ -24,12 +24,14 @@
 // TODO: igvjs dependencies
 import {Alert} from "../node_modules/igv-ui/src/index.js";
 
-let picker;
-let oauth;
+let Global_Picker;
+let Global_Oauth;
+let Global_google;
 
-function init(clientId, oa) {
+function init(clientId, oath, google) {
 
-    oauth = oa;
+    Global_Oauth = oath;
+    Global_google = google;
 
     let scope,
         config;
@@ -104,46 +106,46 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
             let view,
                 teamView;
 
-            view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+            view = new Global_google.picker.DocsView(Global_google.picker.ViewId.DOCS);
             view.setIncludeFolders(true);
 
-            teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
+            teamView = new Global_google.picker.DocsView(Global_google.picker.ViewId.DOCS);
             teamView.setEnableTeamDrives(true);
             teamView.setIncludeFolders(true);
 
             if (accessToken) {
 
                 if (multipleFileSelection) {
-                    picker = new google.picker.PickerBuilder()
-                        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(oauth.google.access_token)
+                    Global_Picker = new Global_google.picker.PickerBuilder()
+                        .enableFeature(Global_google.picker.Feature.MULTISELECT_ENABLED)
+                        .setOAuthToken(Global_Oauth.Global_google.access_token)
                         .addView(view)
                         .addView(teamView)
-                        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                        .enableFeature(Global_google.picker.Feature.SUPPORT_TEAM_DRIVES)
                         .setCallback(function (data) {
-                            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                                filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                            if (data[Global_google.picker.Response.ACTION] === Global_google.picker.Action.PICKED) {
+                                filePickerHandler(data[Global_google.picker.Response.DOCUMENTS]);
                             }
                         })
                         .build();
 
                 } else {
-                    picker = new google.picker.PickerBuilder()
-                        .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(oauth.google.access_token)
+                    Global_Picker = new Global_google.picker.PickerBuilder()
+                        .disableFeature(Global_google.picker.Feature.MULTISELECT_ENABLED)
+                        .setOAuthToken(Global_Oauth.Global_google.access_token)
                         .addView(view)
                         .addView(teamView)
-                        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                        .enableFeature(Global_google.picker.Feature.SUPPORT_TEAM_DRIVES)
                         .setCallback(function (data) {
-                            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                                filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                            if (data[Global_google.picker.Response.ACTION] === Global_google.picker.Action.PICKED) {
+                                filePickerHandler(data[Global_google.picker.Response.DOCUMENTS]);
                             }
                         })
                         .build();
 
                 }
 
-                picker.setVisible(true);
+                Global_Picker.setVisible(true);
 
             } else {
                 Alert.presentAlert("Sign into Google before using picker");
@@ -181,7 +183,7 @@ function signInHandler() {
 
             authResponse = user.getAuthResponse();
 
-            oauth.setToken(authResponse["access_token"]);
+            Global_Oauth.setToken(authResponse["access_token"]);
 
             return authResponse["access_token"];
         })
@@ -189,8 +191,8 @@ function signInHandler() {
 
 function getAccessToken() {
 
-    if (oauth.google.access_token) {
-        return Promise.resolve(oauth.google.access_token);
+    if (Global_Oauth.Global_google.access_token) {
+        return Promise.resolve(Global_Oauth.Global_google.access_token);
     } else {
         return signInHandler();
     }
@@ -202,14 +204,14 @@ function pickerCallback(data) {
         obj,
         documents;
 
-    documents = data[google.picker.Response.DOCUMENTS];
+    documents = data[Global_google.picker.Response.DOCUMENTS];
 
     doc = documents[0];
 
     obj =
         {
-            name: doc[google.picker.Document.NAME],
-            path: 'https://www.googleapis.com/drive/v3/files/' + doc[google.picker.Document.ID] + '?alt=media'
+            name: doc[Global_google.picker.Document.NAME],
+            path: 'https://www.googleapis.com/drive/v3/files/' + doc[Global_google.picker.Document.ID] + '?alt=media'
         };
 
     return obj;
