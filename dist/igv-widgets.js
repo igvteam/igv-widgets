@@ -6467,7 +6467,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 if (multipleFileSelection) {
                     Global_Picker = new Global_google.picker.PickerBuilder()
                         .enableFeature(Global_google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(Global_Oauth.Global_google.access_token)
+                        .setOAuthToken(Global_Oauth.google.access_token)
                         .addView(view)
                         .addView(teamView)
                         .enableFeature(Global_google.picker.Feature.SUPPORT_TEAM_DRIVES)
@@ -6481,7 +6481,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 } else {
                     Global_Picker = new Global_google.picker.PickerBuilder()
                         .disableFeature(Global_google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(Global_Oauth.Global_google.access_token)
+                        .setOAuthToken(Global_Oauth.google.access_token)
                         .addView(view)
                         .addView(teamView)
                         .enableFeature(Global_google.picker.Feature.SUPPORT_TEAM_DRIVES)
@@ -6538,8 +6538,8 @@ function signInHandler() {
 }
 function getAccessToken() {
 
-    if (Global_Oauth.Global_google.access_token) {
-        return Promise.resolve(Global_Oauth.Global_google.access_token);
+    if (Global_Oauth.google.access_token) {
+        return Promise.resolve(Global_Oauth.google.access_token);
     } else {
         return signInHandler();
     }
