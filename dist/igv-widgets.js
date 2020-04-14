@@ -6790,7 +6790,7 @@ class SessionFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        const path = list[ 0 ];
+        const path = paths[ 0 ];
         if ('json' === getExtension(path)) {
             const json = await this.igvxhr.loadJson((path.google_url || path));
             this.loadHandler(json);
