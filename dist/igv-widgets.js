@@ -6580,8 +6580,12 @@ class FileLoad {
                 createDropdownButtonPicker(true, responses => {
 
                     const paths = responses
-                        .map(({ name, url: google_url }) => {
-                            return { filename: name, name, google_url };
+                        .map(({ name, url }) => {
+                            return {
+                                filename: name,
+                                name,
+                                google_url: google.driveDownloadURL(url)
+                            };
                         });
 
                     this.loadPaths(paths);
@@ -6605,9 +6609,9 @@ class FileLoad {
 
             if (isFilePath(path)) {
                 tmp.push(path);
-            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-                const fileInfo = await this.google.getDriveFileInfo(path);
-                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
+            // } else if (undefined === path.google_url && path.includes('drive.google.com')) {
+            //     const fileInfo = await this.google.getDriveFileInfo(path);
+            //     googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
             } else {
                 tmp.push(path);
             }
