@@ -6528,7 +6528,7 @@ function updateSignInStatus(signInStatus) {
     // do nothing
 }
 
-var appGoogle = /*#__PURE__*/Object.freeze({
+var googleFilePicker = /*#__PURE__*/Object.freeze({
     __proto__: null,
     init: init,
     postInit: postInit,
@@ -7043,4 +7043,4 @@ class TrackFileLoad extends FileLoad {
 
 }
 
-export { Alert, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, appGoogle as GoogleFilePicker, SessionFileLoad, TrackFileLoad, utils as Utils };
+export { Alert, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, SessionFileLoad, TrackFileLoad, utils as Utils };
