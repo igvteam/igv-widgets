@@ -24,7 +24,6 @@
  * THE SOFTWARE.
  */
 
-// TODO: igvjs dependencies
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 
 class FileLoadManager {

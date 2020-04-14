@@ -1,6 +1,5 @@
 import FileLoad from "./fileLoad.js";
 import {Alert} from "../node_modules/igv-ui/src/index.js"
-//import igvxhr from "./igvjs/igvxhr.js";
 import {FileUtils, TrackUtils} from "../node_modules/igv-utils/src/index.js"
 import * as Utils from './utils.js';
 
@@ -14,12 +13,10 @@ class TrackFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        let list = await this.processPaths(paths);
-
         let configurations = [];
 
         // isolate JSON paths
-        let jsonPaths = list.filter(path => 'json' === FileUtils.getExtension(path) );
+        let jsonPaths = paths.filter(path => 'json' === FileUtils.getExtension(path) );
         if (jsonPaths.length > 0) {
             const promises = jsonPaths
                 .map(path => {
@@ -33,7 +30,7 @@ class TrackFileLoad extends FileLoad {
 
         }
 
-        let remainingPaths = list.filter(path => 'json' !== FileUtils.getExtension(path) );
+        let remainingPaths = paths.filter(path => 'json' !== FileUtils.getExtension(path) );
 
         if (remainingPaths.length > 0) {
 
