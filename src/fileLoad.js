@@ -1,5 +1,4 @@
 import * as Utils from './utils.js';
-import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 import * as GoogleFilePicker from './app-google.js';
 import { DOMUtils } from '../node_modules/igv-ui/src/index.js'
 
@@ -65,26 +64,6 @@ class FileLoad {
 
     async loadPaths(paths) {
         console.log('FileLoad: loadPaths(...)');
-    }
-
-    async processPaths(paths) {
-
-        let tmp = [];
-        let googleDrivePaths = [];
-        for (let path of paths) {
-
-            if (FileUtils.isFilePath(path)) {
-                tmp.push(path);
-            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-                const fileInfo = await this.google.getDriveFileInfo(path);
-                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
-            } else {
-                tmp.push(path);
-            }
-        }
-
-        return tmp.concat(googleDrivePaths);
-
     }
 
     static isValidLocalFileInput(input) {

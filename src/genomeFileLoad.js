@@ -1,6 +1,5 @@
 import FileLoad from "./fileLoad.js";
 import {Alert} from "../node_modules/igv-ui/src/index.js"
-//import igvxhr from "./igvjs/igvxhr.js";
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 
 const referenceSet = new Set(['fai', 'fa', 'fasta']);
@@ -18,11 +17,9 @@ class GenomeFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        let list = await this.processPaths(paths);
+        if (1 === paths.length) {
 
-        if (1 === list.length) {
-
-            const path = list[ 0 ];
+            const path = paths[ 0 ];
             if ('json' === FileUtils.getExtension(path)) {
                 const json = await this.igvxhr.loadJson((path.google_url || path));
                 this.loadHandler(json);
@@ -37,9 +34,9 @@ class GenomeFileLoad extends FileLoad {
                 Alert.presentAlert(`${ errorString }`);
             }
 
-        } else if (2 === list.length) {
+        } else if (2 === paths.length) {
 
-            let [ a, b ] = list.map(path => {
+            let [ a, b ] = paths.map(path => {
                 return FileUtils.getExtension(path)
             });
 
@@ -48,7 +45,7 @@ class GenomeFileLoad extends FileLoad {
                 return;
             }
 
-            const [ dataPath, indexPath ] = GenomeFileLoad.retrieveDataPathAndIndexPath(list);
+            const [ dataPath, indexPath ] = GenomeFileLoad.retrieveDataPathAndIndexPath(paths);
 
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
@@ -58,11 +55,11 @@ class GenomeFileLoad extends FileLoad {
 
     };
 
-    static retrieveDataPathAndIndexPath(list) {
+    static retrieveDataPathAndIndexPath(paths) {
 
-        let [ a, b ] = list.map(path => FileUtils.getExtension(path))
+        let [ a, b ] = paths.map(path => FileUtils.getExtension(path))
 
-        const [ la, lb ] = list;
+        const [ la, lb ] = paths;
 
         let pa;
         let pb;

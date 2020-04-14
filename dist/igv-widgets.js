@@ -6601,26 +6601,6 @@ class FileLoad {
         console.log('FileLoad: loadPaths(...)');
     }
 
-    async processPaths(paths) {
-
-        let tmp = [];
-        let googleDrivePaths = [];
-        for (let path of paths) {
-
-            if (isFilePath(path)) {
-                tmp.push(path);
-            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-                const fileInfo = await this.google.getDriveFileInfo(path);
-                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
-            } else {
-                tmp.push(path);
-            }
-        }
-
-        return tmp.concat(googleDrivePaths);
-
-    }
-
     static isValidLocalFileInput(input) {
         return (input.files && input.files.length > 0);
     }
@@ -6725,11 +6705,9 @@ class GenomeFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        let list = await this.processPaths(paths);
+        if (1 === paths.length) {
 
-        if (1 === list.length) {
-
-            const path = list[ 0 ];
+            const path = paths[ 0 ];
             if ('json' === getExtension(path)) {
                 const json = await this.igvxhr.loadJson((path.google_url || path));
                 this.loadHandler(json);
@@ -6744,9 +6722,9 @@ class GenomeFileLoad extends FileLoad {
                 Alert.presentAlert(`${ errorString }`);
             }
 
-        } else if (2 === list.length) {
+        } else if (2 === paths.length) {
 
-            let [ a, b ] = list.map(path => {
+            let [ a, b ] = paths.map(path => {
                 return getExtension(path)
             });
 
@@ -6755,7 +6733,7 @@ class GenomeFileLoad extends FileLoad {
                 return;
             }
 
-            const [ dataPath, indexPath ] = GenomeFileLoad.retrieveDataPathAndIndexPath(list);
+            const [ dataPath, indexPath ] = GenomeFileLoad.retrieveDataPathAndIndexPath(paths);
 
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
@@ -6765,11 +6743,11 @@ class GenomeFileLoad extends FileLoad {
 
     };
 
-    static retrieveDataPathAndIndexPath(list) {
+    static retrieveDataPathAndIndexPath(paths) {
 
-        let [ a, b ] = list.map(path => getExtension(path));
+        let [ a, b ] = paths.map(path => getExtension(path));
 
-        const [ la, lb ] = list;
+        const [ la, lb ] = paths;
 
         let pa;
         let pb;
@@ -6812,8 +6790,6 @@ class SessionFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        let list = await this.processPaths(paths);
-
         const path = list[ 0 ];
         if ('json' === getExtension(path)) {
             const json = await this.igvxhr.loadJson((path.google_url || path));
@@ -6841,12 +6817,10 @@ class TrackFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        let list = await this.processPaths(paths);
-
         let configurations = [];
 
         // isolate JSON paths
-        let jsonPaths = list.filter(path => 'json' === getExtension(path) );
+        let jsonPaths = paths.filter(path => 'json' === getExtension(path) );
         if (jsonPaths.length > 0) {
             const promises = jsonPaths
                 .map(path => {
@@ -6860,7 +6834,7 @@ class TrackFileLoad extends FileLoad {
 
         }
 
-        let remainingPaths = list.filter(path => 'json' !== getExtension(path) );
+        let remainingPaths = paths.filter(path => 'json' !== getExtension(path) );
 
         if (remainingPaths.length > 0) {
 
