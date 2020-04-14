@@ -75,9 +75,9 @@ class FileLoad {
 
             if (FileUtils.isFilePath(path)) {
                 tmp.push(path);
-            // } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-            //     const fileInfo = await this.google.getDriveFileInfo(path);
-            //     googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
+            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
+                const fileInfo = await this.google.getDriveFileInfo(path);
+                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
             } else {
                 tmp.push(path);
             }

@@ -60,15 +60,21 @@ class GenomeFileLoad extends FileLoad {
 
     static retrieveDataPathAndIndexPath(list) {
 
-        let [ a, b ] = list.map(path => {
-            return FileUtils.getExtension(path)
-        });
+        let [ a, b ] = list.map(path => FileUtils.getExtension(path))
 
+        const [ la, lb ] = list;
+
+        let pa;
+        let pb;
         if (dataSet.has(a) && indexSet.has(b)) {
-            return [ list[ 0 ], list[ 1 ] ];
+            pa = la.google_url || la;
+            pb = lb.google_url || lb;
         } else {
-            return [ list[ 1 ], list[ 0 ] ];
+            pa = lb.google_url || lb;
+            pb = la.google_url || la;
         }
+
+        return [ pa, pb ];
 
     };
 

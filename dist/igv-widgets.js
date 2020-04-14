@@ -6609,9 +6609,9 @@ class FileLoad {
 
             if (isFilePath(path)) {
                 tmp.push(path);
-            // } else if (undefined === path.google_url && path.includes('drive.google.com')) {
-            //     const fileInfo = await this.google.getDriveFileInfo(path);
-            //     googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
+            } else if (undefined === path.google_url && path.includes('drive.google.com')) {
+                const fileInfo = await this.google.getDriveFileInfo(path);
+                googleDrivePaths.push({ filename: fileInfo.name, name: fileInfo.name, google_url: path});
             } else {
                 tmp.push(path);
             }
@@ -6767,15 +6767,21 @@ class GenomeFileLoad extends FileLoad {
 
     static retrieveDataPathAndIndexPath(list) {
 
-        let [ a, b ] = list.map(path => {
-            return getExtension(path)
-        });
+        let [ a, b ] = list.map(path => getExtension(path));
 
+        const [ la, lb ] = list;
+
+        let pa;
+        let pb;
         if (dataSet.has(a) && indexSet.has(b)) {
-            return [ list[ 0 ], list[ 1 ] ];
+            pa = la.google_url || la;
+            pb = lb.google_url || lb;
         } else {
-            return [ list[ 1 ], list[ 0 ] ];
+            pa = lb.google_url || lb;
+            pb = la.google_url || la;
         }
+
+        return [ pa, pb ];
 
     };
 
