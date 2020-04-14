@@ -6394,135 +6394,112 @@ function init(clientId, oauth, google) {
 }
 
 function postInit() {
-    let callback,
-        onerror,
-        config;
 
-    gapi.auth2
-        .getAuthInstance()
-        .isSignedIn
-        .listen(updateSignInStatus);
+    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
 
-    callback = () => {
-        console.log('Google Picker library loaded successfully');
-    };
-
-    onerror = () => {
-        console.log('Error loading Google Picker library');
-        alert('Error loading Google Picker library');
-    };
-
-    config =
+    const config =
         {
-            callback: callback,
-            onerror: onerror
+            callback: () => {
+                console.log('Google Picker library loaded successfully');
+            },
+            onerror: () => {
+                console.error('Error loading Google Picker library');
+                alert('Error loading Google Picker library');
+            }
         };
 
     gapi.load('picker', config);
 
 }
 
-function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
+const createDropdownButtonPicker = async (multipleFileSelection, filePickerHandler) => {
 
-    getAccessToken()
-        .then(function (accessToken) {
-            return accessToken;
-        })
-        .then(function (accessToken) {
+    let accessToken;
 
-            let view,
-                teamView;
+    try {
+        accessToken = await getAccessToken();
+    } catch (e) {
+        Alert.presentAlert(e.message);
+        return;
+    }
 
-            view = new google.picker.DocsView(google.picker.ViewId.DOCS);
-            view.setIncludeFolders(true);
+    const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+    view.setIncludeFolders(true);
 
-            teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
-            teamView.setEnableTeamDrives(true);
-            teamView.setIncludeFolders(true);
+    const teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
+    teamView.setEnableTeamDrives(true);
+    teamView.setIncludeFolders(true);
 
-            if (accessToken) {
+    if (accessToken) {
 
-                if (multipleFileSelection) {
-                    appGoogle_picker = new google.picker.PickerBuilder()
-                        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(appGoogle_oauth.google.access_token)
-                        .addView(view)
-                        .addView(teamView)
-                        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
-                        .setCallback(function (data) {
-                            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                                filePickerHandler(data[google.picker.Response.DOCUMENTS]);
-                            }
-                        })
-                        .build();
+        if (multipleFileSelection) {
+            appGoogle_picker = new google.picker.PickerBuilder()
+                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                .setOAuthToken(appGoogle_oauth.google.access_token)
+                .addView(view)
+                .addView(teamView)
+                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                .setCallback(function (data) {
+                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                    }
+                })
+                .build();
 
-                } else {
-                    appGoogle_picker = new google.picker.PickerBuilder()
-                        .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                        .setOAuthToken(appGoogle_oauth.google.access_token)
-                        .addView(view)
-                        .addView(teamView)
-                        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
-                        .setCallback(function (data) {
-                            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                                filePickerHandler(data[google.picker.Response.DOCUMENTS]);
-                            }
-                        })
-                        .build();
+        } else {
+            appGoogle_picker = new google.picker.PickerBuilder()
+                .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                .setOAuthToken(appGoogle_oauth.google.access_token)
+                .addView(view)
+                .addView(teamView)
+                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                .setCallback(function (data) {
+                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                    }
+                })
+                .build();
 
-                }
+        }
 
-                appGoogle_picker.setVisible(true);
+        appGoogle_picker.setVisible(true);
 
-            } else {
-                Alert.presentAlert("Sign into Google before using picker");
-            }
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+    } else {
+        Alert.presentAlert("Sign into Google before using picker");
+    }
 
+};
 
-}
+const getAccessToken = async () => {
 
-function signInHandler() {
+    if (appGoogle_oauth.google.access_token) {
+        return appGoogle_oauth.google.access_token;
+    } else {
+        return await signInHandler();
+    }
+};
 
-    let scope,
-        options;
+const signInHandler = async () => {
 
-    scope =
+    const scope =
         [
             'https://www.googleapis.com/auth/devstorage.read_only',
             'https://www.googleapis.com/auth/userinfo.profile',
             'https://www.googleapis.com/auth/drive.readonly'
-        ];
+        ].join(' ');
 
-    options = new gapi.auth2.SigninOptionsBuilder();
+    const options = new gapi.auth2.SigninOptionsBuilder();
     options.setPrompt('select_account');
-    options.setScope(scope.join(' '));
+    options.setScope(scope);
 
-    return gapi.auth2
-        .getAuthInstance()
-        .signIn(options)
-        .then(function (user) {
+    const user = await gapi.auth2.getAuthInstance().signIn(options);
 
-            const { access_token } = user.getAuthResponse();
+    const { access_token } = user.getAuthResponse();
 
-            // igv.setGoogleOauthToken(access_token);
-            appGoogle_oauth.setToken(access_token);
+    appGoogle_oauth.setToken(access_token);
 
-            return access_token;
-        })
-}
-
-function getAccessToken() {
-
-    if (appGoogle_oauth.google.access_token) {
-        return Promise.resolve(appGoogle_oauth.google.access_token);
-    } else {
-        return signInHandler();
-    }
-}
+    return access_token;
+};
 
 function updateSignInStatus(signInStatus) {
     // do nothing
