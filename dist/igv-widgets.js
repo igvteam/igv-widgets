@@ -472,6 +472,43 @@ function translateDeprecatedTypes(config) {
     }
 }
 
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Broad Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+
+function download  (filename, data) {
+
+    const element = document.createElement('a');
+    element.setAttribute('href', data);
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
 /**
  * @fileoverview Zlib namespace. Zlib の仕様に準拠した圧縮は Zlib.Deflate で実装
  * されている. これは Inflate との共存を考慮している為.
@@ -6390,117 +6427,141 @@ function init(clientId, oauth, google) {
             'https://www.googleapis.com/auth/drive.readonly'
         ].join(' ');
 
-    return gapi.client.init({ clientId, scope })
+    const config =
+        {
+            clientId,
+            scope
+        };
+
+    return gapi.client.init(config)
 }
 
 function postInit() {
+    let callback,
+        onerror,
+        config;
 
-    gapi.auth2.getAuthInstance().isSignedIn.listen(updateSignInStatus);
+    gapi.auth2
+        .getAuthInstance()
+        .isSignedIn
+        .listen(updateSignInStatus);
 
-    const config =
+    callback = () => {
+        console.log('Google Picker library loaded successfully');
+    };
+
+    onerror = () => {
+        console.log('Error loading Google Picker library');
+        alert('Error loading Google Picker library');
+    };
+
+    config =
         {
-            callback: () => {
-                console.log('Google Picker library loaded successfully');
-            },
-            onerror: () => {
-                console.error('Error loading Google Picker library');
-                alert('Error loading Google Picker library');
-            }
+            callback: callback,
+            onerror: onerror
         };
 
     gapi.load('picker', config);
 
 }
+function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
 
-const createDropdownButtonPicker = async (multipleFileSelection, filePickerHandler) => {
+    getAccessToken()
+        .then(function (accessToken) {
+            return accessToken;
+        })
+        .then(function (accessToken) {
 
-    let accessToken;
+            let view,
+                teamView;
 
-    try {
-        accessToken = await getAccessToken();
-    } catch (e) {
-        Alert.presentAlert(e.message);
-        return;
-    }
+            view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+            view.setIncludeFolders(true);
 
-    const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
-    view.setIncludeFolders(true);
+            teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
+            teamView.setEnableTeamDrives(true);
+            teamView.setIncludeFolders(true);
 
-    const teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
-    teamView.setEnableTeamDrives(true);
-    teamView.setIncludeFolders(true);
+            if (accessToken) {
 
-    if (accessToken) {
+                if (multipleFileSelection) {
+                    appGoogle_picker = new google.picker.PickerBuilder()
+                        .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                        .setOAuthToken(appGoogle_oauth.google.access_token)
+                        .addView(view)
+                        .addView(teamView)
+                        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                        .setCallback(function (data) {
+                            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                                filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                            }
+                        })
+                        .build();
 
-        if (multipleFileSelection) {
-            appGoogle_picker = new google.picker.PickerBuilder()
-                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                .setOAuthToken(appGoogle_oauth.google.access_token)
-                .addView(view)
-                .addView(teamView)
-                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
-                .setCallback(function (data) {
-                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
-                    }
-                })
-                .build();
+                } else {
+                    appGoogle_picker = new google.picker.PickerBuilder()
+                        .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                        .setOAuthToken(appGoogle_oauth.google.access_token)
+                        .addView(view)
+                        .addView(teamView)
+                        .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                        .setCallback(function (data) {
+                            if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                                filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                            }
+                        })
+                        .build();
 
-        } else {
-            appGoogle_picker = new google.picker.PickerBuilder()
-                .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                .setOAuthToken(appGoogle_oauth.google.access_token)
-                .addView(view)
-                .addView(teamView)
-                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
-                .setCallback(function (data) {
-                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
-                    }
-                })
-                .build();
+                }
 
-        }
+                appGoogle_picker.setVisible(true);
 
-        appGoogle_picker.setVisible(true);
+            } else {
+                Alert.presentAlert("Sign into Google before using picker");
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
 
-    } else {
-        Alert.presentAlert("Sign into Google before using picker");
-    }
 
-};
+}
+function signInHandler() {
 
-const getAccessToken = async () => {
+    let scope,
+        options;
 
-    if (appGoogle_oauth.google.access_token) {
-        return appGoogle_oauth.google.access_token;
-    } else {
-        return await signInHandler();
-    }
-};
-
-const signInHandler = async () => {
-
-    const scope =
+    scope =
         [
             'https://www.googleapis.com/auth/devstorage.read_only',
             'https://www.googleapis.com/auth/userinfo.profile',
             'https://www.googleapis.com/auth/drive.readonly'
-        ].join(' ');
+        ];
 
-    const options = new gapi.auth2.SigninOptionsBuilder();
+    options = new gapi.auth2.SigninOptionsBuilder();
     options.setPrompt('select_account');
-    options.setScope(scope);
+    options.setScope(scope.join(' '));
 
-    const user = await gapi.auth2.getAuthInstance().signIn(options);
+    return gapi.auth2
+        .getAuthInstance()
+        .signIn(options)
+        .then(function (user) {
 
-    const { access_token } = user.getAuthResponse();
+            const { access_token } = user.getAuthResponse();
 
-    appGoogle_oauth.setToken(access_token);
+            appGoogle_oauth.setToken(access_token);
 
-    return access_token;
-};
+            return access_token;
+        })
+}
+function getAccessToken() {
 
+    if (appGoogle_oauth.google.access_token) {
+        return Promise.resolve(appGoogle_oauth.google.access_token);
+    } else {
+        return signInHandler();
+    }
+}
 function updateSignInStatus(signInStatus) {
     // do nothing
 }
@@ -6668,7 +6729,7 @@ class FileLoad {
 }
 
 const referenceSet = new Set(['fai', 'fa', 'fasta']);
-const dataSet = new Set(['fa', 'fasta']);
+const dataSet = new Set(['fna', 'fa', 'fasta']);
 const indexSet = new Set(['fai']);
 
 const errorString = 'ERROR: Load either: 1) single XML file 2). single JSON file. 3) data file (.fa or .fasta ) & index file (.fai).';
@@ -6783,6 +6844,126 @@ class SessionFileLoad extends FileLoad {
     };
 
 }
+
+/*
+ *  The MIT License (MIT)
+ *
+ * Copyright (c) 2016-2017 The Regents of the University of California
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
+class SessionController {
+
+    constructor({sessionLoadModal, sessionSaveModal, sessionFileLoad, JSONProvider}) {
+
+        let config =
+            {
+                widgetParent: sessionLoadModal.querySelector('.modal-body'),
+                dataTitle: 'Load Session',
+                indexTitle: undefined,
+                mode: 'url',
+                fileLoadManager: new FileLoadManager(),
+                dataOnly: true,
+                doURL: undefined
+            };
+
+        this.urlWidget = new FileLoadWidget(config);
+
+        // Configure load session modal
+        configureModal(this.urlWidget, sessionLoadModal, async fileLoadWidget => {
+            await sessionFileLoad.loadPaths(fileLoadWidget.retrievePaths());
+            return true;
+        });
+
+        // Configure save session modal
+        configureSaveSessionModal(JSONProvider, sessionSaveModal);
+
+    }
+
+}
+
+const input_default_value = 'juiceboxjs-session.json';
+
+function configureSaveSessionModal(JSONProvider, sessionSaveModal) {
+
+    let input = sessionSaveModal.querySelector('input');
+
+    let okHandler = () => {
+
+        const extensions = new Set(['json', 'xml']);
+
+        let filename = input.value;
+
+        if (undefined === filename || '' === filename) {
+            filename = input.getAttribute('placeholder');
+        } else if (false === extensions.has(getExtension(filename))) {
+            filename = filename + '.json';
+        }
+
+        const json = JSONProvider();
+        const jsonString = JSON.stringify(json, null, '\t');
+        const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
+
+        download(filename, data);
+
+        $(sessionSaveModal).modal('hide');
+    };
+
+    const $ok = $(sessionSaveModal).find('.modal-footer button:nth-child(2)');
+    $ok.on('click', okHandler);
+
+    $(sessionSaveModal).on('show.bs.modal', (e) => {
+        input.value = input_default_value;
+    });
+
+    input.addEventListener('keyup', e => {
+
+        // enter key key-up
+        if (13 === e.keyCode) {
+            okHandler();
+        }
+    });
+
+}
+
+const sessionControllerConfigurator = (igvxhr, google, googleEnabled, loadHandler, JSONProvider) => {
+
+    // Session File Load
+    const sessionFileLoadConfig =
+        {
+            localFileInput: document.querySelector('#igv-app-dropdown-local-session-file-input'),
+            dropboxButton: document.querySelector('#igv-app-dropdown-dropbox-session-file-button'),
+            googleEnabled,
+            googleDriveButton: document.querySelector('#igv-app-dropdown-google-drive-session-file-button'),
+            loadHandler,
+            igvxhr,
+            google
+        };
+
+    // Session Controller
+    return {
+            sessionLoadModal: document.querySelector('#igv-app-session-from-url-modal'),
+            sessionSaveModal: document.querySelector('#igv-app-session-save-modal'),
+            sessionFileLoad: new SessionFileLoad(sessionFileLoadConfig),
+            JSONProvider
+        }
+};
 
 const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
 
@@ -7020,4 +7201,4 @@ class TrackFileLoad extends FileLoad {
 
 }
 
-export { Alert, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, SessionFileLoad, TrackFileLoad, utils as Utils };
+export { Alert, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, sessionControllerConfigurator };
