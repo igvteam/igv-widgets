@@ -3,7 +3,7 @@ import {Alert} from "../node_modules/igv-ui/src/index.js"
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 
 const referenceSet = new Set(['fai', 'fa', 'fasta']);
-const dataSet = new Set(['fa', 'fasta']);
+const dataSet = new Set(['fna', 'fa', 'fasta']);
 const indexSet = new Set(['fai']);
 
 const errorString = 'ERROR: Load either: 1) single XML file 2). single JSON file. 3) data file (.fa or .fasta ) & index file (.fai).';
