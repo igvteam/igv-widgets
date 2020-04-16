@@ -6379,8 +6379,75 @@ let indexLookup = (dataSuffix) => {
 
 };
 
+// TODO: This replaces the above "indexLookup"
+const knownDataFileIndexFileLookup = extension => {
+
+    const fna =
+        {
+            index: 'fai',
+            isOptional: false
+        };
+
+    const fa =
+        {
+            index: 'fai',
+            isOptional: false
+        };
+
+    const fasta =
+        {
+            index: 'fai',
+            isOptional: false
+        };
+
+    const bam =
+        {
+            index: 'bai',
+            isOptional: false
+        };
+
+    const cram =
+        {
+            index: 'crai',
+            isOptional: false
+        };
+
+    const gz =
+        {
+            index: 'tbi',
+            isOptional: true
+        };
+
+    const bgz =
+        {
+            index: 'tbi',
+            isOptional: true
+        };
+
+    const lut =
+        {
+            fna,
+            fa,
+            fasta,
+            bam,
+            cram,
+            gz,
+            bgz
+        };
+
+    const any =
+        {
+            index: 'idx',
+            isOptional: true
+        };
+
+    return lut[ extension ]  || any;
+
+};
+
 var utils = /*#__PURE__*/Object.freeze({
     __proto__: null,
+    knownDataFileIndexFileLookup: knownDataFileIndexFileLookup,
     validIndexExtensionSet: validIndexExtensionSet,
     isValidIndexExtension: isValidIndexExtension,
     getIndexObjectWithDataName: getIndexObjectWithDataName,
