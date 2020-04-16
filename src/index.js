@@ -6,6 +6,7 @@ import GenomeFileLoad from "./genomeFileLoad.js";
 import SessionFileLoad from "./sessionFileLoad.js";
 import SessionController, { sessionControllerConfigurator } from "./sessionController.js";
 import TrackFileLoad from "./trackFileLoad.js";
+import MultipleTrackFileLoad from "./multipleTrackFileLoad.js";
 import * as GoogleFilePicker from './googleFilePicker.js';
 import * as Utils from './utils.js';
 
@@ -21,5 +22,6 @@ export {
     SessionFileLoad,
     SessionController,
     sessionControllerConfigurator,
-    TrackFileLoad
+    TrackFileLoad,
+    MultipleTrackFileLoad
 }
