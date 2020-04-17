@@ -7937,7 +7937,7 @@ class SessionFileLoad extends FileLoad {
 
 class SessionController {
 
-    constructor({sessionLoadModal, sessionSaveModal, sessionFileLoad, JSONProvider}) {
+    constructor({ prefix, sessionLoadModal, sessionSaveModal, sessionFileLoad, JSONProvider}) {
 
         let config =
             {
@@ -7959,15 +7959,14 @@ class SessionController {
         });
 
         // Configure save session modal
-        configureSaveSessionModal(JSONProvider, sessionSaveModal);
+        configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal);
 
     }
 
 }
 
-const input_default_value = 'juiceboxjs-session.json';
 
-function configureSaveSessionModal(JSONProvider, sessionSaveModal) {
+function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
 
     let input = sessionSaveModal.querySelector('input');
 
@@ -7996,7 +7995,7 @@ function configureSaveSessionModal(JSONProvider, sessionSaveModal) {
     $ok.on('click', okHandler);
 
     $(sessionSaveModal).on('show.bs.modal', (e) => {
-        input.value = input_default_value;
+        input.value = `${ prefix }-session.json`;
     });
 
     input.addEventListener('keyup', e => {
@@ -8009,7 +8008,7 @@ function configureSaveSessionModal(JSONProvider, sessionSaveModal) {
 
 }
 
-const sessionControllerConfigurator = (igvxhr, google, googleEnabled, loadHandler, JSONProvider) => {
+const sessionControllerConfigurator = (prefix, igvxhr, google, googleEnabled, loadHandler, JSONProvider) => {
 
     // Session File Load
     const sessionFileLoadConfig =
@@ -8025,6 +8024,7 @@ const sessionControllerConfigurator = (igvxhr, google, googleEnabled, loadHandle
 
     // Session Controller
     return {
+            prefix,
             sessionLoadModal: document.querySelector('#igv-app-session-from-url-modal'),
             sessionSaveModal: document.querySelector('#igv-app-session-save-modal'),
             sessionFileLoad: new SessionFileLoad(sessionFileLoadConfig),
