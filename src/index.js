@@ -1,4 +1,5 @@
 import { Alert } from "../node_modules/igv-ui/src/index.js";
+import { QRCode } from './qrcode.js';
 import FileLoadManager from './fileLoadManager.js';
 import FileLoadWidget from './fileLoadWidget.js';
 import FileLoad from "./fileLoad.js";
@@ -13,6 +14,7 @@ import * as Utils from './utils.js';
 
 export {
     Alert,
+    QRCode,
     GoogleFilePicker,
     Utils,
     FileLoadManager,
