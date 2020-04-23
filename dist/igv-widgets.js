@@ -8575,13 +8575,19 @@ const assessIndexFileAssociations = (LUT, trackConfigurationLUT) => {
         if (undefined === configuration.errorString) {
 
             const { index: indexExtension, isOptional } = knownDataFileIndexFileLookup( getExtension(configuration.name) );
+
             const indexKey = `${ key }.${ indexExtension }`;
 
+            let pieces = key.split('.');
+            pieces.pop();
+            let alternativeIndexKey = `${ pieces.join('.') }.${ indexExtension }`;
+
             if (LUT[ indexKey ]) {
-                // console.log(`data file ${ key } has ${ isOptional ? 'optional' : 'required' } index file ${ indexKey }`);
                 configuration.indexURL = LUT[ indexKey ];
+            } else if (LUT[ alternativeIndexKey ]) {
+                configuration.indexURL = LUT[ alternativeIndexKey ];
             } else if (false === isOptional) {
-                configuration.errorString = `ERROR: data file ${ key } is missing required index file ${ indexKey }`;
+                configuration.errorString = `ERROR: data file ${ key } is missing required index file`;
             }
 
         }
