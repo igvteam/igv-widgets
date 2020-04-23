@@ -8318,6 +8318,10 @@ class MultipleTrackFileLoad {
 
     constructor ({ $localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection, igvxhr, google }) {
 
+        this.fileLoadHandler = fileLoadHandler;
+        this.igvxhr = igvxhr;
+        this.google = google;
+
         $localFileInput.on('change', async () => {
 
             if (true === MultipleTrackFileLoad.isValidLocalFileInput($localFileInput)) {
@@ -8328,7 +8332,7 @@ class MultipleTrackFileLoad {
 
                 input.value = '';
 
-                await ingestPaths( { paths, fileLoadHandler, google, igvxhr } );
+                await MultipleTrackFileLoad.ingestPaths( { paths, fileLoadHandler, google, igvxhr } );
             }
 
         });
@@ -8337,7 +8341,7 @@ class MultipleTrackFileLoad {
 
             const obj =
                 {
-                    success: dbFiles => ingestPaths( { paths: dbFiles.map(({ link }) => link), fileLoadHandler, google, igvxhr } ),
+                    success: dbFiles => MultipleTrackFileLoad.ingestPaths( { paths: dbFiles.map(({ link }) => link), fileLoadHandler, google, igvxhr } ),
                     cancel: () => {},
                     linkType: "preview",
                     multiselect: multipleFileSelection,
@@ -8368,13 +8372,17 @@ class MultipleTrackFileLoad {
 
                     });
 
-                    await ingestPaths({ paths: obj, fileLoadHandler, google, igvxhr });
+                    await MultipleTrackFileLoad.ingestPaths({ paths: obj, fileLoadHandler, google, igvxhr });
                 });
 
             });
 
         }
 
+    }
+
+    async loadPaths(paths) {
+        await ingestPaths({ paths, fileLoadHandler: this.fileLoadHandler, google: this.google, igvxhr: this.igvxhr });
     }
 
     static isValidLocalFileInput($input) {
