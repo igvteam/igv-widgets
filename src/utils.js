@@ -104,9 +104,11 @@ let configureModal = (fileLoadWidget, modal, okHandler) => {
     // ok - button
     const ok = modal.querySelector('.modal-footer button:nth-child(2)');
 
-    ok.addEventListener('click', () => {
+    ok.addEventListener('click', async () => {
 
-        if (true === okHandler(fileLoadWidget)) {
+        const result = await okHandler(fileLoadWidget);
+
+        if (true === result) {
             fileLoadWidget.dismiss();
         }
 
