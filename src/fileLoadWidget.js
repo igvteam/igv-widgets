@@ -132,10 +132,10 @@ class FileLoadWidget {
 
         this.dismissErrorMessage();
 
-        const e = this.container.querySelector('.igv-flw-local-file-name-container');
-        if (e) {
-            DOMUtils.hide(e);
-        }
+        // const e = this.container.querySelector('.igv-flw-local-file-name-container');
+        // if (e) {
+        //     DOMUtils.hide(e);
+        // }
 
         // clear input elements
         this.container.querySelectorAll('.igv-flw-input-row').forEach(div => {

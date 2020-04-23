@@ -87,18 +87,21 @@ let isJSON = (thang) => {
 };
 
 let configureModal = (fileLoadWidget, modal, okHandler) => {
+
     let dismiss;
 
     // upper dismiss - x - button
     dismiss = modal.querySelector('.modal-header button');
     dismiss.addEventListener('click', () => {
         fileLoadWidget.dismiss();
+        $(modal).modal('hide');
     });
 
     // lower dismiss - close - button
     dismiss = modal.querySelector('.modal-footer button:nth-child(1)');
     dismiss.addEventListener('click', () => {
         fileLoadWidget.dismiss();
+        $(modal).modal('hide');
     });
 
     // ok - button
@@ -110,6 +113,7 @@ let configureModal = (fileLoadWidget, modal, okHandler) => {
 
         if (true === result) {
             fileLoadWidget.dismiss();
+            $(modal).modal('hide');
         }
 
     });
