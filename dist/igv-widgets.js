@@ -8338,7 +8338,7 @@ class MultipleTrackFileLoad {
 
                 input.value = '';
 
-                await MultipleTrackFileLoad.ingestPaths( { paths, fileLoadHandler, google, igvxhr } );
+                await ingestPaths( { paths, fileLoadHandler, google, igvxhr } );
             }
 
         });
@@ -8347,7 +8347,7 @@ class MultipleTrackFileLoad {
 
             const obj =
                 {
-                    success: dbFiles => MultipleTrackFileLoad.ingestPaths( { paths: dbFiles.map(({ link }) => link), fileLoadHandler, google, igvxhr } ),
+                    success: dbFiles => ingestPaths( { paths: dbFiles.map(({ link }) => link), fileLoadHandler, google, igvxhr } ),
                     cancel: () => {},
                     linkType: "preview",
                     multiselect: multipleFileSelection,
@@ -8378,7 +8378,7 @@ class MultipleTrackFileLoad {
 
                     });
 
-                    await MultipleTrackFileLoad.ingestPaths({ paths: obj, fileLoadHandler, google, igvxhr });
+                    await ingestPaths({ paths: obj, fileLoadHandler, google, igvxhr });
                 });
 
             });
