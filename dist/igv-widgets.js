@@ -8014,30 +8014,6 @@ function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
 
 }
 
-const sessionControllerConfigurator = (prefix, igvxhr, google, googleEnabled, loadHandler, JSONProvider) => {
-
-    // Session File Load
-    const sessionFileLoadConfig =
-        {
-            localFileInput: document.querySelector('#igv-app-dropdown-local-session-file-input'),
-            dropboxButton: document.querySelector('#igv-app-dropdown-dropbox-session-file-button'),
-            googleEnabled,
-            googleDriveButton: document.querySelector('#igv-app-dropdown-google-drive-session-file-button'),
-            loadHandler,
-            igvxhr,
-            google
-        };
-
-    // Session Controller
-    return {
-            prefix,
-            sessionLoadModal: document.querySelector('#igv-app-session-from-url-modal'),
-            sessionSaveModal: document.querySelector('#igv-app-session-save-modal'),
-            sessionFileLoad: new SessionFileLoad(sessionFileLoadConfig),
-            JSONProvider
-        }
-};
-
 /*
  *  The MIT License (MIT)
  *
@@ -8623,4 +8599,4 @@ const getFilenameComprehensive = path => {
 
 };
 
-export { Alert, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, sessionControllerConfigurator };
+export { Alert, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils };

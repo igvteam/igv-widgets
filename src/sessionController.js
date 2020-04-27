@@ -23,7 +23,6 @@
 
 import FileLoadWidget from "./fileLoadWidget.js";
 import FileLoadManager from "./fileLoadManager.js";
-import SessionFileLoad from './sessionFileLoad.js';
 import * as Utils from './utils.js';
 import { FileUtils, IGVUtils } from '../node_modules/igv-utils/src/index.js';
 
@@ -99,29 +98,5 @@ function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
     });
 
 }
-
-export const sessionControllerConfigurator = (prefix, igvxhr, google, googleEnabled, loadHandler, JSONProvider) => {
-
-    // Session File Load
-    const sessionFileLoadConfig =
-        {
-            localFileInput: document.querySelector('#igv-app-dropdown-local-session-file-input'),
-            dropboxButton: document.querySelector('#igv-app-dropdown-dropbox-session-file-button'),
-            googleEnabled,
-            googleDriveButton: document.querySelector('#igv-app-dropdown-google-drive-session-file-button'),
-            loadHandler,
-            igvxhr,
-            google
-        };
-
-    // Session Controller
-    return {
-            prefix,
-            sessionLoadModal: document.querySelector('#igv-app-session-from-url-modal'),
-            sessionSaveModal: document.querySelector('#igv-app-session-save-modal'),
-            sessionFileLoad: new SessionFileLoad(sessionFileLoadConfig),
-            JSONProvider
-        }
-};
 
 export default SessionController;
