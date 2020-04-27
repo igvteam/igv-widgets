@@ -1317,8 +1317,7 @@ const knownFileExtensions = new Set([
     "bp",
     "snp",
     "rmsk",
-    "cram",
-    "gwas"
+    "cram"
 ]);
 
 function inferTrackTypes(config) {
