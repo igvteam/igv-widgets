@@ -7980,7 +7980,8 @@ const referenceSet = new Set(['fai', 'fa', 'fasta']);
 const dataSet = new Set(['fna', 'fa', 'fasta']);
 const indexSet = new Set(['fai']);
 
-const errorString = 'ERROR: Load either: 1) single JSON file. 2) data file (.fa or .fasta ) & index file (.fai).';
+// const errorString = 'ERROR: Load either: 1) single JSON file. 2) data file (.fa or .fasta ) & index file (.fai).';
+const errorString = 'ERROR: Select both a sequence file (.fa or .fasta) and an index file (.fai).';
 class GenomeFileLoad extends FileLoad {
 
     constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr, google }) {
@@ -8559,7 +8560,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
         for (let path of remainingPaths) {
 
             let name;
-            if (!(path instanceof File) && google.isGoogleURL(path)) {
+            if (!(path instanceof File) && google.isGoogleDrive(path)) {
                 const { name:n } = await google.getDriveFileInfo(path);
                 name = n;
             } else {
@@ -8644,7 +8645,7 @@ const createDataFilePathLUT = (LUT, google) => {
 
             let format = undefined;
 
-            if (google.isGoogleURL(path)) {
+            if (google.isGoogleDrive(path)) {
                 format = inferFileFormat( key );
             } else if (path instanceof File) {
 
@@ -8654,7 +8655,7 @@ const createDataFilePathLUT = (LUT, google) => {
             } else if ('object' === typeof path) {
 
                 const { name, url } = path;
-                if (google.isGoogleURL(url)) {
+                if (google.isGoogleDrive(url)) {
                     format = inferFileFormat( name );
                 }
 
@@ -8687,7 +8688,7 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
 
             config = { errorString: path.errorString };
 
-        } else if (google.isGoogleURL(path)) {
+        } else if (google.isGoogleDrive(path)) {
 
             config =
                 {
@@ -8713,7 +8714,7 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
 
             const { url } = path;
 
-            if (google.isGoogleURL(url)) {
+            if (google.isGoogleDrive(url)) {
                 config = path;
             }
 
