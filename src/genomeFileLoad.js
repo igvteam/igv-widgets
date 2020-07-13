@@ -6,7 +6,7 @@ const referenceSet = new Set(['fai', 'fa', 'fasta']);
 const dataSet = new Set(['fna', 'fa', 'fasta']);
 const indexSet = new Set(['fai']);
 
-const errorString = 'ERROR: Load either: 1) single XML file 2). single JSON file. 3) data file (.fa or .fasta ) & index file (.fai).';
+const errorString = 'ERROR: Load either: 1) single JSON file. 2) data file (.fa or .fasta ) & index file (.fai).';
 class GenomeFileLoad extends FileLoad {
 
     constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr, google }) {

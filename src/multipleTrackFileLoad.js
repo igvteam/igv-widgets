@@ -111,8 +111,10 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
 
         const LUT = {};
         for (let path of remainingPaths) {
+
             const name = getFilenameComprehensive(path);
             LUT[ name ] = path;
+
         }
 
         // LUT for data file paths
@@ -209,7 +211,7 @@ const createDataFilePathLUT = (LUT, google) => {
             if (undefined !== format) {
                 result[ key ] = path;
             } else {
-                result[ key ] = { errorString: `Error: Unrecognizedfile format ${ key }`}
+                result[ key ] = { errorString: `Error: Unrecognized file format ${ key }`}
             }
 
         }
