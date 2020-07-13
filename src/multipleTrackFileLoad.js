@@ -110,11 +110,18 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
     if (remainingPaths) {
 
         const LUT = {};
+
         for (let path of remainingPaths) {
 
-            const name = getFilenameComprehensive(path);
-            LUT[ name ] = path;
+            let name
+            if (!(path instanceof File) && google.isGoogleURL(path)) {
+                const { name:n } = await google.getDriveFileInfo(path)
+                name = n;
+            } else {
+                name = getFilenameComprehensive(path);
+            }
 
+            LUT[ name ] = path;
         }
 
         // LUT for data file paths
@@ -192,7 +199,9 @@ const createDataFilePathLUT = (LUT, google) => {
 
             let format = undefined;
 
-            if (path instanceof File) {
+            if (google.isGoogleURL(path)) {
+                format = TrackUtils.inferFileFormat( key );
+            } else if (path instanceof File) {
 
                 const { name } = path;
                 format = TrackUtils.inferFileFormat( name );
@@ -232,6 +241,15 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
         if (path.errorString) {
 
             config = { errorString: path.errorString }
+
+        } else if (google.isGoogleURL(path)) {
+
+            config =
+                {
+                    url: path,
+                    name: key,
+                    filename: key
+                };
 
         } else if (path instanceof File) {
 
@@ -326,7 +344,7 @@ const validateTrackConfigurations = trackConfigurationLUT => {
 const getFilenameComprehensive = path => {
 
     if (path instanceof File || 'object' === typeof path) {
-        const { name } = path;
+        const {name} = path;
         return name;
     } else {
         return FileUtils.getFilename(path);

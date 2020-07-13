@@ -7980,7 +7980,7 @@ const referenceSet = new Set(['fai', 'fa', 'fasta']);
 const dataSet = new Set(['fna', 'fa', 'fasta']);
 const indexSet = new Set(['fai']);
 
-const errorString = 'ERROR: Load either: 1) single XML file 2). single JSON file. 3) data file (.fa or .fasta ) & index file (.fai).';
+const errorString = 'ERROR: Load either: 1) single JSON file. 2) data file (.fa or .fasta ) & index file (.fai).';
 class GenomeFileLoad extends FileLoad {
 
     constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr, google }) {
@@ -8555,8 +8555,17 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
     if (remainingPaths) {
 
         const LUT = {};
+
         for (let path of remainingPaths) {
-            const name = getFilenameComprehensive(path);
+
+            let name;
+            if (!(path instanceof File) && google.isGoogleURL(path)) {
+                const { name:n } = await google.getDriveFileInfo(path);
+                name = n;
+            } else {
+                name = getFilenameComprehensive(path);
+            }
+
             LUT[ name ] = path;
         }
 
@@ -8635,7 +8644,9 @@ const createDataFilePathLUT = (LUT, google) => {
 
             let format = undefined;
 
-            if (path instanceof File) {
+            if (google.isGoogleURL(path)) {
+                format = inferFileFormat( key );
+            } else if (path instanceof File) {
 
                 const { name } = path;
                 format = inferFileFormat( name );
@@ -8654,7 +8665,7 @@ const createDataFilePathLUT = (LUT, google) => {
             if (undefined !== format) {
                 result[ key ] = path;
             } else {
-                result[ key ] = { errorString: `Error: Unrecognizedfile format ${ key }`};
+                result[ key ] = { errorString: `Error: Unrecognized file format ${ key }`};
             }
 
         }
@@ -8675,6 +8686,15 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
         if (path.errorString) {
 
             config = { errorString: path.errorString };
+
+        } else if (google.isGoogleURL(path)) {
+
+            config =
+                {
+                    url: path,
+                    name: key,
+                    filename: key
+                };
 
         } else if (path instanceof File) {
 
@@ -8769,7 +8789,7 @@ const validateTrackConfigurations = trackConfigurationLUT => {
 const getFilenameComprehensive = path => {
 
     if (path instanceof File || 'object' === typeof path) {
-        const { name } = path;
+        const {name} = path;
         return name;
     } else {
         return getFilename(path);
