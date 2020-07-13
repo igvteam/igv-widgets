@@ -8593,6 +8593,8 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
                 Alert.presentAlert(errorStrings.join('\n'));
             }
 
+        } else {
+            Alert.presentAlert('ERROR: No data file has been provided');
         }
 
     } else {
