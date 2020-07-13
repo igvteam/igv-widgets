@@ -8560,7 +8560,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
         for (let path of remainingPaths) {
 
             let name;
-            if (!(path instanceof File) && google.isGoogleDrive(path)) {
+            if (!(path instanceof File) && !('object' === typeof path) && google.isGoogleDrive(path)) {
                 const { name:n } = await google.getDriveFileInfo(path);
                 name = n;
             } else {
@@ -8645,10 +8645,7 @@ const createDataFilePathLUT = (LUT, google) => {
 
             let format = undefined;
 
-            if (google.isGoogleDrive(path)) {
-                format = inferFileFormat( key );
-            } else if (path instanceof File) {
-
+            if (path instanceof File) {
                 const { name } = path;
                 format = inferFileFormat( name );
 
@@ -8659,6 +8656,8 @@ const createDataFilePathLUT = (LUT, google) => {
                     format = inferFileFormat( name );
                 }
 
+            } else if (google.isGoogleDrive(path)) {
+                format = inferFileFormat( key );
             } else {
                 format = inferFileFormat( getFilenameComprehensive(path) );
             }
@@ -8688,15 +8687,6 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
 
             config = { errorString: path.errorString };
 
-        } else if (google.isGoogleDrive(path)) {
-
-            config =
-                {
-                    url: path,
-                    name: key,
-                    filename: key
-                };
-
         } else if (path instanceof File) {
 
             const { name } = path;
@@ -8717,6 +8707,15 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
             if (google.isGoogleDrive(url)) {
                 config = path;
             }
+
+        } else if (google.isGoogleDrive(path)) {
+
+            config =
+                {
+                    url: path,
+                    name: key,
+                    filename: key
+                };
 
         } else {
 
