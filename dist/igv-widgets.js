@@ -7551,7 +7551,7 @@ let indexLookup = (dataSuffix) => {
 
 };
 
-const isGooglePath = (path, google) => {
+const isGoogleDriveComprehensive = (path, google) => {
     return !(path instanceof File) && !('object' === typeof path) && google.isGoogleDrive(path)
 };
 
@@ -7638,7 +7638,7 @@ var utils = /*#__PURE__*/Object.freeze({
     getIndexObjectWithDataName: getIndexObjectWithDataName,
     isKnownFileExtension: isKnownFileExtension,
     configureModal: configureModal,
-    isGooglePath: isGooglePath
+    isGoogleDriveComprehensive: isGoogleDriveComprehensive
 });
 
 /*
@@ -8565,7 +8565,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
         for (let path of remainingPaths) {
 
             let name;
-            if (isGooglePath(path, google)) {
+            if (isGoogleDriveComprehensive(path, google)) {
                 const { name:n } = await google.getDriveFileInfo(path);
                 name = n;
             } else {

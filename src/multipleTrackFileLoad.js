@@ -114,7 +114,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
         for (let path of remainingPaths) {
 
             let name
-            if (Utils.isGooglePath(path, google)) {
+            if (Utils.isGoogleDriveComprehensive(path, google)) {
                 const { name:n } = await google.getDriveFileInfo(path)
                 name = n;
             } else {
