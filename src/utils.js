@@ -182,6 +182,10 @@ let indexLookup = (dataSuffix) => {
 
 };
 
+const isGooglePath = (path, google) => {
+    return !(path instanceof File) && !('object' === typeof path) && google.isGoogleDrive(path)
+}
+
 // TODO: This replaces the above "indexLookup"
 const knownDataFileIndexFileLookup = (extension, isGZippedVCF) => {
 
@@ -257,4 +261,4 @@ const knownDataFileIndexFileLookup = (extension, isGZippedVCF) => {
 
 };
 
-export { knownDataFileIndexFileLookup, validIndexExtensionSet, isValidIndexExtension, getIndexObjectWithDataName, isKnownFileExtension, configureModal };
+export { knownDataFileIndexFileLookup, validIndexExtensionSet, isValidIndexExtension, getIndexObjectWithDataName, isKnownFileExtension, configureModal, isGooglePath };

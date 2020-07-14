@@ -114,7 +114,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
         for (let path of remainingPaths) {
 
             let name
-            if (!(path instanceof File) && !('object' === typeof path) && google.isGoogleDrive(path)) {
+            if (Utils.isGooglePath(path, google)) {
                 const { name:n } = await google.getDriveFileInfo(path)
                 name = n;
             } else {
@@ -148,7 +148,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
             }
 
         } else {
-            Alert.presentAlert('ERROR: No data file has been provided')
+            Alert.presentAlert('ERROR: Only index files were selected. The corresponding data files must also be selected.')
         }
 
     } else {
