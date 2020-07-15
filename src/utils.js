@@ -183,7 +183,7 @@ let indexLookup = (dataSuffix) => {
 };
 
 const isGoogleDriveComprehensive = (path, google) => {
-    return !(path instanceof File) && !('object' === typeof path) && google.isGoogleDrive(path)
+    return !(path instanceof File) && !(path.google_url) && google.isGoogleDrive(path)
 }
 
 // TODO: This replaces the above "indexLookup"

@@ -69,22 +69,19 @@ class MultipleTrackFileLoad {
 
                 GoogleFilePicker.createDropdownButtonPicker(multipleFileSelection, async responses => {
 
-                    const obj = responses.map(({ name, url }) => {
+                    const paths = responses.map(({ name, url }) => {
 
                         return {
                             url: google.driveDownloadURL(url),
-
-                            // TODO: NOT NEEDED! Used only for compatibility with FileUtils.getExtension()
                             google_url: google.driveDownloadURL(url),
-
                             name,
                             filename: name,
                             format: TrackUtils.inferFileFormat(name)
-                        };
+                        }
 
                     });
 
-                    await ingestPaths({ paths: obj, fileLoadHandler, google, igvxhr });
+                    await ingestPaths({ paths, fileLoadHandler, google, igvxhr });
                 });
 
             });
@@ -205,7 +202,7 @@ const createDataFilePathLUT = (LUT, google) => {
                 const { name } = path;
                 format = TrackUtils.inferFileFormat( name );
 
-            } else if ('object' === typeof path) {
+            } else if (path.google_url) {
 
                 const { name, url } = path;
                 if (google.isGoogleDrive(url)) {
@@ -256,7 +253,7 @@ const createTrackConfigurationLUT = (dataFileLUT, google) => {
 
             TrackUtils.inferTrackTypes(config);
 
-        } else if ('object' === typeof path) {
+        } else if (path.google_url) {
 
             const { url } = path;
 
@@ -344,7 +341,7 @@ const validateTrackConfigurations = trackConfigurationLUT => {
 
 const getFilenameComprehensive = path => {
 
-    if (path instanceof File || 'object' === typeof path) {
+    if (path instanceof File || path.google_url) {
         const {name} = path;
         return name;
     } else {
