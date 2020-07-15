@@ -2,15 +2,9 @@
   "name": "igv-widgets",
   "version": "1.0.0",
   "description": "Various UI modules to support igvteam web apps",
-  "browser": "dist/igv-widgets.js",
-  "module": "dist/igv-widgets.js",
   "files": [
-    "dist/**"
+    "src/**"
   ],
-  "scripts": {
-    "build": "npx rollup --config",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/igvteam/igv-widgets.git"
@@ -29,8 +23,5 @@
     "data-modal": "github:igvteam/data-modal",
     "igv-ui": "github:igvteam/igv-ui",
     "igv-utils": "github:igvteam/igv-utils"
-  },
-  "devDependencies": {
-    "rollup": "^1.32.1"
   }
 }
