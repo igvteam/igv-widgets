@@ -141,7 +141,7 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
 
             if (errorStrings) {
                 // console.log(errorStrings.join('\n'));
-                Alert.presentAlert(errorStrings.join('\n'))
+                Alert.presentAlert(errorStrings.join('<br>'))
             }
 
         } else {
