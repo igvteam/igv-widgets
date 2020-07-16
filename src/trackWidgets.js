@@ -4,8 +4,6 @@ import EncodeTrackDatasource from "../node_modules/data-modal/js/encodeTrackData
 import { encodeTrackDatasourceConfigurator } from '../node_modules/data-modal/js/encodeTrackDatasourceConfig.js'
 import { encodeTrackDatasourceSignalConfigurator } from "../node_modules/data-modal/js/encodeTrackDatasourceSignalConfig.js"
 import { encodeTrackDatasourceOtherConfigurator } from "../node_modules/data-modal/js/encodeTrackDatasourceOtherConfig.js"
-
-import { GtexUtils } from '../node_modules/igv-utils/src/index.js';
 import { createGenericSelectModal, createTrackURLModal } from '../node_modules/igv-ui/src/index.js'
 
 let fileLoadWidget;
@@ -81,7 +79,7 @@ const createTrackWidgets = ($igvMain, $localFileInput, $dropboxButton, googleEna
 
 }
 
-const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, selectModalId, igvxhr, google, trackRegistryFile, trackLoadHandler) => {
+const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, selectModalId, igvxhr, google, GtexUtils, trackRegistryFile, trackLoadHandler) => {
 
     createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, igvxhr, google, trackLoadHandler)
 
@@ -94,7 +92,7 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
             const { genomeID } = data;
             encodeModalTables[ 0 ].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)))
             encodeModalTables[ 1 ].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)))
-            await updateTrackMenus(genomeID, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, trackLoadHandler);
+            await updateTrackMenus(genomeID, GtexUtils, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, trackLoadHandler);
         }
     }
 
@@ -102,7 +100,7 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
 
 }
 
-const updateTrackMenus = async (genomeID, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, fileLoader) => {
+const updateTrackMenus = async (genomeID, GtexUtils, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, fileLoader) => {
 
     const id_prefix = 'genome_specific_';
 
