@@ -9545,33 +9545,36 @@ const encodeTrackDatasourceOtherConfigurator = genomeId => {
 
 const createGenericSelectModal = (id, select_id) => {
 
-    const generic_select_modal_string =
-        `<div id="${ id }" class="modal">
+    return `<div id="${ id }" class="modal">
 
-            <div class="modal-dialog modal-lg">
-
-                <div class="modal-content">
-
-                    <div class="modal-header">
-                        <div class="modal-title"></div>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
-                    </div>
-        
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <select id="${ select_id }" class="form-control"></select>
+                <div class="modal-dialog modal-lg">
+    
+                    <div class="modal-content">
+    
+                        <div class="modal-header">
+                            <div class="modal-title"></div>
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
                         </div>
+            
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <select id="${ select_id }" class="form-control" multiple></select>
+                            </div>
+                        </div>
+                        
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">OK</button>
+                        </div>
+    
                     </div>
-
+    
                 </div>
 
-            </div>
+            </div>`;
 
-        </div>`;
-
-    return generic_select_modal_string;
 };
 
 const createTrackURLModal = id => {
@@ -9689,13 +9692,40 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
     const $genericSelectModal = $(createGenericSelectModal(selectModalId, `${ selectModalId }-select`));
     $igvMain.append($genericSelectModal);
 
+    const $select = $genericSelectModal.find('select');
+
+    // close - button
+    const dismiss = $genericSelectModal.get(0).querySelector('.modal-footer button:nth-child(1)');
+    dismiss.addEventListener('click', () => {
+        $genericSelectModal.modal('hide');
+    });
+
+    // ok - button
+    const ok = $genericSelectModal.get(0).querySelector('.modal-footer button:nth-child(2)');
+    ok.addEventListener('click', () => {
+
+        const configurations = [];
+        const $selectedOptions = $select.find('option:selected');
+        $selectedOptions.each(function() {
+            console.log(`You selected ${ $(this).val() }`);
+            configurations.push( $(this).data('track') );
+            $(this).removeAttr('selected');
+        });
+
+        if (configurations.length > 0) {
+            trackLoadHandler(configurations);
+        }
+
+        $genericSelectModal.modal('hide');
+    });
+
     genomeChangeListener = {
 
         receiveEvent: async ({ data }) => {
             const { genomeID } = data;
             encodeModalTables[ 0 ].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)));
             encodeModalTables[ 1 ].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)));
-            await updateTrackMenus(genomeID, GtexUtils, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, trackLoadHandler);
+            await updateTrackMenus(genomeID, GtexUtils, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
         }
     };
 
@@ -9703,7 +9733,7 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
 
 };
 
-const updateTrackMenus = async (genomeID, GtexUtils, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, fileLoader) => {
+const updateTrackMenus = async (genomeID, GtexUtils, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal) => {
 
     const id_prefix = 'genome_specific_';
 
@@ -9784,12 +9814,11 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeModalTables, trackReg
         const $button = createDropdownButton($divider, config.label, id_prefix);
 
         $button.on('click', () => {
-            configureSelectModal($genericSelectModal, config, fileLoader);
+            configureSelectModal($genericSelectModal, config);
             $genericSelectModal.modal('show');
         });
 
     }
-
 
 };
 
@@ -9801,7 +9830,7 @@ const createDropdownButton = ($divider, buttonText, id_prefix) => {
     return $button
 };
 
-const configureSelectModal = ($genericSelectModal, buttonConfiguration, fileLoader) => {
+const configureSelectModal = ($genericSelectModal, buttonConfiguration) => {
 
     let markup = `<div>${ buttonConfiguration.label }</div>`;
 
@@ -9811,20 +9840,12 @@ const configureSelectModal = ($genericSelectModal, buttonConfiguration, fileLoad
 
     $genericSelectModal.find('.modal-title').html(markup);
 
-    $genericSelectModal.find('select').remove();
-
-    let $select = $('<select>', {class: 'form-control'});
-    $genericSelectModal.find('.form-group').append($select);
-
-    let $option = $('<option>', {text: 'Select...'});
-    $select.append($option);
-
-    $option.attr('selected', 'selected');
-    $option.val(undefined);
+    let $select = $genericSelectModal.find('select');
+    $select.empty();
 
     buttonConfiguration.tracks.reduce(($accumulator, configuration) => {
 
-        $option = $('<option>', {value: configuration.name, text: configuration.name});
+        const $option = $('<option>', {value: configuration.name, text: configuration.name});
         $select.append($option);
 
         $option.data('track', configuration);
@@ -9833,24 +9854,6 @@ const configureSelectModal = ($genericSelectModal, buttonConfiguration, fileLoad
 
         return $accumulator;
     }, $select);
-
-    $select.on('change', () => {
-
-        let $option = $select.find('option:selected');
-        const value = $option.val();
-
-        if ('' === value) ; else {
-
-            $option.removeAttr("selected");
-
-            const configuration = $option.data('track');
-
-            fileLoader([ configuration ]);
-        }
-
-        $genericSelectModal.modal('hide');
-
-    });
 
 };
 
