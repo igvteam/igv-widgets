@@ -9694,15 +9694,11 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
 
     const $select = $genericSelectModal.find('select');
 
-    // close - button
-    const dismiss = $genericSelectModal.get(0).querySelector('.modal-footer button:nth-child(1)');
-    dismiss.addEventListener('click', () => {
-        $genericSelectModal.modal('hide');
-    });
+    const $dismiss = $genericSelectModal.find('.modal-footer button:nth-child(1)');
+    $dismiss.on('click', () => $genericSelectModal.modal('hide'));
 
-    // ok - button
-    const ok = $genericSelectModal.get(0).querySelector('.modal-footer button:nth-child(2)');
-    ok.addEventListener('click', () => {
+    const $ok = $genericSelectModal.find('.modal-footer button:nth-child(2)');
+    $ok.on('click', () => {
 
         const configurations = [];
         const $selectedOptions = $select.find('option:selected');
@@ -9737,7 +9733,6 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeModalTables, trackReg
 
     const id_prefix = 'genome_specific_';
 
-    // const $divider = $dropdownMenu.find('#igv-app-annotations-section');
     const $divider = $dropdownMenu.find('.dropdown-divider');
 
     const searchString = '[id^=' + id_prefix + ']';
