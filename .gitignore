@@ -1,9 +1,9 @@
 .DS_Store
 /.vscode/
+/es5/
 /.idea/
-/igv.js.iml
 /node_modules/
-/tmp/
 *.iml
 /npm-debug.log
-/examples/css/.sass-cache/
+/css/.sass-cache/
+/dist/
