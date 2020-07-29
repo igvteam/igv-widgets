@@ -3,7 +3,8 @@
   "version": "1.0.1",
   "description": "Various UI modules to support igvteam web apps",
   "files": [
-    "dist/**"
+    "dist/**",
+    "css/**"
   ],
   "scripts": {
     "build": "npx rollup --config",
