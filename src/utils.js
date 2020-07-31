@@ -118,12 +118,10 @@ let configureModal = (fileLoadWidget, modal, okHandler) => {
 
     ok.addEventListener('click', doOK);
 
-    ok.addEventListener('keydown', event => {
-        // Enter Key
-        if (event.key === 13) {
+    modal.addEventListener('keypress', event => {
+        if ('Enter' === event.key) {
             doOK()
         }
-
     });
 };
 

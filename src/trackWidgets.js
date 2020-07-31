@@ -99,7 +99,8 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
     $dismiss.on('click', () => $genericSelectModal.modal('hide'));
 
     const $ok = $genericSelectModal.find('.modal-footer button:nth-child(2)');
-    $ok.on('click', () => {
+
+    const okHandler = () => {
 
         const configurations = []
         const $selectedOptions = $select.find('option:selected')
@@ -114,6 +115,15 @@ const createTrackWidgetsWithTrackRegistry = ($igvMain, $dropdownMenu, $localFile
         }
 
         $genericSelectModal.modal('hide');
+
+    }
+
+    $ok.on('click', okHandler);
+
+    $genericSelectModal.get(0).addEventListener('keypress', event => {
+        if ('Enter' === event.key) {
+            okHandler()
+        }
     });
 
     genomeChangeListener = {
