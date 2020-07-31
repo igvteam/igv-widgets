@@ -1,4 +1,4 @@
-.igv-ui-alert-dialog-container {
+.igv-widgets-alert-dialog-container {
   position: absolute;
   z-index: 2048;
   top: 50%;
@@ -19,7 +19,7 @@
   flex-wrap: nowrap;
   justify-content: space-between;
   align-items: center; }
-  .igv-ui-alert-dialog-container > div:first-child {
+  .igv-widgets-alert-dialog-container > div:first-child {
     display: flex;
     flex-flow: row;
     flex-wrap: nowrap;
@@ -34,21 +34,21 @@
     border-bottom-style: solid;
     border-bottom-width: thin;
     background-color: #eee; }
-    .igv-ui-alert-dialog-container > div:first-child div {
+    .igv-widgets-alert-dialog-container > div:first-child div {
       margin-right: 4px;
       margin-bottom: 2px;
       height: 12px;
       width: 12px;
       color: #7F7F7F; }
-    .igv-ui-alert-dialog-container > div:first-child div:hover {
+    .igv-widgets-alert-dialog-container > div:first-child div:hover {
       cursor: pointer;
       color: #444; }
-  .igv-ui-alert-dialog-container #igv-ui-alert-dialog-body {
+  .igv-widgets-alert-dialog-container #igv-widgets-alert-dialog-body {
     color: #7F7F7F;
     width: 100%;
     height: calc(100% - 24px - 64px);
     overflow-y: scroll; }
-    .igv-ui-alert-dialog-container #igv-ui-alert-dialog-body #igv-ui-alert-dialog-body-copy {
+    .igv-widgets-alert-dialog-container #igv-widgets-alert-dialog-body #igv-widgets-alert-dialog-body-copy {
       cursor: pointer;
       margin: 16px;
       width: auto;
@@ -57,7 +57,7 @@
       word-break: break-word;
       background-color: white;
       border: unset; }
-  .igv-ui-alert-dialog-container > div:last-child {
+  .igv-widgets-alert-dialog-container > div:last-child {
     width: 100%;
     margin-bottom: 10px;
     background-color: white;
@@ -66,7 +66,7 @@
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center; }
-    .igv-ui-alert-dialog-container > div:last-child div {
+    .igv-widgets-alert-dialog-container > div:last-child div {
       margin: unset;
       width: 40px;
       height: 30px;
@@ -81,9 +81,9 @@
       border-width: thin;
       border-radius: 4px;
       background-color: #2B81AF; }
-    .igv-ui-alert-dialog-container > div:last-child div:hover {
+    .igv-widgets-alert-dialog-container > div:last-child div:hover {
       cursor: pointer;
       border-color: #25597f;
       background-color: #25597f; }
 
-/*# sourceMappingURL=igv-alert-dialog.css.map */
+/*# sourceMappingURL=igv-widgets-alert-dialog.css.map */

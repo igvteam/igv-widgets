@@ -1,30 +1,30 @@
-$igv-alert-font-face: 'Open Sans', sans-serif;
-$igv-alert-grey-color: #7F7F7F;
-$igv-alert-border-radius: 4px;
-$igv-alert-dialog-width: 400px;
-$igv-alert-dialog-height: 200px;
-$igv-alert-dialog-margin: -150px;
-$igv-alert-dialog-header-height: 24px;
-$igv-alert-dialog-ok-container-height: 64px;
-$igv-alert-dialog-ok-button-height: 30px;
-$igv-alert-dialog-body-copy-margin: 16px;
+$igv-widgets-alert-font-face: 'Open Sans', sans-serif;
+$igv-widgets-alert-grey-color: #7F7F7F;
+$igv-widgets-alert-border-radius: 4px;
+$igv-widgets-alert-dialog-width: 400px;
+$igv-widgets-alert-dialog-height: 200px;
+$igv-widgets-alert-dialog-margin: -150px;
+$igv-widgets-alert-dialog-header-height: 24px;
+$igv-widgets-alert-dialog-ok-container-height: 64px;
+$igv-widgets-alert-dialog-ok-button-height: 30px;
+$igv-widgets-alert-dialog-body-copy-margin: 16px;
 
-.igv-ui-alert-dialog-container {
+.igv-widgets-alert-dialog-container {
 
   position: absolute;
   z-index: 2048;
   top:50%;
   left:50%;
-  margin:$igv-alert-dialog-margin 0 0 $igv-alert-dialog-margin;
-  width:$igv-alert-dialog-width;
-  height:$igv-alert-dialog-height;
+  margin:$igv-widgets-alert-dialog-margin 0 0 $igv-widgets-alert-dialog-margin;
+  width:$igv-widgets-alert-dialog-width;
+  height:$igv-widgets-alert-dialog-height;
 
-  border-color: $igv-alert-grey-color;
-  border-radius: $igv-alert-border-radius;
+  border-color: $igv-widgets-alert-grey-color;
+  border-radius: $igv-widgets-alert-border-radius;
   border-style: solid;
   border-width: thin;
 
-  font-family: $igv-alert-font-face;
+  font-family: $igv-widgets-alert-font-face;
   font-size: 15px;
   font-weight: 400;
 
@@ -46,12 +46,12 @@ $igv-alert-dialog-body-copy-margin: 16px;
     align-items: center;
 
     width: 100%;
-    height: $igv-alert-dialog-header-height;
+    height: $igv-widgets-alert-dialog-header-height;
     cursor: move;
 
-    border-top-left-radius: $igv-alert-border-radius;
-    border-top-right-radius: $igv-alert-border-radius;
-    border-bottom-color: $igv-alert-grey-color;
+    border-top-left-radius: $igv-widgets-alert-border-radius;
+    border-top-right-radius: $igv-widgets-alert-border-radius;
+    border-bottom-color: $igv-widgets-alert-grey-color;
     border-bottom-style: solid;
     border-bottom-width: thin;
 
@@ -62,7 +62,7 @@ $igv-alert-dialog-body-copy-margin: 16px;
       margin-bottom: 2px;
       height: 12px;
       width: 12px;
-      color: $igv-alert-grey-color;
+      color: $igv-widgets-alert-grey-color;
     }
 
     div:hover {
@@ -73,19 +73,19 @@ $igv-alert-dialog-body-copy-margin: 16px;
   }
 
   // body container
-  #igv-ui-alert-dialog-body {
-    color: $igv-alert-grey-color;
+  #igv-widgets-alert-dialog-body {
+    color: $igv-widgets-alert-grey-color;
 
     width: 100%;
-    height: calc(100% - #{$igv-alert-dialog-header-height} - #{$igv-alert-dialog-ok-container-height});
+    height: calc(100% - #{$igv-widgets-alert-dialog-header-height} - #{$igv-widgets-alert-dialog-ok-container-height});
 
     overflow-y: scroll;
 
-    #igv-ui-alert-dialog-body-copy {
+    #igv-widgets-alert-dialog-body-copy {
       cursor: pointer;
       //user-select: none;
 
-      margin: $igv-alert-dialog-body-copy-margin;
+      margin: $igv-widgets-alert-dialog-body-copy-margin;
 
       width: auto;
       height: auto;
@@ -116,13 +116,13 @@ $igv-alert-dialog-body-copy-margin: 16px;
     div {
       margin: unset;
       width: 40px;
-      height: $igv-alert-dialog-ok-button-height;
+      height: $igv-widgets-alert-dialog-ok-button-height;
 
-      line-height: $igv-alert-dialog-ok-button-height;
+      line-height: $igv-widgets-alert-dialog-ok-button-height;
       text-align: center;
 
       color: white;
-      font-family: $igv-alert-font-face;
+      font-family: $igv-widgets-alert-font-face;
       font-size: small;
       font-weight: 400;
 
