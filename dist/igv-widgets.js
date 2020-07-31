@@ -7406,26 +7406,12 @@ let isKnownFileExtension = (extension) => {
 
 let configureModal = (fileLoadWidget, modal, okHandler) => {
 
-    let dismiss;
-
-    // upper dismiss - x - button
-    dismiss = modal.querySelector('.modal-header button');
-    dismiss.addEventListener('click', () => {
+    const doDismiss = () => {
         fileLoadWidget.dismiss();
         $(modal).modal('hide');
-    });
+    };
 
-    // lower dismiss - close - button
-    dismiss = modal.querySelector('.modal-footer button:nth-child(1)');
-    dismiss.addEventListener('click', () => {
-        fileLoadWidget.dismiss();
-        $(modal).modal('hide');
-    });
-
-    // ok - button
-    const ok = modal.querySelector('.modal-footer button:nth-child(2)');
-
-    ok.addEventListener('click', async () => {
+    const doOK = async () => {
 
         const result = await okHandler(fileLoadWidget);
 
@@ -7433,9 +7419,30 @@ let configureModal = (fileLoadWidget, modal, okHandler) => {
             fileLoadWidget.dismiss();
             $(modal).modal('hide');
         }
+    };
+
+    let dismiss;
+
+    // upper dismiss - x - button
+    dismiss = modal.querySelector('.modal-header button');
+    dismiss.addEventListener('click', doDismiss);
+
+    // lower dismiss - close - button
+    dismiss = modal.querySelector('.modal-footer button:nth-child(1)');
+    dismiss.addEventListener('click', doDismiss);
+
+    // ok - button
+    const ok = modal.querySelector('.modal-footer button:nth-child(2)');
+
+    ok.addEventListener('click', doOK);
+
+    ok.addEventListener('keydown', event => {
+        // Enter Key
+        if (event.key === 13) {
+            doOK();
+        }
 
     });
-
 };
 
 let indexLookup = (dataSuffix) => {
