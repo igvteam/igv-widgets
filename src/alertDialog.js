@@ -14,6 +14,7 @@ class AlertDialog {
         // container
         this.container = DOMUtils.div({class: "igv-widgets-alert-dialog-container"});
         parent.appendChild(this.container);
+        this.container.setAttribute('tabIndex', '0')
 
         // header
         let header = DOMUtils.div();
@@ -36,13 +37,30 @@ class AlertDialog {
         ok_container.appendChild(this.ok);
         this.ok.textContent = 'OK';
 
-        this.ok.addEventListener('click', () => {
+        const okHandler = () => {
+
             if (typeof this.callback === 'function') {
                 this.callback("OK");
                 this.callback = undefined;
             }
             this.body.innerHTML = '';
             DOMUtils.hide(this.container);
+        }
+
+        this.ok.addEventListener('click', event => {
+
+            event.stopPropagation()
+
+            okHandler()
+        });
+
+        this.container.addEventListener('keypress', event => {
+
+            event.stopPropagation()
+
+            if ('Enter' === event.key) {
+                okHandler()
+            }
         });
 
         makeDraggable(this.container, header);
@@ -58,6 +76,7 @@ class AlertDialog {
         this.body.innerHTML = string;
         this.callback = callback;
         DOMUtils.show(this.container, "flex");
+        this.container.focus()
     }
 }
 
