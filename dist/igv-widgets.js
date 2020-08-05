@@ -5889,7 +5889,7 @@ class AlertDialog {
         // container
         this.container = div({class: "igv-widgets-alert-dialog-container"});
         parent.appendChild(this.container);
-        this.container.setAttribute('tabIndex', '0');
+        this.container.setAttribute('tabIndex', '-1');
 
         // header
         let header = div();
@@ -9586,6 +9586,7 @@ const createGenericSelectModal = (id, select_id) => {
                             <div class="form-group">
                                 <select id="${ select_id }" class="form-control" multiple></select>
                             </div>
+                            <div id="igv-widgets-generic-select-modal-footnotes"></div>
                         </div>
                         
                         <div class="modal-footer">
@@ -9863,11 +9864,11 @@ const configureSelectModal = ($genericSelectModal, buttonConfiguration) => {
 
     let markup = `<div>${ buttonConfiguration.label }</div>`;
 
-    if (buttonConfiguration.description) {
-        markup += `<div>${ buttonConfiguration.description }</div>`;
-    }
+    // if (buttonConfiguration.description) {
+    //     markup += `<div>${ buttonConfiguration.description }</div>`
+    // }
 
-    $genericSelectModal.find('.modal-title').html(markup);
+    $genericSelectModal.find('.modal-title').text(`${ buttonConfiguration.label }`);
 
     let $select = $genericSelectModal.find('select');
     $select.empty();
@@ -9883,6 +9884,10 @@ const configureSelectModal = ($genericSelectModal, buttonConfiguration) => {
 
         return $accumulator;
     }, $select);
+
+    if (buttonConfiguration.description) {
+        $genericSelectModal.find('#igv-widgets-generic-select-modal-footnotes').html(buttonConfiguration.description);
+    }
 
 };
 

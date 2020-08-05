@@ -245,11 +245,11 @@ const configureSelectModal = ($genericSelectModal, buttonConfiguration) => {
 
     let markup = `<div>${ buttonConfiguration.label }</div>`
 
-    if (buttonConfiguration.description) {
-        markup += `<div>${ buttonConfiguration.description }</div>`
-    }
+    // if (buttonConfiguration.description) {
+    //     markup += `<div>${ buttonConfiguration.description }</div>`
+    // }
 
-    $genericSelectModal.find('.modal-title').html(markup);
+    $genericSelectModal.find('.modal-title').text(`${ buttonConfiguration.label }`);
 
     let $select = $genericSelectModal.find('select');
     $select.empty()
@@ -265,6 +265,10 @@ const configureSelectModal = ($genericSelectModal, buttonConfiguration) => {
 
         return $accumulator;
     }, $select);
+
+    if (buttonConfiguration.description) {
+        $genericSelectModal.find('#igv-widgets-generic-select-modal-footnotes').html(buttonConfiguration.description)
+    }
 
 }
 
