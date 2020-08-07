@@ -194,7 +194,7 @@ class FileLoadWidget {
 
         const input = DOMUtils.create('input');
         input.setAttribute('type', 'text');
-        input.setAttribute('placeholder', (true === isIndexFile ? 'Enter index URL' : 'Enter data URL'));
+        // input.setAttribute('placeholder', (true === isIndexFile ? 'Enter index URL' : 'Enter data URL'));
         parent.appendChild(input);
 
         if (isIndexFile) {

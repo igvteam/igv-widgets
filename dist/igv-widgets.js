@@ -7290,7 +7290,7 @@ class FileLoadWidget {
 
         const input = create('input');
         input.setAttribute('type', 'text');
-        input.setAttribute('placeholder', (true === isIndexFile ? 'Enter index URL' : 'Enter data URL'));
+        // input.setAttribute('placeholder', (true === isIndexFile ? 'Enter index URL' : 'Enter data URL'));
         parent.appendChild(input);
 
         if (isIndexFile) {
@@ -8823,7 +8823,7 @@ const createSessionWidgets = ($rootContainer, igvxhr, google, prefix, localFileI
     const fileLoadWidgetConfig =
         {
             widgetParent: $urlModal.find('.modal-body').get(0),
-            dataTitle: 'Load Session',
+            dataTitle: 'Session',
             indexTitle: undefined,
             mode: 'url',
             fileLoadManager: new FileLoadManager(),
@@ -9650,7 +9650,7 @@ const createTrackWidgets = ($igvMain, $localFileInput, $dropboxButton, googleEna
         {
             widgetParent: $urlModal.find('.modal-body').get(0),
             dataTitle: 'Track',
-            indexTitle: 'Track Index',
+            indexTitle: 'Index',
             mode: 'url',
             fileLoadManager: new FileLoadManager(),
             dataOnly: false,
