@@ -19,7 +19,7 @@ const createSessionWidgets = ($rootContainer, igvxhr, google, prefix, localFileI
     const fileLoadWidgetConfig =
         {
             widgetParent: $urlModal.find('.modal-body').get(0),
-            dataTitle: 'Load Session',
+            dataTitle: 'Session',
             indexTitle: undefined,
             mode: 'url',
             fileLoadManager: new FileLoadManager(),

@@ -26,7 +26,7 @@ const createTrackWidgets = ($igvMain, $localFileInput, $dropboxButton, googleEna
         {
             widgetParent: $urlModal.find('.modal-body').get(0),
             dataTitle: 'Track',
-            indexTitle: 'Track Index',
+            indexTitle: 'Index',
             mode: 'url',
             fileLoadManager: new FileLoadManager(),
             dataOnly: false,
