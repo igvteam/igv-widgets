@@ -5887,7 +5887,7 @@ class AlertDialog {
     constructor(parent) {
 
         // container
-        this.container = div({class: "igv-alert-dialog-container"});
+        this.container = div({class: "igv-widgets-alert-dialog-container"});
         parent.appendChild(this.container);
         this.parent = parent;
 
@@ -5902,11 +5902,11 @@ class AlertDialog {
         error.textContent = "ERROR";
 
         // body container
-        let bodyContainer = div({id: 'igv-alert-dialog-body'});
+        let bodyContainer = div({id: 'igv-widgets-alert-dialog-body'});
         this.container.appendChild(bodyContainer);
 
         // body copy
-        this.body = div({id: 'igv-alert-dialog-body-copy'});
+        this.body = div({id: 'igv-widgets-alert-dialog-body-copy'});
         bodyContainer.appendChild(this.body);
 
         // ok container
@@ -5976,6 +5976,9 @@ class AlertDialog {
 
 class AlertSingleton {
     constructor(root) {
+
+        console.log('AlertSingleton instance');
+
         if (root) {
             this.alertDialog = undefined;
         }
@@ -5991,7 +5994,7 @@ class AlertSingleton {
 
 }
 
-var alertSingleton = new AlertSingleton();
+var AlertSingleton$1 = new AlertSingleton();
 
 let subscribers = {};
 
@@ -7765,7 +7768,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 appGoogle_picker.setVisible(true);
 
             } else {
-                Alert.present("Sign into Google before using picker");
+                AlertSingleton$1.present("Sign into Google before using picker");
             }
         })
         .catch(function (error) {
@@ -8006,7 +8009,7 @@ class GenomeFileLoad extends FileLoad {
 
                 this.loadHandler(o);
             } else {
-                Alert.present(`${ errorString }`);
+                AlertSingleton$1.present(`${ errorString }`);
             }
 
         } else if (2 === paths.length) {
@@ -8016,7 +8019,7 @@ class GenomeFileLoad extends FileLoad {
             });
 
             if (false === GenomeFileLoad.extensionValidator(a, b)) {
-                Alert.present(`${ errorString }`);
+                AlertSingleton$1.present(`${ errorString }`);
                 return;
             }
 
@@ -8025,7 +8028,7 @@ class GenomeFileLoad extends FileLoad {
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
         } else {
-            Alert.present(`${ errorString }`);
+            AlertSingleton$1.present(`${ errorString }`);
         }
 
     };
@@ -8247,7 +8250,7 @@ class TrackFileLoad extends FileLoad {
             // isolate data paths
             let dataPaths = TrackFileLoad.createDataPathDictionary(remainingPaths);
             if (0 === Object.keys(dataPaths).length) {
-                Alert.present('ERROR: Must provide data file(s)');
+                AlertSingleton$1.present('ERROR: Must provide data file(s)');
                 return;
             }
 
@@ -8263,7 +8266,7 @@ class TrackFileLoad extends FileLoad {
 
             const str = TrackFileLoad.getErrorString(dataPaths, indexPaths, indexPathCandidates);
             if (str) {
-                Alert.present(str);
+                AlertSingleton$1.present(str);
             }
 
         }
@@ -8378,7 +8381,7 @@ class TrackFileLoad extends FileLoad {
                 TrackFileLoad.jsonConfigurator(configurations);
             })
             .catch(error => {
-                Alert.present(error.message);
+                AlertSingleton$1.present(error.message);
             });
 
     }
@@ -8587,11 +8590,11 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
 
             if (errorStrings) {
                 // console.log(errorStrings.join('\n'));
-                Alert.present(errorStrings.join('<br>'));
+                AlertSingleton$1.present(errorStrings.join('<br>'));
             }
 
         } else {
-            Alert.present('ERROR: Only index files were selected. The corresponding data files must also be selected.');
+            AlertSingleton$1.present('ERROR: Only index files were selected. The corresponding data files must also be selected.');
         }
 
     } else {
@@ -9815,14 +9818,14 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeIsSupported, encodeMo
     try {
         responses = await Promise.all( paths.map( path => fetch(path) ) );
     } catch (e) {
-        Alert.present(e.message);
+        AlertSingleton$1.present(e.message);
     }
 
     let jsons = [];
     try {
         jsons = await Promise.all( responses.map( response => response.json() ) );
     } catch (e) {
-        Alert.present(e.message);
+        AlertSingleton$1.present(e.message);
     }
 
     let buttonConfigurations = [];
@@ -9843,7 +9846,7 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeIsSupported, encodeMo
             try {
                 info = await GtexUtils.getTissueInfo(json.datasetId);
             } catch (e) {
-                Alert.present(e.message);
+                AlertSingleton$1.present(e.message);
             }
 
             if (info) {
@@ -9939,7 +9942,7 @@ const getPathsWithTrackRegistryFile = async (genomeID, trackRegistryFile) => {
         trackRegistry = await response.json();
     } else {
         const e = new Error("Error retrieving registry via getPathsWithTrackRegistryFile()");
-        Alert.present(e.message);
+        AlertSingleton$1.present(e.message);
         throw e;
     }
 
@@ -9990,4 +9993,4 @@ const googleDriveDropdownItem = id => {
             </div>`
 };
 
-export { alertSingleton as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgets, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem };
+export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgets, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem };

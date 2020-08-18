@@ -169,14 +169,14 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeIsSupported, encodeMo
     try {
         responses = await Promise.all( paths.map( path => fetch(path) ) )
     } catch (e) {
-        Alert.present(e.message);
+        AlertSingleton.present(e.message);
     }
 
     let jsons = [];
     try {
         jsons = await Promise.all( responses.map( response => response.json() ) )
     } catch (e) {
-        Alert.present(e.message);
+        AlertSingleton.present(e.message);
     }
 
     let buttonConfigurations = [];
@@ -197,7 +197,7 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeIsSupported, encodeMo
             try {
                 info = await GtexUtils.getTissueInfo(json.datasetId);
             } catch (e) {
-                Alert.present(e.message);
+                AlertSingleton.present(e.message);
             }
 
             if (info) {
@@ -298,7 +298,7 @@ const getPathsWithTrackRegistryFile = async (genomeID, trackRegistryFile) => {
         trackRegistry = await response.json();
     } else {
         const e = new Error("Error retrieving registry via getPathsWithTrackRegistryFile()");
-        Alert.present(e.message);
+        AlertSingleton.present(e.message);
         throw e;
     }
 

@@ -60,7 +60,7 @@ class TrackFileLoad extends FileLoad {
             // isolate data paths
             let dataPaths = TrackFileLoad.createDataPathDictionary(remainingPaths);
             if (0 === Object.keys(dataPaths).length) {
-                Alert.present('ERROR: Must provide data file(s)');
+                AlertSingleton.present('ERROR: Must provide data file(s)');
                 return;
             }
 
@@ -76,7 +76,7 @@ class TrackFileLoad extends FileLoad {
 
             const str = TrackFileLoad.getErrorString(dataPaths, indexPaths, indexPathCandidates);
             if (str) {
-                Alert.present(str)
+                AlertSingleton.present(str)
             }
 
         }
@@ -191,7 +191,7 @@ class TrackFileLoad extends FileLoad {
                 TrackFileLoad.jsonConfigurator(configurations);
             })
             .catch(error => {
-                Alert.present(error.message);
+                AlertSingleton.present(error.message);
             });
 
     }

@@ -131,7 +131,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 appGoogle_picker.setVisible(true);
 
             } else {
-                Alert.present("Sign into Google before using picker");
+                AlertSingleton.present("Sign into Google before using picker");
             }
         })
         .catch(function (error) {

@@ -141,11 +141,11 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
 
             if (errorStrings) {
                 // console.log(errorStrings.join('\n'));
-                Alert.present(errorStrings.join('<br>'))
+                AlertSingleton.present(errorStrings.join('<br>'))
             }
 
         } else {
-            Alert.present('ERROR: Only index files were selected. The corresponding data files must also be selected.')
+            AlertSingleton.present('ERROR: Only index files were selected. The corresponding data files must also be selected.')
         }
 
     } else {

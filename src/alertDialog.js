@@ -13,7 +13,7 @@ class AlertDialog {
     constructor(parent) {
 
         // container
-        this.container = DOMUtils.div({class: "igv-alert-dialog-container"});
+        this.container = DOMUtils.div({class: "igv-widgets-alert-dialog-container"});
         parent.appendChild(this.container);
         this.parent = parent;
 
@@ -28,11 +28,11 @@ class AlertDialog {
         error.textContent = "ERROR";
 
         // body container
-        let bodyContainer = DOMUtils.div({id: 'igv-alert-dialog-body'});
+        let bodyContainer = DOMUtils.div({id: 'igv-widgets-alert-dialog-body'});
         this.container.appendChild(bodyContainer);
 
         // body copy
-        this.body = DOMUtils.div({id: 'igv-alert-dialog-body-copy'});
+        this.body = DOMUtils.div({id: 'igv-widgets-alert-dialog-body-copy'});
         bodyContainer.appendChild(this.body);
 
         // ok container

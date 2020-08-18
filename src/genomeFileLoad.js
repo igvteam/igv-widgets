@@ -32,7 +32,7 @@ class GenomeFileLoad extends FileLoad {
 
                 this.loadHandler(o);
             } else {
-                Alert.present(`${ errorString }`);
+                AlertSingleton.present(`${ errorString }`);
             }
 
         } else if (2 === paths.length) {
@@ -42,7 +42,7 @@ class GenomeFileLoad extends FileLoad {
             });
 
             if (false === GenomeFileLoad.extensionValidator(a, b)) {
-                Alert.present(`${ errorString }`);
+                AlertSingleton.present(`${ errorString }`);
                 return;
             }
 
@@ -51,7 +51,7 @@ class GenomeFileLoad extends FileLoad {
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
         } else {
-            Alert.present(`${ errorString }`);
+            AlertSingleton.present(`${ errorString }`);
         }
 
     };
