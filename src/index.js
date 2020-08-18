@@ -1,4 +1,4 @@
-import Alert from "./alert.js";
+import AlertSingleton from "./alertSingleton.js";
 import EventBus from "./eventBus.js";
 import { QRCode } from './qrcode.js';
 import FileLoadManager from './fileLoadManager.js';
@@ -19,7 +19,7 @@ import { createGenericSelectModal } from './genericSelectModal.js'
 import { createTrackURLModal } from './trackURLModal.js'
 
 export {
-    Alert,
+    AlertSingleton,
     EventBus,
     QRCode,
     GoogleFilePicker,

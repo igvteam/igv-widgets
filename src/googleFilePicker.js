@@ -21,7 +21,7 @@
  *
  */
 
-import Alert from './alert.js'
+import AlertSingleton from './alertSingleton.js'
 
 let appGoogle_picker;
 let appGoogle_oauth;
@@ -131,7 +131,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 appGoogle_picker.setVisible(true);
 
             } else {
-                Alert.presentAlert("Sign into Google before using picker");
+                Alert.present("Sign into Google before using picker");
             }
         })
         .catch(function (error) {

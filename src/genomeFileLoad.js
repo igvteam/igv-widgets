@@ -1,6 +1,6 @@
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
-import Alert from './alert.js'
+import AlertSingleton from './alertSingleton.js'
 
 const referenceSet = new Set(['fai', 'fa', 'fasta']);
 const dataSet = new Set(['fna', 'fa', 'fasta']);
@@ -32,7 +32,7 @@ class GenomeFileLoad extends FileLoad {
 
                 this.loadHandler(o);
             } else {
-                Alert.presentAlert(`${ errorString }`);
+                Alert.present(`${ errorString }`);
             }
 
         } else if (2 === paths.length) {
@@ -42,7 +42,7 @@ class GenomeFileLoad extends FileLoad {
             });
 
             if (false === GenomeFileLoad.extensionValidator(a, b)) {
-                Alert.presentAlert(`${ errorString }`);
+                Alert.present(`${ errorString }`);
                 return;
             }
 
@@ -51,7 +51,7 @@ class GenomeFileLoad extends FileLoad {
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
         } else {
-            Alert.presentAlert(`${ errorString }`);
+            Alert.present(`${ errorString }`);
         }
 
     };

@@ -24,7 +24,7 @@
 import { FileUtils, TrackUtils } from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
 import * as Utils from './utils.js'
-import Alert from './alert.js'
+import AlertSingleton from './alertSingleton.js'
 
 const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
 
@@ -60,7 +60,7 @@ class TrackFileLoad extends FileLoad {
             // isolate data paths
             let dataPaths = TrackFileLoad.createDataPathDictionary(remainingPaths);
             if (0 === Object.keys(dataPaths).length) {
-                Alert.presentAlert('ERROR: Must provide data file(s)');
+                Alert.present('ERROR: Must provide data file(s)');
                 return;
             }
 
@@ -76,7 +76,7 @@ class TrackFileLoad extends FileLoad {
 
             const str = TrackFileLoad.getErrorString(dataPaths, indexPaths, indexPathCandidates);
             if (str) {
-                Alert.presentAlert(str)
+                Alert.present(str)
             }
 
         }
@@ -191,7 +191,7 @@ class TrackFileLoad extends FileLoad {
                 TrackFileLoad.jsonConfigurator(configurations);
             })
             .catch(error => {
-                Alert.presentAlert(error.message);
+                Alert.present(error.message);
             });
 
     }

@@ -24,7 +24,7 @@
 import { FileUtils, TrackUtils } from "../node_modules/igv-utils/src/index.js"
 import * as Utils from './utils.js';
 import * as GoogleFilePicker from './googleFilePicker.js';
-import Alert from './alert.js'
+import AlertSingleton from './alertSingleton.js'
 
 class MultipleTrackFileLoad {
 
@@ -141,11 +141,11 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
 
             if (errorStrings) {
                 // console.log(errorStrings.join('\n'));
-                Alert.presentAlert(errorStrings.join('<br>'))
+                Alert.present(errorStrings.join('<br>'))
             }
 
         } else {
-            Alert.presentAlert('ERROR: Only index files were selected. The corresponding data files must also be selected.')
+            Alert.present('ERROR: Only index files were selected. The corresponding data files must also be selected.')
         }
 
     } else {

@@ -107,81 +107,6 @@ const icons = {
     "wrench": [512, 512, [], "f0ad", "M481.156 200c9.3 0 15.12 10.155 10.325 18.124C466.295 259.992 420.419 288 368 288c-79.222 0-143.501-63.974-143.997-143.079C223.505 65.469 288.548-.001 368.002 0c52.362.001 98.196 27.949 123.4 69.743C496.24 77.766 490.523 88 481.154 88H376l-40 56 40 56h105.156zm-171.649 93.003L109.255 493.255c-24.994 24.993-65.515 24.994-90.51 0-24.993-24.994-24.993-65.516 0-90.51L218.991 202.5c16.16 41.197 49.303 74.335 90.516 90.503zM104 432c0-13.255-10.745-24-24-24s-24 10.745-24 24 10.745 24 24 24 24-10.745 24-24z"],
 };
 
-/**
- * Make the target element movable by clicking and dragging on the handle.  This is not a general purprose function,
- * it makes several options specific to igv dialogs, the primary one being that the
- * target is absolutely positioned in pixel coordinates
-
- */
-
-let dragData;   // Its assumed we are only dragging one element at a time.
-
-
-function makeDraggable(target, handle) {
-    handle.addEventListener('mousedown', dragStart.bind(target));
-}
-
-
-function dragStart(event) {
-
-    event.stopPropagation();
-    event.preventDefault();
-
-    const pageCoords = offset(this);
-    const dragFunction = drag.bind(this);
-    const dragEndFunction = dragEnd.bind(this);
-    const computedStyle = getComputedStyle(this);
-    const top = parseInt(computedStyle.top.replace("px", ""));
-    const left = parseInt(computedStyle.left.replace("px", ""));
-
-    dragData =
-        {
-            dragFunction: dragFunction,
-            dragEndFunction: dragEndFunction,
-            screenX: event.screenX,
-            screenY: event.screenY,
-            top: top,
-            left: left
-        };
-
-    document.addEventListener('mousemove', dragFunction);
-    document.addEventListener('mouseup', dragEndFunction);
-    document.addEventListener('mouseleave', dragEndFunction);
-    document.addEventListener('mouseexit', dragEndFunction);
-}
-
-function drag(event) {
-
-    if (!dragData) {
-        console.log("No drag data!");
-        return;
-    }
-    event.stopPropagation();
-    event.preventDefault();
-    const dx = event.screenX - dragData.screenX;
-    const dy = event.screenY - dragData.screenY;
-    this.style.left = `${dragData.left + dx}px`;
-    this.style.top = `${dragData.top + dy}px`;
-}
-
-function dragEnd(event) {
-
-    if (!dragData) {
-        console.log("No drag data!");
-        return;
-    }
-    event.stopPropagation();
-    event.preventDefault();
-
-    const dragFunction = dragData.dragFunction;
-    const dragEndFunction = dragData.dragEndFunction;
-    document.removeEventListener('mousemove', dragFunction);
-    document.removeEventListener('mouseup', dragEndFunction);
-    document.removeEventListener('mouseleave', dragEndFunction);
-    document.removeEventListener('mouseexit', dragEndFunction);
-    dragData = undefined;
-}
-
 function attachDialogCloseHandlerWithParent(parent, closeHandler) {
 
     var container = document.createElement("div");
@@ -5875,6 +5800,81 @@ if (typeof process === 'object' && typeof window === 'undefined') {
     };
 }
 
+/**
+ * Make the target element movable by clicking and dragging on the handle.  This is not a general purprose function,
+ * it makes several options specific to igv dialogs, the primary one being that the
+ * target is absolutely positioned in pixel coordinates
+
+ */
+
+let dragData;   // Its assumed we are only dragging one element at a time.
+
+
+function makeDraggable(target, handle) {
+    handle.addEventListener('mousedown', dragStart.bind(target));
+}
+
+
+function dragStart(event) {
+
+    event.stopPropagation();
+    event.preventDefault();
+
+    const pageCoords = offset(this);
+    const dragFunction = drag.bind(this);
+    const dragEndFunction = dragEnd.bind(this);
+    const computedStyle = getComputedStyle(this);
+    const top = parseInt(computedStyle.top.replace("px", ""));
+    const left = parseInt(computedStyle.left.replace("px", ""));
+
+    dragData =
+        {
+            dragFunction: dragFunction,
+            dragEndFunction: dragEndFunction,
+            screenX: event.screenX,
+            screenY: event.screenY,
+            top: top,
+            left: left
+        };
+
+    document.addEventListener('mousemove', dragFunction);
+    document.addEventListener('mouseup', dragEndFunction);
+    document.addEventListener('mouseleave', dragEndFunction);
+    document.addEventListener('mouseexit', dragEndFunction);
+}
+
+function drag(event) {
+
+    if (!dragData) {
+        console.log("No drag data!");
+        return;
+    }
+    event.stopPropagation();
+    event.preventDefault();
+    const dx = event.screenX - dragData.screenX;
+    const dy = event.screenY - dragData.screenY;
+    this.style.left = `${dragData.left + dx}px`;
+    this.style.top = `${dragData.top + dy}px`;
+}
+
+function dragEnd(event) {
+
+    if (!dragData) {
+        console.log("No drag data!");
+        return;
+    }
+    event.stopPropagation();
+    event.preventDefault();
+
+    const dragFunction = dragData.dragFunction;
+    const dragEndFunction = dragData.dragEndFunction;
+    document.removeEventListener('mousemove', dragFunction);
+    document.removeEventListener('mouseup', dragEndFunction);
+    document.removeEventListener('mouseleave', dragEndFunction);
+    document.removeEventListener('mouseexit', dragEndFunction);
+    dragData = undefined;
+}
+
 const httpMessages =
     {
         "401": "Access unauthorized",
@@ -5887,20 +5887,26 @@ class AlertDialog {
     constructor(parent) {
 
         // container
-        this.container = div({class: "igv-widgets-alert-dialog-container"});
+        this.container = div({class: "igv-alert-dialog-container"});
         parent.appendChild(this.container);
+        this.parent = parent;
+
         this.container.setAttribute('tabIndex', '-1');
 
         // header
-        let header = div();
+        const header = div();
         this.container.appendChild(header);
 
+        const error = div();
+        header.appendChild(error);
+        error.textContent = "ERROR";
+
         // body container
-        let bodyContainer = div({id: 'igv-widgets-alert-dialog-body'});
+        let bodyContainer = div({id: 'igv-alert-dialog-body'});
         this.container.appendChild(bodyContainer);
 
         // body copy
-        this.body = div({id: 'igv-widgets-alert-dialog-body-copy'});
+        this.body = div({id: 'igv-alert-dialog-body-copy'});
         bodyContainer.appendChild(this.body);
 
         // ok container
@@ -5948,28 +5954,44 @@ class AlertDialog {
         if (httpMessages.hasOwnProperty(string)) {
             string = httpMessages[string];
         }
+
         this.body.innerHTML = string;
         this.callback = callback;
+
         show(this.container);
+
+        // DOMUtils.show(this.container, "flex");
+        const { width,    height    } = this.parent.getBoundingClientRect();
+        const { width: w, height: h } = this.container.getBoundingClientRect();
+
+        const x = 0.5 * (width - w);
+        const y = -(0.5 * (height - h));
+
+        this.container.style.left = `${x}px`;
+        this.container.style.top = `${y}px`;
+
         this.container.focus();
     }
 }
 
-// The global Alert dialog
-
-let alertDialog;
-
-const Alert = {
-    init(root) {
-        if (!alertDialog) {
-            alertDialog = new AlertDialog(root);
+class AlertSingleton {
+    constructor(root) {
+        if (root) {
+            this.alertDialog = undefined;
         }
-    },
+    }
 
-    presentAlert: function (alert, callback) {
-        alertDialog.present(alert, callback);
-    },
-};
+    init(root) {
+        this.alertDialog = new AlertDialog(root);
+    }
+
+    present(alert, callback) {
+        this.alertDialog.present(alert, callback);
+    }
+
+}
+
+var alertSingleton = new AlertSingleton();
 
 let subscribers = {};
 
@@ -7743,7 +7765,7 @@ function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
                 appGoogle_picker.setVisible(true);
 
             } else {
-                Alert.presentAlert("Sign into Google before using picker");
+                Alert.present("Sign into Google before using picker");
             }
         })
         .catch(function (error) {
@@ -7984,7 +8006,7 @@ class GenomeFileLoad extends FileLoad {
 
                 this.loadHandler(o);
             } else {
-                Alert.presentAlert(`${ errorString }`);
+                Alert.present(`${ errorString }`);
             }
 
         } else if (2 === paths.length) {
@@ -7994,7 +8016,7 @@ class GenomeFileLoad extends FileLoad {
             });
 
             if (false === GenomeFileLoad.extensionValidator(a, b)) {
-                Alert.presentAlert(`${ errorString }`);
+                Alert.present(`${ errorString }`);
                 return;
             }
 
@@ -8003,7 +8025,7 @@ class GenomeFileLoad extends FileLoad {
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
         } else {
-            Alert.presentAlert(`${ errorString }`);
+            Alert.present(`${ errorString }`);
         }
 
     };
@@ -8225,7 +8247,7 @@ class TrackFileLoad extends FileLoad {
             // isolate data paths
             let dataPaths = TrackFileLoad.createDataPathDictionary(remainingPaths);
             if (0 === Object.keys(dataPaths).length) {
-                Alert.presentAlert('ERROR: Must provide data file(s)');
+                Alert.present('ERROR: Must provide data file(s)');
                 return;
             }
 
@@ -8241,7 +8263,7 @@ class TrackFileLoad extends FileLoad {
 
             const str = TrackFileLoad.getErrorString(dataPaths, indexPaths, indexPathCandidates);
             if (str) {
-                Alert.presentAlert(str);
+                Alert.present(str);
             }
 
         }
@@ -8356,7 +8378,7 @@ class TrackFileLoad extends FileLoad {
                 TrackFileLoad.jsonConfigurator(configurations);
             })
             .catch(error => {
-                Alert.presentAlert(error.message);
+                Alert.present(error.message);
             });
 
     }
@@ -8565,11 +8587,11 @@ const ingestPaths = async ({ paths, fileLoadHandler, google, igvxhr }) => {
 
             if (errorStrings) {
                 // console.log(errorStrings.join('\n'));
-                Alert.presentAlert(errorStrings.join('<br>'));
+                Alert.present(errorStrings.join('<br>'));
             }
 
         } else {
-            Alert.presentAlert('ERROR: Only index files were selected. The corresponding data files must also be selected.');
+            Alert.present('ERROR: Only index files were selected. The corresponding data files must also be selected.');
         }
 
     } else {
@@ -9793,14 +9815,14 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeIsSupported, encodeMo
     try {
         responses = await Promise.all( paths.map( path => fetch(path) ) );
     } catch (e) {
-        Alert.presentAlert(e.message);
+        Alert.present(e.message);
     }
 
     let jsons = [];
     try {
         jsons = await Promise.all( responses.map( response => response.json() ) );
     } catch (e) {
-        Alert.presentAlert(e.message);
+        Alert.present(e.message);
     }
 
     let buttonConfigurations = [];
@@ -9821,7 +9843,7 @@ const updateTrackMenus = async (genomeID, GtexUtils, encodeIsSupported, encodeMo
             try {
                 info = await GtexUtils.getTissueInfo(json.datasetId);
             } catch (e) {
-                Alert.presentAlert(e.message);
+                Alert.present(e.message);
             }
 
             if (info) {
@@ -9917,7 +9939,7 @@ const getPathsWithTrackRegistryFile = async (genomeID, trackRegistryFile) => {
         trackRegistry = await response.json();
     } else {
         const e = new Error("Error retrieving registry via getPathsWithTrackRegistryFile()");
-        Alert.presentAlert(e.message);
+        Alert.present(e.message);
         throw e;
     }
 
@@ -9968,4 +9990,4 @@ const googleDriveDropdownItem = id => {
             </div>`
 };
 
-export { Alert, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgets, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem };
+export { alertSingleton as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, googleFilePicker as GoogleFilePicker, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgets, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem };
