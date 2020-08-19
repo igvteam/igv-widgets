@@ -111,10 +111,12 @@ function configureSaveSessionModal($rootContainer, prefix, JSONProvider, session
         }
 
         const json = JSONProvider();
-        const jsonString = JSON.stringify(json, null, '\t');
-        const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
 
-        IGVUtils.download(filename, data);
+        if (json) {
+            const jsonString = JSON.stringify(json, null, '\t');
+            const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
+            IGVUtils.download(filename, data);
+        }
 
         $modal.modal('hide');
     };
