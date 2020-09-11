@@ -4,7 +4,6 @@
   "description": "Various UI modules to support igvteam web apps",
   "files": [
     "dist/**",
-    "css/**",
     "src/**"
   ],
   "scripts": {
