@@ -4,7 +4,8 @@
   "description": "Various UI modules to support igvteam web apps",
   "files": [
     "dist/**",
-    "css/**"
+    "css/**",
+    "src/**"
   ],
   "scripts": {
     "build": "npx rollup --config",
