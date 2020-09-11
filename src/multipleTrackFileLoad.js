@@ -23,7 +23,7 @@
 
 import { FileUtils, TrackUtils } from "../node_modules/igv-utils/src/index.js"
 import * as Utils from './utils.js';
-import * as GoogleFilePicker from './googleFilePicker.js';
+import {GooglePicker} from '../node_modules/igv-utils/src/index.js'
 import AlertSingleton from './alertSingleton.js'
 
 class MultipleTrackFileLoad {
@@ -67,7 +67,7 @@ class MultipleTrackFileLoad {
 
             $googleDriveButton.on('click', () => {
 
-                GoogleFilePicker.createDropdownButtonPicker(multipleFileSelection, async responses => {
+                GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => {
 
                     const paths = responses.map(({ name, url }) => {
 

@@ -1,6 +1,6 @@
 import { DOMUtils } from '../node_modules/igv-utils/src/index.js'
 import * as Utils from './utils.js'
-import * as GoogleFilePicker from './googleFilePicker.js'
+import {GooglePicker} from '../node_modules/igv-utils/src/index.js'
 
 class FileLoad {
 
@@ -42,7 +42,7 @@ class FileLoad {
 
             googleDriveButton.addEventListener('click', () => {
 
-                GoogleFilePicker.createDropdownButtonPicker(true, responses => {
+                GooglePicker.createDropdownButtonPicker(true, responses => {
 
                     const paths = responses
                         .map(({ name, url }) => {
