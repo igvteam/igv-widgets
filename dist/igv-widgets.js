@@ -119,310 +119,6 @@ function attachDialogCloseHandlerWithParent(parent, closeHandler) {
     });
 }
 
-function getExtension(url) {
-
-    if (undefined === url) {
-        return undefined;
-    }
-
-    let path = (isFilePath(url) || url.google_url) ? url.name : url;
-    let filename = path.toLowerCase();
-
-    //Strip parameters -- handle local files later
-    let index = filename.indexOf("?");
-    if (index > 0) {
-        filename = filename.substr(0, index);
-    }
-
-    //Strip aux extensions .gz, .tab, and .txt
-    if (filename.endsWith(".gz")) {
-        filename = filename.substr(0, filename.length - 3);
-    } else if (filename.endsWith(".txt") || filename.endsWith(".tab") || filename.endsWith(".bgz")) {
-        filename = filename.substr(0, filename.length - 4);
-    }
-
-    index = filename.lastIndexOf(".");
-
-    return index < 0 ? filename : filename.substr(1 + index);
-}
-
-/**
- * Return the filename from the path.   Example
- *   https://foo.com/bar.bed?param=2   => bar.bed
- * @param path
- */
-
-function getFilename (path) {
-
-    if (path.google_url || path instanceof File) {
-        return path.name;
-    } else {
-
-        let index = path.lastIndexOf("/");
-        let filename = index < 0 ? path : path.substr(index + 1);
-
-        //Strip parameters -- handle local files later
-        index = filename.indexOf("?");
-        if (index > 0) {
-            filename = filename.substr(0, index);
-        }
-
-        return filename;
-
-    }
-
-}
-
-function isFilePath (path) {
-    return (path instanceof File);
-}
-
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2014 Broad Institute
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-const knownFileExtensions = new Set([
-
-    "narrowpeak",
-    "broadpeak",
-    "regionpeak",
-    "peaks",
-    "bedgraph",
-    "wig",
-    "gff3",
-    "gff",
-    "gtf",
-    "fusionjuncspan",
-    "refflat",
-    "seg",
-    "aed",
-    "bed",
-    "vcf",
-    "bb",
-    "bigbed",
-    "bw",
-    "bigwig",
-    "bam",
-    "tdf",
-    "refgene",
-    "genepred",
-    "genepredext",
-    "bedpe",
-    "bp",
-    "snp",
-    "rmsk",
-    "cram"
-]);
-
-function inferTrackTypes(config) {
-
-    // function inferFileFormat(config) {
-    //
-    //     var path;
-    //
-    //     if (config.format) {
-    //         config.format = config.format.toLowerCase();
-    //         return;
-    //     }
-    //
-    //     path = isFilePath(config.url) ? config.url.name : config.url;
-    //
-    //     config.format = inferFileFormat(path);
-    // }
-
-
-    translateDeprecatedTypes(config);
-
-    if (undefined === config.sourceType && config.url) {
-        config.sourceType = "file";
-    }
-
-    if ("file" === config.sourceType) {
-        if (undefined === config.format) {
-            const path = isFilePath(config.url) ? config.url.name : config.url;
-            config.format = inferFileFormat(path);
-        } else {
-            config.format = config.format.toLowerCase();
-        }
-    }
-
-    if (undefined === config.type) {
-        if (config.type) return;
-
-        if (config.format) {
-
-            switch (config.format.toLowerCase()) {
-                case "bw":
-                case "bigwig":
-                case "wig":
-                case "bedgraph":
-                case "tdf":
-                    config.type = "wig";
-                    break;
-                case "vcf":
-                    config.type = "variant";
-                    break;
-                case "seg":
-                    config.type = "seg";
-                    break;
-                case "bam":
-                case "cram":
-                    config.type = "alignment";
-                    break;
-                case "bedpe":
-                case "bedpe-loop":
-                    config.type = "interaction";
-                    break;
-                case "bp":
-                    config.type = "arc";
-                    break;
-                default:
-                    config.type = "annotation";
-
-            }
-        }
-
-    }
-}
-
-function inferFileFormat(fn) {
-
-    var idx, ext;
-
-    fn = fn.toLowerCase();
-
-    // Special case -- UCSC refgene files
-    if (fn.endsWith("refgene.txt.gz") ||
-        fn.endsWith("refgene.txt.bgz") ||
-        fn.endsWith("refgene.txt") ||
-        fn.endsWith("refgene.sorted.txt.gz") ||
-        fn.endsWith("refgene.sorted.txt.bgz")) {
-        return "refgene";
-    }
-
-
-    //Strip parameters -- handle local files later
-    idx = fn.indexOf("?");
-    if (idx > 0) {
-        fn = fn.substr(0, idx);
-    }
-
-    //Strip aux extensions .gz, .tab, and .txt
-    if (fn.endsWith(".gz")) {
-        fn = fn.substr(0, fn.length - 3);
-    }
-
-    if (fn.endsWith(".txt") || fn.endsWith(".tab") || fn.endsWith(".bgz")) {
-        fn = fn.substr(0, fn.length - 4);
-    }
-
-
-    idx = fn.lastIndexOf(".");
-    ext = idx < 0 ? fn : fn.substr(idx + 1);
-
-    switch (ext) {
-        case "bw":
-            return "bigwig";
-        case "bb":
-            return "bigbed";
-
-        default:
-            if (knownFileExtensions.has(ext)) {
-                return ext;
-            } else {
-                return undefined;
-            }
-    }
-
-}
-
-function translateDeprecatedTypes(config) {
-
-    if (config.featureType) {  // Translate deprecated "feature" type
-        config.type = config.type || config.featureType;
-        config.featureType = undefined;
-    }
-    if ("bed" === config.type) {
-        config.type = "annotation";
-        config.format = config.format || "bed";
-    } else if ("annotations" === config.type) {
-        config.type = "annotation";
-    } else if ("alignments" === config.type) {
-        config.type = "alignment";
-    } else if ("bam" === config.type) {
-        config.type = "alignment";
-        config.format = "bam";
-    } else if ("vcf" === config.type) {
-        config.type = "variant";
-        config.format = "vcf";
-    } else if ("t2d" === config.type) {
-        config.type = "gwas";
-    } else if ("FusionJuncSpan" === config.type && !config.format) {
-        config.format = "fusionjuncspan";
-    } else if ("aed" === config.type) {
-        config.type = "annotation";
-        config.format = config.format || "aed";
-    }
-}
-
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2014 Broad Institute
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-
-function download  (filename, data) {
-
-    const element = document.createElement('a');
-    element.setAttribute('href', data);
-    element.setAttribute('download', filename);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-}
-
 /**
  * @fileoverview Zlib namespace. Zlib の仕様に準拠した圧縮は Zlib.Deflate で実装
  * されている. これは Inflate との共存を考慮している為.
@@ -5794,6 +5490,290 @@ if(typeof btoa === 'undefined') {
     _btoa = btoa;
 }
 
+function getExtension(url) {
+
+    if (undefined === url) {
+        return undefined;
+    }
+
+    let path = (isFilePath(url) || url.google_url) ? url.name : url;
+    let filename = path.toLowerCase();
+
+    //Strip parameters -- handle local files later
+    let index = filename.indexOf("?");
+    if (index > 0) {
+        filename = filename.substr(0, index);
+    }
+
+    //Strip aux extensions .gz, .tab, and .txt
+    if (filename.endsWith(".gz")) {
+        filename = filename.substr(0, filename.length - 3);
+    } else if (filename.endsWith(".txt") || filename.endsWith(".tab") || filename.endsWith(".bgz")) {
+        filename = filename.substr(0, filename.length - 4);
+    }
+
+    index = filename.lastIndexOf(".");
+
+    return index < 0 ? filename : filename.substr(1 + index);
+}
+
+/**
+ * Return the filename from the path.   Example
+ *   https://foo.com/bar.bed?param=2   => bar.bed
+ * @param path
+ */
+
+function getFilename (path) {
+
+    if (path.google_url || path instanceof File) {
+        return path.name;
+    } else {
+
+        let index = path.lastIndexOf("/");
+        let filename = index < 0 ? path : path.substr(index + 1);
+
+        //Strip parameters -- handle local files later
+        index = filename.indexOf("?");
+        if (index > 0) {
+            filename = filename.substr(0, index);
+        }
+
+        return filename;
+
+    }
+}
+
+function isFilePath (path) {
+    return (path instanceof File);
+}
+
+
+function download  (filename, data) {
+
+    const element = document.createElement('a');
+    element.setAttribute('href', data);
+    element.setAttribute('download', filename);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+}
+
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Broad Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+const knownFileExtensions = new Set([
+
+    "narrowpeak",
+    "broadpeak",
+    "regionpeak",
+    "peaks",
+    "bedgraph",
+    "wig",
+    "gff3",
+    "gff",
+    "gtf",
+    "fusionjuncspan",
+    "refflat",
+    "seg",
+    "aed",
+    "bed",
+    "vcf",
+    "bb",
+    "bigbed",
+    "bw",
+    "bigwig",
+    "bam",
+    "tdf",
+    "refgene",
+    "genepred",
+    "genepredext",
+    "bedpe",
+    "bp",
+    "snp",
+    "rmsk",
+    "cram",
+    "gwas"
+]);
+
+function inferTrackTypes(config) {
+
+    // function inferFileFormat(config) {
+    //
+    //     var path;
+    //
+    //     if (config.format) {
+    //         config.format = config.format.toLowerCase();
+    //         return;
+    //     }
+    //
+    //     path = isFilePath(config.url) ? config.url.name : config.url;
+    //
+    //     config.format = inferFileFormat(path);
+    // }
+
+
+    translateDeprecatedTypes(config);
+
+    if (undefined === config.sourceType && config.url) {
+        config.sourceType = "file";
+    }
+
+    if ("file" === config.sourceType) {
+        if (undefined === config.format) {
+            const path = isFilePath(config.url) ? config.url.name : config.url;
+            config.format = inferFileFormat(path);
+        } else {
+            config.format = config.format.toLowerCase();
+        }
+    }
+
+    if (undefined === config.type) {
+        if (config.type) return;
+
+        if (config.format) {
+
+            switch (config.format.toLowerCase()) {
+                case "bw":
+                case "bigwig":
+                case "wig":
+                case "bedgraph":
+                case "tdf":
+                    config.type = "wig";
+                    break;
+                case "vcf":
+                    config.type = "variant";
+                    break;
+                case "seg":
+                    config.type = "seg";
+                    break;
+                case "bam":
+                case "cram":
+                    config.type = "alignment";
+                    break;
+                case "bedpe":
+                case "bedpe-loop":
+                    config.type = "interaction";
+                    break;
+                case "bp":
+                    config.type = "arc";
+                    break;
+                case "gwas":
+                    config.type = "gwas";
+                    break;
+                default:
+                    config.type = "annotation";
+
+            }
+        }
+
+    }
+}
+
+function inferFileFormat(fn) {
+
+    var idx, ext;
+
+    fn = fn.toLowerCase();
+
+    // Special case -- UCSC refgene files
+    if (fn.endsWith("refgene.txt.gz") ||
+        fn.endsWith("refgene.txt.bgz") ||
+        fn.endsWith("refgene.txt") ||
+        fn.endsWith("refgene.sorted.txt.gz") ||
+        fn.endsWith("refgene.sorted.txt.bgz")) {
+        return "refgene";
+    }
+
+
+    //Strip parameters -- handle local files later
+    idx = fn.indexOf("?");
+    if (idx > 0) {
+        fn = fn.substr(0, idx);
+    }
+
+    //Strip aux extensions .gz, .tab, and .txt
+    if (fn.endsWith(".gz")) {
+        fn = fn.substr(0, fn.length - 3);
+    }
+
+    if (fn.endsWith(".txt") || fn.endsWith(".tab") || fn.endsWith(".bgz")) {
+        fn = fn.substr(0, fn.length - 4);
+    }
+
+
+    idx = fn.lastIndexOf(".");
+    ext = idx < 0 ? fn : fn.substr(idx + 1);
+
+    switch (ext) {
+        case "bw":
+            return "bigwig";
+        case "bb":
+            return "bigbed";
+
+        default:
+            if (knownFileExtensions.has(ext)) {
+                return ext;
+            } else {
+                return undefined;
+            }
+    }
+
+}
+
+function translateDeprecatedTypes(config) {
+
+    if (config.featureType) {  // Translate deprecated "feature" type
+        config.type = config.type || config.featureType;
+        config.featureType = undefined;
+    }
+    if ("junctions" === config.type) {
+        config.type = "spliceJunctions";
+    } else if ("bed" === config.type) {
+        config.type = "annotation";
+        config.format = config.format || "bed";
+    } else if ("annotations" === config.type) {
+        config.type = "annotation";
+    } else if ("alignments" === config.type) {
+        config.type = "alignment";
+    } else if ("bam" === config.type) {
+        config.type = "alignment";
+        config.format = "bam";
+    } else if ("vcf" === config.type) {
+        config.type = "variant";
+        config.format = "vcf";
+    } else if ("t2d" === config.type) {
+        config.type = "gwas";
+    } else if ("FusionJuncSpan" === config.type && !config.format) {
+        config.format = "fusionjuncspan";
+    } else if ("aed" === config.type) {
+        config.type = "annotation";
+        config.format = config.format || "aed";
+    }
+}
+
 if (typeof process === 'object' && typeof window === 'undefined') {
     global.atob = function (str) {
         return Buffer.from(str, 'base64').toString('binary');
@@ -7508,13 +7488,13 @@ class FileLoadWidget {
 
 let validIndexExtensionSet = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
 
-let isValidIndexExtension = (path) => {
+function isValidIndexExtension (path) {
     // let set;
     // set = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
     return validIndexExtensionSet.has(getExtension(path));
-};
+}
 
-let getIndexObjectWithDataName = (name) => {
+function getIndexObjectWithDataName  (name) {
     let extension,
         dataSuffix,
         lookup,
@@ -7556,15 +7536,13 @@ let getIndexObjectWithDataName = (name) => {
     }
 
     return indexObject;
-};
-
-let isKnownFileExtension = (extension) => {
+}
+function isKnownFileExtension  (extension)  {
     let fasta = new Set(['fa', 'fasta']);
     let union = new Set([...(TrackUtils.knownFileExtensions), ...fasta]);
     return union.has(extension);
-};
-
-let configureModal = (fileLoadWidget, modal, okHandler) => {
+}
+function configureModal  (fileLoadWidget, modal, okHandler) {
 
     const doDismiss = () => {
         fileLoadWidget.dismiss();
@@ -7601,9 +7579,8 @@ let configureModal = (fileLoadWidget, modal, okHandler) => {
             doOK();
         }
     });
-};
-
-let indexLookup = (dataSuffix) => {
+}
+function indexLookup  (dataSuffix)  {
 
     const fa =
         {
@@ -7663,14 +7640,13 @@ let indexLookup = (dataSuffix) => {
         return any;
     }
 
-};
-
-const isGoogleDriveComprehensive = (path, google) => {
+}
+function isGoogleDriveComprehensive  (path, google)  {
     return !(path instanceof File) && !(path.google_url) && google.isGoogleDrive(path)
-};
+}
 
 // TODO: This replaces the above "indexLookup"
-const knownDataFileIndexFileLookup = (extension, isGZippedVCF) => {
+function knownDataFileIndexFileLookup  (extension, isGZippedVCF) {
 
     const vcf_gz =
         {
@@ -7742,7 +7718,7 @@ const knownDataFileIndexFileLookup = (extension, isGZippedVCF) => {
 
     return lut[ key ] || any;
 
-};
+}
 
 var utils = /*#__PURE__*/Object.freeze({
     __proto__: null,

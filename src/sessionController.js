@@ -24,7 +24,7 @@
 import FileLoadWidget from "./fileLoadWidget.js";
 import FileLoadManager from "./fileLoadManager.js";
 import * as Utils from './utils.js';
-import { FileUtils, IGVUtils } from '../node_modules/igv-utils/src/index.js';
+import { FileUtils } from '../node_modules/igv-utils/src/index.js';
 
 class SessionController {
 
@@ -77,7 +77,7 @@ function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
         const jsonString = JSON.stringify(json, null, '\t');
         const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
 
-        IGVUtils.download(filename, data);
+        FileUtils.download(filename, data);
 
         $(sessionSaveModal).modal('hide');
     };

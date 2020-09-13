@@ -25,13 +25,13 @@ import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 
 let validIndexExtensionSet = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
 
-let isValidIndexExtension = (path) => {
+function isValidIndexExtension (path) {
     // let set;
     // set = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
     return validIndexExtensionSet.has(FileUtils.getExtension(path));
-};
+}
 
-let getIndexObjectWithDataName = (name) => {
+function getIndexObjectWithDataName  (name) {
     let extension,
         dataSuffix,
         lookup,
@@ -75,18 +75,18 @@ let getIndexObjectWithDataName = (name) => {
     return indexObject;
 };
 
-let isKnownFileExtension = (extension) => {
+function isKnownFileExtension  (extension)  {
     let fasta = new Set(['fa', 'fasta']);
     let union = new Set([...(TrackUtils.knownFileExtensions), ...fasta]);
     return union.has(extension);
 };
 
-let isJSON = (thang) => {
+function isJSON  (thang)  {
     // Better JSON test. JSON.parse gives false positives.
     return (true === (thang instanceof Object) && false === (thang instanceof File));
 };
 
-let configureModal = (fileLoadWidget, modal, okHandler) => {
+function configureModal  (fileLoadWidget, modal, okHandler) {
 
     const doDismiss = () => {
         fileLoadWidget.dismiss();
@@ -125,7 +125,7 @@ let configureModal = (fileLoadWidget, modal, okHandler) => {
     });
 };
 
-let indexLookup = (dataSuffix) => {
+function indexLookup  (dataSuffix)  {
 
     const fa =
         {
@@ -187,12 +187,12 @@ let indexLookup = (dataSuffix) => {
 
 };
 
-const isGoogleDriveComprehensive = (path, google) => {
+function isGoogleDriveComprehensive  (path, google)  {
     return !(path instanceof File) && !(path.google_url) && google.isGoogleDrive(path)
 }
 
 // TODO: This replaces the above "indexLookup"
-const knownDataFileIndexFileLookup = (extension, isGZippedVCF) => {
+function knownDataFileIndexFileLookup  (extension, isGZippedVCF) {
 
     const vcf_gz =
         {

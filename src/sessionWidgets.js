@@ -1,4 +1,4 @@
-import { FileUtils, IGVUtils } from '../node_modules/igv-utils/src/index.js'
+import { FileUtils } from '../node_modules/igv-utils/src/index.js'
 import FileLoadManager from './fileLoadManager.js'
 import FileLoadWidget from './fileLoadWidget.js'
 import SessionFileLoad from "./sessionFileLoad.js"
@@ -115,7 +115,7 @@ function configureSaveSessionModal($rootContainer, prefix, JSONProvider, session
         if (json) {
             const jsonString = JSON.stringify(json, null, '\t');
             const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
-            IGVUtils.download(filename, data);
+            FileUtils.download(filename, data);
         }
 
         $modal.modal('hide');
