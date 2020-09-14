@@ -5787,26 +5787,20 @@ async function getAccessToken(scope) {
 
     let currentUser = gapi.auth2.getAuthInstance().currentUser.get();
     if (currentUser.isSignedIn()) {
-        if (currentUser.hasGrantedScopes(scope)) {
-            const {access_token, expires_at} = currentUser.getAuthResponse();
-            if ((Date.now() - FIVE_MINUTES) < expires_at) {
-                return access_token;
-            } else {
-                // reloadAuthResponse should work but doesn't reliably.  Force another sign-in as a workaround
-                // const reloadResponse = await currentUser.reloadAuthResponse();
-                // return reloadResponse.access_token;
-                currentUser = await signIn(scope);
-                const {access_token} = currentUser.getAuthResponse();
-                return access_token;
-            }
+        if (!currentUser.hasGrantedScopes(scope)) {
+            await currentUser.grant({scope});
+        }
+        const {access_token, expires_at} = currentUser.getAuthResponse();
+        if (Date.now()  < (expires_at - FIVE_MINUTES)) {
+            return {access_token, expires_at};
         } else {
-            const {access_token} = currentUser.grant({scope});
-            return access_token;
+            const {access_token, expires_at} = currentUser.reloadAuthResponse();
+            return {access_token, expires_at};
         }
     } else {
         currentUser = await signIn(scope);
-        const {access_token} = currentUser.getAuthResponse();
-        return access_token;
+        const {access_token, expires_at} = currentUser.getAuthResponse();
+        return {access_token, expires_at};
     }
 }
 
@@ -5847,8 +5841,8 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
         await init();
     }
 
-    const accessToken = await getAccessToken('https://www.googleapis.com/auth/drive.readonly');
-    if (accessToken) {
+    const {access_token} = await getAccessToken('https://www.googleapis.com/auth/drive.readonly');
+    if (access_token) {
 
         const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
         view.setIncludeFolders(true);
@@ -5861,7 +5855,7 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
         if (multipleFileSelection) {
              picker = new google.picker.PickerBuilder()
                 .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                .setOAuthToken(accessToken)
+                .setOAuthToken(access_token)
                 .addView(view)
                 .addView(teamView)
                 .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
