@@ -9822,7 +9822,7 @@ async function updateTrackMenus(genomeID,
                                 encodeIsSupported,
                                 encodeModalTables,
 				customModalTables,
-				customModalTrackItems,
+				customTrackModalItems,
                                 trackRegistryFile,
                                 $dropdownMenu,
                                 $genericSelectModal) {
@@ -9883,8 +9883,8 @@ async function updateTrackMenus(genomeID,
                 buttonConfigurations.push(json);
             }
 
-        } else if ('CUSTOM' == json.type) {
-	    let configCustomModalTable = customModalTrackItems[customModalTablesIndex].configurator(genomeID);
+        } else if ('CUSTOM' == json.type && customTrackModalItems.length > 0 ) {
+	    let configCustomModalTable = customTrackModalItems[customModalTablesIndex].configurator(genomeID);
 	    let config = {...configCustomModalTable, ...json.configurator};
 	    customModalTables[customModalTablesIndex].setDatasource( new GenericMapDatasource(config) );
 	    customModalTables[customModalTablesIndex].title = json.label;
