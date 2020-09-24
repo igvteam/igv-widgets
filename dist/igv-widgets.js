@@ -1580,7 +1580,7 @@ Zlib.RawInflate.prototype.concatBufferBlock = function() {
 
   // single buffer
   if (blocks.length === 0) {
-    return         this.output.subarray(Zlib.RawInflate.MaxBackwardLength, this.op) ;
+    return         this.output.subarray(Zlib.RawInflate.MaxBackwardLength, this.op) ;
   }
 
   // copy to buffer
@@ -5780,6 +5780,39 @@ if (typeof process === 'object' && typeof window === 'undefined') {
     };
 }
 
+function isGoogleDriveURL(url) {
+    return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
+}
+
+function driveDownloadURL(link) {
+    // Return a google drive download url for the sharable link
+    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var id = getGoogleDriveFileID(link);
+    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
+}
+
+function getGoogleDriveFileID(link) {
+
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var i1, i2;
+
+    if (link.includes("/open?id=")) {
+        i1 = link.indexOf("/open?id=") + 9;
+        i2 = link.indexOf("&");
+        if (i1 > 0 && i2 > i1) {
+            return link.substring(i1, i2)
+        } else if (i1 > 0) {
+            return link.substring(i1);
+        }
+
+    } else if (link.includes("/file/d/")) {
+        i1 = link.indexOf("/file/d/") + 8;
+        i2 = link.lastIndexOf("/");
+        return link.substring(i1, i2);
+    }
+}
+
 // Convenience functions for the gapi oAuth library.
 
 const FIVE_MINUTES = 5 * 60 * 1000;
@@ -5825,76 +5858,6 @@ async function signIn(scope) {
 
 function getApiKey() {
     return apiKey;
-}
-
-function isGoogleDriveURL(url) {
-    return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
-}
-
-function driveDownloadURL(link) {
-    // Return a google drive download url for the sharable link
-    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var id = getGoogleDriveFileID(link);
-    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
-}
-
-
-// getDriveFileInfo: function (googleDriveURL) {
-//     const id = getGoogleDriveFileID(googleDriveURL);
-//     const endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true";
-//     return igvxhr.loadJson(endPoint, buildOptions({}));
-// }
-
-
-function getGoogleDriveFileID(link) {
-
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var i1, i2;
-
-    if (link.includes("/open?id=")) {
-        i1 = link.indexOf("/open?id=") + 9;
-        i2 = link.indexOf("&");
-        if (i1 > 0 && i2 > i1) {
-            return link.substring(i1, i2)
-        } else if (i1 > 0) {
-            return link.substring(i1);
-        }
-
-    } else if (link.includes("/file/d/")) {
-        i1 = link.indexOf("/file/d/") + 8;
-        i2 = link.lastIndexOf("/");
-        return link.substring(i1, i2);
-    }
-}
-
-async function getDriveFileInfo(googleDriveURL) {
-
-    const id = getGoogleDriveFileID(googleDriveURL);
-    const apiKey = getApiKey();
-    //const accessToken = getAccessToken("https://www.googleapis.com/auth/drive.readonly");
-    //if(accessToken) {
-    const endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true&key=" + apiKey;
-    const response = await fetch(endPoint);
-    let json = await response.json();
-    if (json.error && json.error.code === 404) {
-        const {access_token} = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
-        if (access_token) {
-            const response = await fetch(endPoint, {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`
-                }
-            });
-            json = await response.json();
-            if(json.error) {
-                throw Error(json.error);
-            }
-        } else {
-            throw Error(json.error);
-        }
-    }
-    return json;
-    // }
 }
 
 /*
@@ -5976,6 +5939,33 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
     } else {
         throw Error("Sign into Google before using picker");
     }
+}
+
+async function getDriveFileInfo(googleDriveURL) {
+
+    const id = getGoogleDriveFileID(googleDriveURL);
+    const apiKey = getApiKey();
+
+    const endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true&key=" + apiKey;
+    const response = await fetch(endPoint);
+    let json = await response.json();
+    if (json.error && json.error.code === 404) {
+        const {access_token} = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
+        if (access_token) {
+            const response = await fetch(endPoint, {
+                headers: {
+                    'Authorization': `Bearer ${access_token}`
+                }
+            });
+            json = await response.json();
+            if(json.error) {
+                throw Error(json.error);
+            }
+        } else {
+            throw Error(json.error);
+        }
+    }
+    return json;
 }
 
 /**
@@ -6155,8 +6145,6 @@ class AlertDialog {
 
 class AlertSingleton {
     constructor(root) {
-
-        console.log('AlertSingleton instance');
 
         if (root) {
             this.alertDialog = undefined;
@@ -7269,7 +7257,7 @@ class FileLoadManager {
 
     dragDropHandler (dataTransfer, isIndexFile) {
         var url,
-            files;
+            files;
 
         url = dataTransfer.getData('text/uri-list');
         files = dataTransfer.files;
@@ -7874,7 +7862,7 @@ class FileLoad {
     }
 
     async loadPaths(paths) {
-        console.log('FileLoad: loadPaths(...)');
+        //console.log('FileLoad: loadPaths(...)');
     }
 
     static isValidLocalFileInput(input) {
@@ -9664,6 +9652,7 @@ const createTrackURLModal = id => {
 let fileLoadWidget$1;
 let multipleTrackFileLoad;
 let encodeModalTables = [];
+let customModalTables = [];
 let genomeChangeListener;
 
 function createTrackWidgets($igvMain,
@@ -9672,6 +9661,7 @@ function createTrackWidgets($igvMain,
                             googleEnabled,
                             $googleDriveButton,
                             encodeTrackModalIds,
+			    customTrackModalItems,
                             urlModalId,
                             igvxhr,
                             trackLoadHandler) {
@@ -9728,7 +9718,19 @@ function createTrackWidgets($igvMain,
         encodeModalTables.push(new ModalTable(encodeModalTableConfig));
 
     }
-
+    
+    for (let customTrackModalItem of customTrackModalItems) {
+        const customModalTableConfig =
+            {
+                id: customTrackModalItem.id,
+                title: 'CUSTOM',
+                selectionStyle: 'multi',
+                pageLength: 100,
+                selectHandler: trackLoadHandler
+            };
+	customModalTables.push(new ModalTable(customModalTableConfig));
+    }
+    
     genomeChangeListener = {
 
         receiveEvent: async ({data}) => {
@@ -9749,6 +9751,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              googleEnabled,
                                              $googleDriveButton,
                                              encodeTrackModalIds,
+					     customTrackModalItems,
                                              urlModalId,
                                              selectModalId,
                                              igvxhr,
@@ -9756,7 +9759,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              trackRegistryFile,
                                              trackLoadHandler) {
 
-    createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, igvxhr, trackLoadHandler);
+    createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, customTrackModalItems, urlModalId, igvxhr, trackLoadHandler);
 
     const $genericSelectModal = $(createGenericSelectModal(selectModalId, `${selectModalId}-select`));
     $igvMain.append($genericSelectModal);
@@ -9773,7 +9776,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         const configurations = [];
         const $selectedOptions = $select.find('option:selected');
         $selectedOptions.each(function () {
-            console.log(`You selected ${$(this).val()}`);
+            //console.log(`You selected ${$(this).val()}`);
             configurations.push($(this).data('track'));
             $(this).removeAttr('selected');
         });
@@ -9801,14 +9804,12 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
             const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID);
             if (encodeIsSupported) {
-                console.log(`ENCODE supports genome ${genomeID}`);
+                //console.log(`ENCODE supports genome ${genomeID}`)
                 encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)));
                 encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)));
-            } else {
-                console.log(`ENCODE DOES NOT support genome ${genomeID}`);
             }
 
-            await updateTrackMenus(genomeID, GtexUtils, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
+            await updateTrackMenus(genomeID, GtexUtils, encodeIsSupported, encodeModalTables, customModalTables, customTrackModalItems, trackRegistryFile, $dropdownMenu, $genericSelectModal);
         }
     };
 
@@ -9820,6 +9821,8 @@ async function updateTrackMenus(genomeID,
                                 GtexUtils,
                                 encodeIsSupported,
                                 encodeModalTables,
+				customModalTables,
+				customModalTrackItems,
                                 trackRegistryFile,
                                 $dropdownMenu,
                                 $genericSelectModal) {
@@ -9854,6 +9857,7 @@ async function updateTrackMenus(genomeID,
     }
 
     let buttonConfigurations = [];
+    let customModalTablesIndex = 0;
 
     for (let json of jsons) {
 
@@ -9879,14 +9883,21 @@ async function updateTrackMenus(genomeID,
                 buttonConfigurations.push(json);
             }
 
-        } else {
+        } else if ('CUSTOM' == json.type) {
+	    let configCustomModalTable = customModalTrackItems[customModalTablesIndex].configurator(genomeID);
+	    let config = {...configCustomModalTable, ...json.configurator};
+	    customModalTables[customModalTablesIndex].setDatasource( new GenericMapDatasource(config) );
+	    customModalTables[customModalTablesIndex].title = json.label;
+	    customModalTablesIndex++;
+	    buttonConfigurations.push(json);	
+	} else {
             buttonConfigurations.push(json);
         }
 
     } // for (json)
     let configurations = [];
     for (let config of buttonConfigurations) {
-        if (config.type && 'ENCODE' === config.type) ; else {
+        if (config.type && 'ENCODE' === config.type) ; else if (config.type && 'CUSTOM' == config.type) ; else {
             configurations.unshift(config);
         }
     }
@@ -9899,6 +9910,14 @@ async function updateTrackMenus(genomeID,
         createDropdownButton($divider, 'ENCODE Signals', id_prefix)
             .on('click', () => encodeModalTables[0].$modal.modal('show'));
 
+    }
+
+    if (customModalTablesIndex > 0 ) {
+	for (let i = 0; i < customModalTablesIndex; i++) {
+	    //console.log(customModalTables[i]);
+	    createDropdownButton($divider, customModalTables[i].title, id_prefix)
+		.on('click', () => customModalTables[i].$modal.modal('show'));
+	}
     }
 
     for (let config of configurations) {
