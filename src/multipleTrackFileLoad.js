@@ -21,7 +21,7 @@
  *
  */
 
-import {FileUtils, GooglePicker, TrackUtils, GoogleUtils} from "../node_modules/igv-utils/src/index.js"
+import {FileUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive} from "../node_modules/igv-utils/src/index.js"
 import * as Utils from './utils.js';
 import AlertSingleton from './alertSingleton.js'
 
@@ -115,7 +115,7 @@ async function ingestPaths({paths, fileLoadHandler, igvxhr}) {
 
             let name
             if (Utils.isGoogleDriveComprehensive(path)) {
-                const {name: n} = await GoogleUtils.getDriveFileInfo(path)
+                const {name: n} = await GoogleDrive.getDriveFileInfo(path)
                 name = n;
             } else {
                 name = getFilenameComprehensive(path);
