@@ -254,8 +254,6 @@ function createTrackConfigurationLUT (dataFileLUT) {
                     filename: name
                 };
 
-            TrackUtils.inferTrackTypes(config);
-
         } else if (path.google_url) {
 
             const {url} = path;
@@ -283,8 +281,6 @@ function createTrackConfigurationLUT (dataFileLUT) {
                     name,
                     filename: name
                 };
-
-            TrackUtils.inferTrackTypes(config);
 
         }
 

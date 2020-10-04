@@ -134,8 +134,6 @@ class TrackFileLoad extends FileLoad {
                     }
                 }
 
-                TrackUtils.inferTrackTypes(config);
-
                 configurations.push(config);
             }
         }
