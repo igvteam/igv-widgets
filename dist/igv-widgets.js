@@ -5618,80 +5618,6 @@ const knownFileExtensions = new Set([
     "gwas"
 ]);
 
-function inferTrackTypes(config) {
-
-    // function inferFileFormat(config) {
-    //
-    //     var path;
-    //
-    //     if (config.format) {
-    //         config.format = config.format.toLowerCase();
-    //         return;
-    //     }
-    //
-    //     path = isFilePath(config.url) ? config.url.name : config.url;
-    //
-    //     config.format = inferFileFormat(path);
-    // }
-
-
-    translateDeprecatedTypes(config);
-
-    if (undefined === config.sourceType && config.url) {
-        config.sourceType = "file";
-    }
-
-    if ("file" === config.sourceType) {
-        if (undefined === config.format) {
-            const path = isFilePath(config.url) ? config.url.name : config.url;
-            config.format = inferFileFormat(path);
-        } else {
-            config.format = config.format.toLowerCase();
-        }
-    }
-
-    if (undefined === config.type) {
-        if (config.type) return;
-
-        if (config.format) {
-
-            switch (config.format.toLowerCase()) {
-                case "bw":
-                case "bigwig":
-                case "wig":
-                case "bedgraph":
-                case "tdf":
-                    config.type = "wig";
-                    break;
-                case "vcf":
-                    config.type = "variant";
-                    break;
-                case "seg":
-                    config.type = "seg";
-                    break;
-                case "bam":
-                case "cram":
-                    config.type = "alignment";
-                    break;
-                case "bedpe":
-                case "bedpe-loop":
-                    config.type = "interaction";
-                    break;
-                case "bp":
-                    config.type = "arc";
-                    break;
-                case "gwas":
-                    config.type = "gwas";
-                    break;
-                default:
-                    config.type = "annotation";
-
-            }
-        }
-
-    }
-}
-
 function inferFileFormat(fn) {
 
     var idx, ext;
@@ -5743,41 +5669,43 @@ function inferFileFormat(fn) {
 
 }
 
-function translateDeprecatedTypes(config) {
-
-    if (config.featureType) {  // Translate deprecated "feature" type
-        config.type = config.type || config.featureType;
-        config.featureType = undefined;
-    }
-    if ("junctions" === config.type) {
-        config.type = "spliceJunctions";
-    } else if ("bed" === config.type) {
-        config.type = "annotation";
-        config.format = config.format || "bed";
-    } else if ("annotations" === config.type) {
-        config.type = "annotation";
-    } else if ("alignments" === config.type) {
-        config.type = "alignment";
-    } else if ("bam" === config.type) {
-        config.type = "alignment";
-        config.format = "bam";
-    } else if ("vcf" === config.type) {
-        config.type = "variant";
-        config.format = "vcf";
-    } else if ("t2d" === config.type) {
-        config.type = "gwas";
-    } else if ("FusionJuncSpan" === config.type && !config.format) {
-        config.format = "fusionjuncspan";
-    } else if ("aed" === config.type) {
-        config.type = "annotation";
-        config.format = config.format || "aed";
-    }
-}
-
 if (typeof process === 'object' && typeof window === 'undefined') {
     global.atob = function (str) {
         return Buffer.from(str, 'base64').toString('binary');
     };
+}
+
+function isGoogleDriveURL(url) {
+    return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
+}
+
+function driveDownloadURL(link) {
+    // Return a google drive download url for the sharable link
+    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var id = getGoogleDriveFileID(link);
+    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
+}
+
+function getGoogleDriveFileID(link) {
+
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var i1, i2;
+
+    if (link.includes("/open?id=")) {
+        i1 = link.indexOf("/open?id=") + 9;
+        i2 = link.indexOf("&");
+        if (i1 > 0 && i2 > i1) {
+            return link.substring(i1, i2)
+        } else if (i1 > 0) {
+            return link.substring(i1);
+        }
+
+    } else if (link.includes("/file/d/")) {
+        i1 = link.indexOf("/file/d/") + 8;
+        i2 = link.lastIndexOf("/");
+        return link.substring(i1, i2);
+    }
 }
 
 // Convenience functions for the gapi oAuth library.
@@ -5825,76 +5753,6 @@ async function signIn(scope) {
 
 function getApiKey() {
     return apiKey;
-}
-
-function isGoogleDriveURL(url) {
-    return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
-}
-
-function driveDownloadURL(link) {
-    // Return a google drive download url for the sharable link
-    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var id = getGoogleDriveFileID(link);
-    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
-}
-
-
-// getDriveFileInfo: function (googleDriveURL) {
-//     const id = getGoogleDriveFileID(googleDriveURL);
-//     const endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true";
-//     return igvxhr.loadJson(endPoint, buildOptions({}));
-// }
-
-
-function getGoogleDriveFileID(link) {
-
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var i1, i2;
-
-    if (link.includes("/open?id=")) {
-        i1 = link.indexOf("/open?id=") + 9;
-        i2 = link.indexOf("&");
-        if (i1 > 0 && i2 > i1) {
-            return link.substring(i1, i2)
-        } else if (i1 > 0) {
-            return link.substring(i1);
-        }
-
-    } else if (link.includes("/file/d/")) {
-        i1 = link.indexOf("/file/d/") + 8;
-        i2 = link.lastIndexOf("/");
-        return link.substring(i1, i2);
-    }
-}
-
-async function getDriveFileInfo(googleDriveURL) {
-
-    const id = getGoogleDriveFileID(googleDriveURL);
-    const apiKey = getApiKey();
-    //const accessToken = getAccessToken("https://www.googleapis.com/auth/drive.readonly");
-    //if(accessToken) {
-    const endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true&key=" + apiKey;
-    const response = await fetch(endPoint);
-    let json = await response.json();
-    if (json.error && json.error.code === 404) {
-        const {access_token} = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
-        if (access_token) {
-            const response = await fetch(endPoint, {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`
-                }
-            });
-            json = await response.json();
-            if(json.error) {
-                throw Error(json.error);
-            }
-        } else {
-            throw Error(json.error);
-        }
-    }
-    return json;
-    // }
 }
 
 /*
@@ -5976,6 +5834,33 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
     } else {
         throw Error("Sign into Google before using picker");
     }
+}
+
+async function getDriveFileInfo(googleDriveURL) {
+
+    const id = getGoogleDriveFileID(googleDriveURL);
+    const apiKey = getApiKey();
+
+    const endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true&key=" + apiKey;
+    const response = await fetch(endPoint);
+    let json = await response.json();
+    if (json.error && json.error.code === 404) {
+        const {access_token} = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
+        if (access_token) {
+            const response = await fetch(endPoint, {
+                headers: {
+                    'Authorization': `Bearer ${access_token}`
+                }
+            });
+            json = await response.json();
+            if(json.error) {
+                throw Error(json.error);
+            }
+        } else {
+            throw Error(json.error);
+        }
+    }
+    return json;
 }
 
 /**
@@ -6155,8 +6040,6 @@ class AlertDialog {
 
 class AlertSingleton {
     constructor(root) {
-
-        console.log('AlertSingleton instance');
 
         if (root) {
             this.alertDialog = undefined;
@@ -7874,7 +7757,7 @@ class FileLoad {
     }
 
     async loadPaths(paths) {
-        console.log('FileLoad: loadPaths(...)');
+        //console.log('FileLoad: loadPaths(...)');
     }
 
     static isValidLocalFileInput(input) {
@@ -8311,8 +8194,6 @@ class TrackFileLoad extends FileLoad {
                     }
                 }
 
-                inferTrackTypes(config);
-
                 configurations.push(config);
             }
         }
@@ -8689,8 +8570,6 @@ function createTrackConfigurationLUT (dataFileLUT) {
                     filename: name
                 };
 
-            inferTrackTypes(config);
-
         } else if (path.google_url) {
 
             const {url} = path;
@@ -8718,8 +8597,6 @@ function createTrackConfigurationLUT (dataFileLUT) {
                     name,
                     filename: name
                 };
-
-            inferTrackTypes(config);
 
         }
 
@@ -9773,7 +9650,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         const configurations = [];
         const $selectedOptions = $select.find('option:selected');
         $selectedOptions.each(function () {
-            console.log(`You selected ${$(this).val()}`);
+            //console.log(`You selected ${$(this).val()}`);
             configurations.push($(this).data('track'));
             $(this).removeAttr('selected');
         });
@@ -9801,11 +9678,9 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
             const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID);
             if (encodeIsSupported) {
-                console.log(`ENCODE supports genome ${genomeID}`);
+                //console.log(`ENCODE supports genome ${genomeID}`)
                 encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)));
                 encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)));
-            } else {
-                console.log(`ENCODE DOES NOT support genome ${genomeID}`);
             }
 
             await updateTrackMenus(genomeID, GtexUtils, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
