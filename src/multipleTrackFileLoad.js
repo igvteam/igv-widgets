@@ -21,9 +21,7 @@
  *
  */
 
-import {FileUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive} from "../node_modules/igv-utils/src/index.js"
-import * as Utils from './utils.js';
-import AlertSingleton from './alertSingleton.js'
+import { FileUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
 
 class MultipleTrackFileLoad {
 
@@ -37,12 +35,12 @@ class MultipleTrackFileLoad {
             if (true === MultipleTrackFileLoad.isValidLocalFileInput($localFileInput)) {
 
                 const input = $localFileInput.get(0);
-                const {files} = input;
+                const { files } = input;
                 const paths = Array.from(files);
 
                 input.value = '';
 
-                await ingestPaths({paths, fileLoadHandler, igvxhr});
+                await ingestPaths({ paths, fileLoadHandler });
             }
 
         });
@@ -51,13 +49,8 @@ class MultipleTrackFileLoad {
 
             const obj =
                 {
-                    success: dbFiles => ingestPaths({
-                        paths: dbFiles.map(({link}) => link),
-                        fileLoadHandler,
-                        igvxhr
-                    }),
-                    cancel: () => {
-                    },
+                    success: dbFiles => ingestPaths({ paths: dbFiles.map(({link}) => link), fileLoadHandler }),
+                    cancel: () => { },
                     linkType: "preview",
                     multiselect: multipleFileSelection,
                     folderselect: false,
@@ -72,19 +65,11 @@ class MultipleTrackFileLoad {
 
                 GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => {
 
-                    const paths = responses.map(({name, url}) => {
+                    // const paths = responses.map(async ({ name, url }) => {
+                    //     return { url: GoogleUtils.driveDownloadURL(url), name, filename: name, format: TrackUtils.inferFileFormat(name) }
+                    // });
 
-                        return {
-                            url: GoogleUtils.driveDownloadURL(url),
-                            google_url: GoogleUtils.driveDownloadURL(url),
-                            name,
-                            filename: name,
-                            format: TrackUtils.inferFileFormat(name)
-                        }
-
-                    });
-
-                    await ingestPaths({paths, fileLoadHandler, igvxhr});
+                    await ingestPaths({ paths : responses.map(({ name, url }) => url), fileLoadHandler });
                 });
 
             });
@@ -94,7 +79,7 @@ class MultipleTrackFileLoad {
     }
 
     async loadPaths(paths) {
-        await ingestPaths({paths, fileLoadHandler: this.fileLoadHandler, igvxhr: this.igvxhr})
+        await ingestPaths({ paths, fileLoadHandler: this.fileLoadHandler })
     }
 
     static isValidLocalFileInput($input) {
@@ -103,250 +88,74 @@ class MultipleTrackFileLoad {
 
 }
 
-async function ingestPaths({paths, fileLoadHandler, igvxhr}) {
+const indexExtensions = new Set(["bai", "csi", "tbi", "idx", "crai"])
 
-    const {jsonConfigurations, remainingPaths} = await getJSONTrackConfigurations(paths, igvxhr);
+async function ingestPaths({ paths, fileLoadHandler }) {
 
-    if (remainingPaths) {
+    // Search for index files  (.bai, .csi, .tbi, .idx)
+    const indexLUT = new Map();
 
-        const LUT = {};
+    const dataPaths = [];
+    for(let path of paths) {
 
-        for (let path of remainingPaths) {
+        const name = await getFilenameComprehensive(path)
 
-            let name
-            if (Utils.isGoogleDriveComprehensive(path)) {
-                const {name: n} = await GoogleDrive.getDriveFileInfo(path)
-                name = n;
+        const extension = FileUtils.getExtension(name)
+        if (indexExtensions.has(extension)) {
+
+            let key = name.substring(0, name.length - (extension.length + 1))
+
+            // bam and cram files (.bai, .crai) have 2 convension <data>.bam.bai and <data.bai>, account for second
+            if(extension === 'bai' && !key.endsWith('bam')) {
+                key = `${ key }.bam`
+            } else if(extension === 'crai' && !key.endsWith('cram')) {
+                key = `${ key }.cram`
+            }
+
+            indexLUT.set(key, path);
+
+        } else {
+            dataPaths.push(path);
+        }
+
+    }
+
+    // Loop through data files building "configs"
+    const configurations = [];
+
+    for(let dataPath of dataPaths) {
+
+        const name = await getFilenameComprehensive(dataPath)
+
+        const format = TrackUtils.inferFileFormat(name);
+
+        if (!format) {
+            console.log(`Skipping ${name} - unknown format.`);
+        } else {
+            if (indexLUT.has(name)) {
+                configurations.push({ format, url: dataPath, indexURL: indexLUT.get(name), name })
             } else {
-                name = getFilenameComprehensive(path);
+                configurations.push({ format, url: dataPath, name })
             }
-
-            LUT[name] = path;
-        }
-
-        // LUT for data file paths
-        const dataFileLUT = createDataFilePathLUT(LUT);
-
-        if (Object.keys(dataFileLUT).length > 0) {
-
-            // LUT for track configurations
-            const trackConfigurationLUT = createTrackConfigurationLUT(dataFileLUT);
-
-            // add index file associations to track files
-            assessIndexFileAssociations(LUT, trackConfigurationLUT);
-
-            // error assessment
-            let {configurations, errorStrings} = validateTrackConfigurations(trackConfigurationLUT);
-
-            if (configurations) {
-                fileLoadHandler(jsonConfigurations ? jsonConfigurations.concat(configurations) : configurations)
-            }
-
-            if (errorStrings) {
-                // console.log(errorStrings.join('\n'));
-                AlertSingleton.present(errorStrings.join('<br>'))
-            }
-
-        } else {
-            AlertSingleton.present('ERROR: Only index files were selected. The corresponding data files must also be selected.')
-        }
-
-    } else {
-        fileLoadHandler(jsonConfigurations);
-    }
-
-};
-
-async function getJSONTrackConfigurations  (paths, igvxhr)  {
-
-    let remainingPaths = [];
-    let jsonPaths = [];
-    for (let path of paths) {
-
-        const extension = FileUtils.getExtension(path);
-
-        if ('json' === extension) {
-            jsonPaths.push(path);
-        } else {
-            remainingPaths.push(path)
         }
     }
 
-    if (0 === jsonPaths.length) {
-        return {jsonConfigurations: undefined, remainingPaths};
+    if (configurations) {
+        fileLoadHandler(configurations)
     }
-
-    const promises = jsonPaths.map(path => path.url ? handleGoogleJSON(path.url, igvxhr) : igvxhr.loadJson(path));
-
-    if (0 === remainingPaths.length) {
-        remainingPaths = undefined;
-    }
-
-    return {jsonConfigurations: await Promise.all(promises), remainingPaths}
 
 }
 
-const handleGoogleJSON = async (url, igvxhr) => {
-    const result = await igvxhr.load(url);
-    return JSON.parse(result);
-};
-
-function createDataFilePathLUT (LUT) {
-
-    const result = {};
-
-    for (let [key, path] of Object.entries(LUT)) {
-
-        if (!Utils.isValidIndexExtension(key)) {
-
-            let format = undefined;
-
-            if (path instanceof File) {
-                const {name} = path;
-                format = TrackUtils.inferFileFormat(name);
-
-            } else if (path.google_url) {
-
-                const {name, url} = path;
-                if (GoogleUtils.isGoogleDriveURL(url)) {
-                    format = TrackUtils.inferFileFormat(name);
-                }
-
-            } else if (GoogleUtils.isGoogleDriveURL(path)) {
-                format = TrackUtils.inferFileFormat(key);
-            } else {
-                format = TrackUtils.inferFileFormat(getFilenameComprehensive(path));
-            }
-
-            if (undefined !== format) {
-                result[key] = path;
-            } else {
-                result[key] = {errorString: `Error: Unrecognized file format ${key}`}
-            }
-
-        }
-
-    }
-
-    return result;
-};
-
-function createTrackConfigurationLUT (dataFileLUT) {
-
-    const result = {};
-
-    for (let [key, path] of Object.entries(dataFileLUT)) {
-
-        let config = undefined;
-
-        if (path.errorString) {
-
-            config = {errorString: path.errorString}
-
-        } else if (path instanceof File) {
-
-            const {name} = path;
-
-            config =
-                {
-                    url: path,
-                    name,
-                    filename: name
-                };
-
-        } else if (path.google_url) {
-
-            const {url} = path;
-
-            if (GoogleUtils.isGoogleDriveURL(url)) {
-                config = path;
-            }
-
-        } else if (GoogleUtils.isGoogleDriveURL(path)) {
-
-            config =
-                {
-                    url: path,
-                    name: key,
-                    filename: key
-                };
-
-        } else {
-
-            const name = getFilenameComprehensive(path);
-
-            config =
-                {
-                    url: path,
-                    name,
-                    filename: name
-                };
-
-        }
-
-        result[key] = config;
-    }
-
-    return result;
-};
-
-const assessIndexFileAssociations = (LUT, trackConfigurationLUT) => {
-
-    // identify data file - index file associations
-    for (let [key, configuration] of Object.entries(trackConfigurationLUT)) {
-
-        if (undefined === configuration.errorString) {
-
-            let extension = FileUtils.getExtension(configuration.name)
-            const suffix = configuration.name.split('.').pop()
-            const isGZippedVCF = ('vcf' === extension && 'gz' === suffix)
-            const {index: indexExtension, isOptional} = Utils.knownDataFileIndexFileLookup(extension, isGZippedVCF);
-
-            const indexKey = `${key}.${indexExtension}`;
-
-            let pieces = key.split('.');
-            pieces.pop();
-            let alternativeIndexKey = `${pieces.join('.')}.${indexExtension}`
-
-            if (LUT[indexKey]) {
-                configuration.indexURL = LUT[indexKey].google_url ? LUT[indexKey].url : LUT[indexKey];
-            } else if (LUT[alternativeIndexKey]) {
-                configuration.indexURL = LUT[indexKey].google_url ? LUT[alternativeIndexKey].url : LUT[alternativeIndexKey];
-            } else if (false === isOptional) {
-                configuration.errorString = `ERROR: data file ${key} is missing required index file`;
-            }
-
-        }
-
-
-    }
-
-};
-
-const validateTrackConfigurations = trackConfigurationLUT => {
-
-    let configurations = Object.values(trackConfigurationLUT).filter(({errorString}) => undefined === errorString);
-    if (0 === configurations.length) {
-        configurations = undefined;
-    }
-
-    let errorStrings = Object.values(trackConfigurationLUT).filter(({errorString}) => undefined !== errorString).map(({errorString}) => errorString);
-    if (0 === errorStrings.length) {
-        errorStrings = undefined;
-    }
-
-    return {configurations, errorStrings}
-};
-
-const getFilenameComprehensive = path => {
-
-    if (path instanceof File || path.google_url) {
-        const {name} = path;
-        return name;
+const getFilenameComprehensive = async path => {
+    if (path instanceof File) {
+        return path.name
+    } else if (GoogleUtils.isGoogleDriveURL(path)) {
+        const { name } = await GoogleDrive.getDriveFileInfo(path)
+        return name
     } else {
-        return FileUtils.getFilename(path);
+        return FileUtils.getFilename(path)
     }
 
-};
+}
 
 export default MultipleTrackFileLoad;
