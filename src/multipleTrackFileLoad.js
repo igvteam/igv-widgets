@@ -86,6 +86,23 @@ class MultipleTrackFileLoad {
         return ($input.get(0).files && $input.get(0).files.length > 0);
     }
 
+    static async getFilename(path ){
+
+        if (path instanceof File) {
+            return path.name
+        } else if (GoogleUtils.isGoogleDriveURL(path)) {
+            const { name } = await GoogleDrive.getDriveFileInfo(path)
+            return name
+        } else {
+            return FileUtils.getFilename(path)
+        }
+
+    }
+
+    static isGoogleDrivePath(path) {
+        return path instanceof File ? false : GoogleUtils.isGoogleDriveURL( path )
+    }
+
 }
 
 const indexExtensions = new Set(["bai", "csi", "tbi", "idx", "crai"])
@@ -98,21 +115,21 @@ async function ingestPaths({ paths, fileLoadHandler }) {
     const dataPaths = [];
     for(let path of paths) {
 
-        const name = await getFilenameComprehensive(path)
+        const name = await MultipleTrackFileLoad.getFilename(path)
 
         const extension = FileUtils.getExtension(name)
         if (indexExtensions.has(extension)) {
 
             let key = name.substring(0, name.length - (extension.length + 1))
 
-            // bam and cram files (.bai, .crai) have 2 convension <data>.bam.bai and <data.bai>, account for second
+            // bam and cram files (.bai, .crai) have 2 convention <data>.bam.bai and <data.bai>, account for second
             if(extension === 'bai' && !key.endsWith('bam')) {
                 key = `${ key }.bam`
             } else if(extension === 'crai' && !key.endsWith('cram')) {
                 key = `${ key }.cram`
             }
 
-            indexLUT.set(key, path);
+            indexLUT.set(key, { indexURL: path, indexFilename: MultipleTrackFileLoad.isGoogleDrivePath( path ) ? name : undefined });
 
         } else {
             dataPaths.push(path);
@@ -125,7 +142,7 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
     for(let dataPath of dataPaths) {
 
-        const name = await getFilenameComprehensive(dataPath)
+        const name = await MultipleTrackFileLoad.getFilename(dataPath)
 
         const format = TrackUtils.inferFileFormat(name);
 
@@ -133,9 +150,11 @@ async function ingestPaths({ paths, fileLoadHandler }) {
             console.log(`Skipping ${name} - unknown format.`);
         } else {
             if (indexLUT.has(name)) {
-                configurations.push({ format, url: dataPath, indexURL: indexLUT.get(name), name })
+
+                const { indexURL, indexFilename } = indexLUT.get(name)
+                configurations.push({ url: dataPath, name, indexURL, indexFilename, format })
             } else {
-                configurations.push({ format, url: dataPath, name })
+                configurations.push({ url: dataPath, name,                          format })
             }
         }
     }
@@ -146,16 +165,5 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
 }
 
-const getFilenameComprehensive = async path => {
-    if (path instanceof File) {
-        return path.name
-    } else if (GoogleUtils.isGoogleDriveURL(path)) {
-        const { name } = await GoogleDrive.getDriveFileInfo(path)
-        return name
-    } else {
-        return FileUtils.getFilename(path)
-    }
-
-}
 
 export default MultipleTrackFileLoad;
