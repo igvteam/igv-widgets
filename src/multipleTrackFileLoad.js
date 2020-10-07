@@ -21,7 +21,7 @@
  *
  */
 
-import { FileUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
+import { FileUtils, URIUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
 
 class MultipleTrackFileLoad {
 
@@ -91,10 +91,11 @@ class MultipleTrackFileLoad {
         if (path instanceof File) {
             return path.name
         } else if (GoogleUtils.isGoogleDriveURL(path)) {
-            const { name } = await GoogleDrive.getDriveFileInfo(path)
-            return name
+            const info = await GoogleDrive.getDriveFileInfo(path)
+            return info.name || info.originalFileName
         } else {
-            return FileUtils.getFilename(path)
+            const result = URIUtils.parseUri(path)
+            return result.file;
         }
 
     }
@@ -116,28 +117,17 @@ async function ingestPaths({ paths, fileLoadHandler }) {
     for(let path of paths) {
 
         const name = await MultipleTrackFileLoad.getFilename(path)
-
         const extension = FileUtils.getExtension(name)
+
         if (indexExtensions.has(extension)) {
-
-            let key = name.substring(0, name.length - (extension.length + 1))
-
-            // bam and cram files (.bai, .crai) have 2 convention <data>.bam.bai and <data.bai>, account for second
-            if(extension === 'bai' && !key.endsWith('bam')) {
-                key = `${ key }.bam`
-            } else if(extension === 'crai' && !key.endsWith('cram')) {
-                key = `${ key }.cram`
-            }
-
+            const key = createIndexLUTKey(name, extension)
             indexLUT.set(key, { indexURL: path, indexFilename: MultipleTrackFileLoad.isGoogleDrivePath( path ) ? name : undefined });
-
         } else {
             dataPaths.push(path);
         }
 
     }
 
-    // Loop through data files building "configs"
     const configurations = [];
 
     for(let dataPath of dataPaths) {
@@ -146,9 +136,8 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
         const format = TrackUtils.inferFileFormat(name);
 
-        if (!format) {
-            console.log(`Skipping ${name} - unknown format.`);
-        } else {
+        if (format) {
+
             if (indexLUT.has(name)) {
 
                 const { indexURL, indexFilename } = indexLUT.get(name)
@@ -156,7 +145,11 @@ async function ingestPaths({ paths, fileLoadHandler }) {
             } else {
                 configurations.push({ url: dataPath, name,                          format })
             }
+
+        } else {
+            console.error(`ERROR: Unable to load track file ${ name }. Unknown format.`);
         }
+
     }
 
     if (configurations) {
@@ -165,5 +158,23 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
 }
 
+// key is the data file name
+const createIndexLUTKey = (name, extension) => {
+
+    let key = name.substring(0, name.length - (extension.length + 1))
+
+    // bam and cram files (.bai, .crai) have 2 conventions:
+    // <data>.bam.bai
+    // <data>.bai - we will support this one
+
+    if('bai' === extension && !key.endsWith('bam')) {
+        return `${ key }.bam`
+    } else if('crai' === extension && !key.endsWith('cram')) {
+        return `${ key }.cram`
+    } else {
+        return key
+    }
+
+}
 
 export default MultipleTrackFileLoad;
