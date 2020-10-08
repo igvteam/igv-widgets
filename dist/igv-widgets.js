@@ -5517,32 +5517,6 @@ function getExtension(url) {
     return index < 0 ? filename : filename.substr(1 + index);
 }
 
-/**
- * Return the filename from the path.   Example
- *   https://foo.com/bar.bed?param=2   => bar.bed
- * @param path
- */
-
-function getFilename (path) {
-
-    if (path.google_url || path instanceof File) {
-        return path.name;
-    } else {
-
-        let index = path.lastIndexOf("/");
-        let filename = index < 0 ? path : path.substr(index + 1);
-
-        //Strip parameters -- handle local files later
-        index = filename.indexOf("?");
-        if (index > 0) {
-            filename = filename.substr(0, index);
-        }
-
-        return filename;
-
-    }
-}
-
 function isFilePath (path) {
     return (path instanceof File);
 }
@@ -7482,14 +7456,6 @@ class FileLoadWidget {
  *
  */
 
-let validIndexExtensionSet = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
-
-function isValidIndexExtension (path) {
-    // let set;
-    // set = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
-    return validIndexExtensionSet.has(getExtension(path));
-}
-
 function getIndexObjectWithDataName  (name) {
     let extension,
         dataSuffix,
@@ -7637,94 +7603,12 @@ function indexLookup  (dataSuffix)  {
     }
 
 }
-function isGoogleDriveComprehensive  (path)  {
-    return !(path instanceof File) && !(path.google_url) && isGoogleDriveURL(path)
-}
-
-// TODO: This replaces the above "indexLookup"
-function knownDataFileIndexFileLookup  (extension, isGZippedVCF) {
-
-    const vcf_gz =
-        {
-            index: 'tbi',
-            isOptional: false
-        };
-
-    const fna =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const fa =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const fasta =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const bam =
-        {
-            index: 'bai',
-            isOptional: false
-        };
-
-    const cram =
-        {
-            index: 'crai',
-            isOptional: false
-        };
-
-    const gz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const bgz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const lut =
-        {
-            vcf_gz,
-            fna,
-            fa,
-            fasta,
-            bam,
-            cram,
-            gz,
-            bgz
-        };
-
-    const any =
-        {
-            index: 'idx',
-            isOptional: true
-        };
-
-    const key = true === isGZippedVCF ? `${ extension }_gz` : extension;
-
-    return lut[ key ] || any;
-
-}
 
 var utils = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    knownDataFileIndexFileLookup: knownDataFileIndexFileLookup,
-    validIndexExtensionSet: validIndexExtensionSet,
-    isValidIndexExtension: isValidIndexExtension,
     getIndexObjectWithDataName: getIndexObjectWithDataName,
     isKnownFileExtension: isKnownFileExtension,
-    configureModal: configureModal,
-    isGoogleDriveComprehensive: isGoogleDriveComprehensive
+    configureModal: configureModal
 });
 
 class FileLoad {
@@ -8116,263 +8000,6 @@ function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
  *
  */
 
-const indexableFormats = new Set(["vcf", "bed", "gff", "gtf", "gff3", "bedgraph"]);
-
-class TrackFileLoad extends FileLoad {
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, igvxhr });
-        this.loadHandler = loadHandler;
-    }
-
-    async loadPaths(paths) {
-
-        let configurations = [];
-
-        // isolate JSON paths
-        let jsonPaths = paths.filter(path => 'json' === getExtension(path) );
-        if (jsonPaths.length > 0) {
-            const promises = jsonPaths
-                .map(path => {
-                    let url = (path.google_url || path);
-                    return { promise: this.igvxhr.loadJson(url) }
-                });
-
-
-            const jsons = await Promise.all(promises.map(task => task.promise));
-            configurations.push(...jsons);
-
-        }
-
-        let remainingPaths = paths.filter(path => 'json' !== getExtension(path) );
-
-        if (remainingPaths.length > 0) {
-
-            // isolate data paths
-            let dataPaths = TrackFileLoad.createDataPathDictionary(remainingPaths);
-            if (0 === Object.keys(dataPaths).length) {
-                AlertSingleton$1.present('ERROR: Must provide data file(s)');
-                return;
-            }
-
-            // isolate index path candidates
-            let indexPathCandidates = TrackFileLoad.createIndexPathCandidateDictionary(remainingPaths);
-
-            // identify index paths that are
-            // 1) present
-            // 2) names of missing index paths for later error reporting
-            let indexPaths = FileLoad.getIndexPaths(dataPaths, indexPathCandidates);
-
-            TrackFileLoad.trackConfigurator(dataPaths, indexPaths, configurations);
-
-            const str = TrackFileLoad.getErrorString(dataPaths, indexPaths, indexPathCandidates);
-            if (str) {
-                AlertSingleton$1.present(str);
-            }
-
-        }
-
-        if (configurations.length > 0) {
-            this.loadHandler(configurations);
-        }
-
-
-    }
-
-    static createDataPathDictionary(paths) {
-
-        return paths
-            .filter(path => isKnownFileExtension( getExtension(path) ))
-            .reduce((accumulator, path) => {
-                accumulator[ getFilename(path) ] = (path.google_url || path);
-                return accumulator;
-            }, {});
-
-    }
-
-    static createIndexPathCandidateDictionary(paths) {
-
-        return paths
-            .filter(path => isValidIndexExtension( getExtension(path) ))
-            .reduce((accumulator, path) => {
-                accumulator[ getFilename(path) ] = (path.google_url || path);
-                return accumulator;
-            }, {});
-
-    }
-
-    static trackConfigurator(dataPaths, indexPaths, configurations) {
-
-        for (let key of Object.keys(dataPaths)) {
-
-            if (false === TrackFileLoad.IndexPathIsMissing(key, indexPaths)) {
-
-                let config =
-                    {
-                        name: key,
-                        filename:key,
-                        format: inferFileFormat(key),
-                        url: dataPaths[ key ]
-                    };
-
-                const indexURL = FileLoad.getIndexURL(indexPaths[ key ]);
-
-                if(indexURL) {
-                    config.indexURL = indexURL;
-                } else {
-                    if(indexableFormats.has(config.format)) {
-                        config.indexed = false;
-                    }
-                }
-
-                configurations.push(config);
-            }
-        }
-
-    }
-
-    static jsonConfigurator(jsonConfigurations) {
-
-        if (jsonConfigurations.length > 0) {
-            let reduction;
-
-            reduction = jsonConfigurations
-                .reduce(function(accumulator, item) {
-
-                    if (true === Array.isArray(item)) {
-                        item.forEach(function (config) {
-                            accumulator.push(config);
-                        });
-                    } else {
-                        accumulator.push(item);
-                    }
-
-                    return accumulator;
-                }, []);
-
-            self.fileLoadHander(configurations);
-
-
-        }
-    }
-
-    static jsonRetrievalSerial(tasks, configurations) {
-
-        let jsonConfigurations = [];
-
-        tasks
-            .reduce((promiseChain, task) => {
-
-                return promiseChain
-                    .then((chainResults) => {
-
-                        let { promise } = task;
-
-                        return promise
-                            .then((currentResult) => {
-                                jsonConfigurations = [...chainResults, currentResult];
-                                return jsonConfigurations;
-                            })
-                    })
-            }, Promise.resolve([]))
-            .then(() => {
-                configurations.push(...jsonConfigurations);
-                TrackFileLoad.jsonConfigurator(configurations);
-            })
-            .catch(error => {
-                AlertSingleton$1.present(error.message);
-            });
-
-    }
-
-    static IndexPathIsMissing(dataName, indexPaths) {
-        let status,
-            aa;
-
-        // if index for data is not in indexPaths it has been culled
-        // because it is optional AND missing
-        if (undefined === indexPaths[ dataName ]) {
-            status = false;
-        }
-
-        else if (indexPaths && indexPaths[ dataName ]) {
-
-            aa = indexPaths[ dataName ][ 0 ];
-            if (1 === indexPaths[ dataName ].length) {
-                status = (undefined === aa);
-            } else /* BAM Track with two naming conventions */ {
-                let bb;
-                bb = indexPaths[ dataName ][ 1 ];
-                if (aa || bb) {
-                    status = false;
-                } else {
-                    status = true;
-                }
-            }
-
-        } else {
-            status = true;
-        }
-
-        return status;
-
-    }
-
-    static getErrorString(dataPaths, indexPaths, indexPathCandidates) {
-
-        let errorStrings = [];
-
-        for (let dataKey of Object.keys(dataPaths)) {
-            if (true === TrackFileLoad.IndexPathIsMissing(dataKey, indexPaths)) {
-                errorStrings.push(`Index file missing for ${ dataKey }`);
-            }
-        }
-
-        let indexPathNameSet = new Set();
-        for (let key in indexPaths) {
-            if (indexPaths.hasOwnProperty(key)) {
-                indexPaths[ key ].forEach(function (obj) {
-                    if (obj) {
-                        indexPathNameSet.add( obj.name );
-                    }
-                });
-            }
-        }
-
-        for (let key of Object.keys(indexPathCandidates)) {
-            if (false === indexPathNameSet.has(key)) {
-                errorStrings.push(`Data file is missing for ${ name }`);
-            }
-
-        }
-
-        return errorStrings.length > 0 ? errorStrings.join(' ') : undefined;
-    }
-
-}
-
-/*
- *  The MIT License (MIT)
- *
- * Copyright (c) 2016-2017 The Regents of the University of California
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial
- * portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
 class MultipleTrackFileLoad {
 
     constructor({$localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection, igvxhr}) {
@@ -8456,9 +8083,20 @@ class MultipleTrackFileLoad {
 
 }
 
-const indexExtensions = new Set(["bai", "csi", "tbi", "idx", "crai"]);
+const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai']);
+
+const requireIndex = new Set(['bam', 'cram']);
 
 async function ingestPaths({ paths, fileLoadHandler }) {
+    try {
+        await ingestPathsHandler({ paths, fileLoadHandler });
+    } catch (e) {
+        console.error(e);
+        AlertSingleton$1.present(e.message);
+    }
+}
+
+async function ingestPathsHandler({ paths, fileLoadHandler }) {
 
     // Search for index files  (.bai, .csi, .tbi, .idx)
     const indexLUT = new Map();
@@ -8470,6 +8108,8 @@ async function ingestPaths({ paths, fileLoadHandler }) {
         const extension = getExtension(name);
 
         if (indexExtensions.has(extension)) {
+
+            // key is the data file name
             const key = createIndexLUTKey(name, extension);
             indexLUT.set(key, { indexURL: path, indexFilename: MultipleTrackFileLoad.isGoogleDrivePath( path ) ? name : undefined });
         } else {
@@ -8490,14 +8130,16 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
             if (indexLUT.has(name)) {
 
-                const { indexURL, indexFilename } = indexLUT.get(name);
-                configurations.push({ url: dataPath, name, indexURL, indexFilename, format });
+                const {indexURL, indexFilename} = indexLUT.get(name);
+                configurations.push({url: dataPath, name, indexURL, indexFilename, format});
+            } else if (requireIndex.has(getExtension(name))) {
+                throw new Error(`ERROR: ${ name } does not have an index file.`)
             } else {
-                configurations.push({ url: dataPath, name,                          format });
+                configurations.push({ url: dataPath, name, format });
             }
 
         } else {
-            console.error(`ERROR: Unable to load track file ${ name }. Unknown format.`);
+            throw new Error(`ERROR: Unable to load track file ${ name }. Unknown format.`)
         }
 
     }
@@ -8508,7 +8150,6 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
 }
 
-// key is the data file name
 const createIndexLUTKey = (name, extension) => {
 
     let key = name.substring(0, name.length - (extension.length + 1));
@@ -9755,4 +9396,4 @@ const googleDriveDropdownItem = id => {
             </div>`
 };
 
-export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, TrackFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgets, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem };
+export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgets, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem };

@@ -21,6 +21,7 @@
  *
  */
 
+import AlertSingleton from './alertSingleton.js'
 import { FileUtils, URIUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
 
 class MultipleTrackFileLoad {
@@ -106,9 +107,20 @@ class MultipleTrackFileLoad {
 
 }
 
-const indexExtensions = new Set(["bai", "csi", "tbi", "idx", "crai"])
+const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai'])
+
+const requireIndex = new Set(['bam', 'cram'])
 
 async function ingestPaths({ paths, fileLoadHandler }) {
+    try {
+        await ingestPathsHandler({ paths, fileLoadHandler })
+    } catch (e) {
+        console.error(e)
+        AlertSingleton.present(e.message);
+    }
+}
+
+async function ingestPathsHandler({ paths, fileLoadHandler }) {
 
     // Search for index files  (.bai, .csi, .tbi, .idx)
     const indexLUT = new Map();
@@ -120,6 +132,8 @@ async function ingestPaths({ paths, fileLoadHandler }) {
         const extension = FileUtils.getExtension(name)
 
         if (indexExtensions.has(extension)) {
+
+            // key is the data file name
             const key = createIndexLUTKey(name, extension)
             indexLUT.set(key, { indexURL: path, indexFilename: MultipleTrackFileLoad.isGoogleDrivePath( path ) ? name : undefined });
         } else {
@@ -140,14 +154,16 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
             if (indexLUT.has(name)) {
 
-                const { indexURL, indexFilename } = indexLUT.get(name)
-                configurations.push({ url: dataPath, name, indexURL, indexFilename, format })
+                const {indexURL, indexFilename} = indexLUT.get(name)
+                configurations.push({url: dataPath, name, indexURL, indexFilename, format})
+            } else if (requireIndex.has(FileUtils.getExtension(name))) {
+                throw new Error(`ERROR: ${ name } does not have an index file.`)
             } else {
-                configurations.push({ url: dataPath, name,                          format })
+                configurations.push({ url: dataPath, name, format })
             }
 
         } else {
-            console.error(`ERROR: Unable to load track file ${ name }. Unknown format.`);
+            throw new Error(`ERROR: Unable to load track file ${ name }. Unknown format.`)
         }
 
     }
@@ -158,7 +174,6 @@ async function ingestPaths({ paths, fileLoadHandler }) {
 
 }
 
-// key is the data file name
 const createIndexLUTKey = (name, extension) => {
 
     let key = name.substring(0, name.length - (extension.length + 1))

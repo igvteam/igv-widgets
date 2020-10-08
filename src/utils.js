@@ -21,15 +21,7 @@
  *
  */
 
-import {FileUtils, GoogleUtils} from "../node_modules/igv-utils/src/index.js"
-
-let validIndexExtensionSet = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
-
-function isValidIndexExtension (path) {
-    // let set;
-    // set = new Set(['fai', 'bai', 'crai', 'tbi', 'idx']);
-    return validIndexExtensionSet.has(FileUtils.getExtension(path));
-}
+import { FileUtils } from "../node_modules/igv-utils/src/index.js"
 
 function getIndexObjectWithDataName  (name) {
     let extension,
@@ -79,11 +71,6 @@ function isKnownFileExtension  (extension)  {
     let fasta = new Set(['fa', 'fasta']);
     let union = new Set([...(TrackUtils.knownFileExtensions), ...fasta]);
     return union.has(extension);
-};
-
-function isJSON  (thang)  {
-    // Better JSON test. JSON.parse gives false positives.
-    return (true === (thang instanceof Object) && false === (thang instanceof File));
 };
 
 function configureModal  (fileLoadWidget, modal, okHandler) {
@@ -185,85 +172,6 @@ function indexLookup  (dataSuffix)  {
         return any;
     }
 
-};
-
-function isGoogleDriveComprehensive  (path)  {
-    return !(path instanceof File) && !(path.google_url) && GoogleUtils.isGoogleDriveURL(path)
 }
 
-// TODO: This replaces the above "indexLookup"
-function knownDataFileIndexFileLookup  (extension, isGZippedVCF) {
-
-    const vcf_gz =
-        {
-            index: 'tbi',
-            isOptional: false
-        };
-
-    const fna =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const fa =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const fasta =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const bam =
-        {
-            index: 'bai',
-            isOptional: false
-        };
-
-    const cram =
-        {
-            index: 'crai',
-            isOptional: false
-        };
-
-    const gz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const bgz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const lut =
-        {
-            vcf_gz,
-            fna,
-            fa,
-            fasta,
-            bam,
-            cram,
-            gz,
-            bgz
-        };
-
-    const any =
-        {
-            index: 'idx',
-            isOptional: true
-        };
-
-    const key = true === isGZippedVCF ? `${ extension }_gz` : extension;
-
-    return lut[ key ] || any;
-
-};
-
-export { knownDataFileIndexFileLookup, validIndexExtensionSet, isValidIndexExtension, getIndexObjectWithDataName, isKnownFileExtension, configureModal, isGoogleDriveComprehensive };
+export { getIndexObjectWithDataName, isKnownFileExtension, configureModal };
