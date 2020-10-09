@@ -8002,10 +8002,9 @@ function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
 
 class MultipleTrackFileLoad {
 
-    constructor({$localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection, igvxhr}) {
+    constructor({ $localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
 
         this.fileLoadHandler = fileLoadHandler;
-        this.igvxhr = igvxhr;
 
         $localFileInput.on('change', async () => {
 
@@ -9089,8 +9088,7 @@ function createTrackWidgets($igvMain,
             $dropboxButton,
             $googleDriveButton: googleEnabled ? $googleDriveButton : undefined,
             fileLoadHandler: trackLoadHandler,
-            multipleFileSelection: true,
-            igvxhr
+            multipleFileSelection: true
         };
 
     multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig);

@@ -112,14 +112,14 @@ const requireIndex = new Set(['bam', 'cram'])
 
 async function ingestPaths({ paths, fileLoadHandler }) {
     try {
-        await ingestPathsHandler({ paths, fileLoadHandler })
+        await doIngestPaths({paths, fileLoadHandler})
     } catch (e) {
         console.error(e)
         AlertSingleton.present(e.message);
     }
 }
 
-async function ingestPathsHandler({ paths, fileLoadHandler }) {
+async function doIngestPaths({paths, fileLoadHandler}) {
 
     // Search for index files  (.bai, .csi, .tbi, .idx)
     const indexLUT = new Map();
