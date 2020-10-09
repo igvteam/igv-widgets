@@ -8088,14 +8088,14 @@ const requireIndex = new Set(['bam', 'cram']);
 
 async function ingestPaths({ paths, fileLoadHandler }) {
     try {
-        await ingestPathsHandler({ paths, fileLoadHandler });
+        await doIngestPaths({paths, fileLoadHandler});
     } catch (e) {
         console.error(e);
         AlertSingleton$1.present(e.message);
     }
 }
 
-async function ingestPathsHandler({ paths, fileLoadHandler }) {
+async function doIngestPaths({paths, fileLoadHandler}) {
 
     // Search for index files  (.bai, .csi, .tbi, .idx)
     const indexLUT = new Map();
@@ -9053,7 +9053,6 @@ function createTrackWidgets($igvMain,
                             $googleDriveButton,
                             encodeTrackModalIds,
                             urlModalId,
-                            igvxhr,
                             trackLoadHandler) {
 
     const $urlModal = $(createTrackURLModal(urlModalId));
@@ -9130,12 +9129,11 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              encodeTrackModalIds,
                                              urlModalId,
                                              selectModalId,
-                                             igvxhr,
                                              GtexUtils,
                                              trackRegistryFile,
                                              trackLoadHandler) {
 
-    createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, igvxhr, trackLoadHandler);
+    createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, trackLoadHandler);
 
     const $genericSelectModal = $(createGenericSelectModal(selectModalId, `${selectModalId}-select`));
     $igvMain.append($genericSelectModal);
