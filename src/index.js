@@ -7,7 +7,6 @@ import FileLoad from "./fileLoad.js";
 import GenomeFileLoad from "./genomeFileLoad.js";
 import SessionFileLoad from "./sessionFileLoad.js";
 import SessionController from "./sessionController.js";
-import TrackFileLoad from "./trackFileLoad.js";
 import MultipleTrackFileLoad from "./multipleTrackFileLoad.js";
 import * as Utils from './utils.js';
 import { createSessionWidgets } from "./sessionWidgets.js";
@@ -28,7 +27,6 @@ export {
     GenomeFileLoad,
     SessionFileLoad,
     SessionController,
-    TrackFileLoad,
     MultipleTrackFileLoad,
     createSessionWidgets,
     createTrackWidgets,
