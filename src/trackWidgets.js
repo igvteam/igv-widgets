@@ -24,7 +24,6 @@ function createTrackWidgets($igvMain,
                             $googleDriveButton,
                             encodeTrackModalIds,
                             urlModalId,
-                            igvxhr,
                             trackLoadHandler) {
 
     const $urlModal = $(createTrackURLModal(urlModalId))
@@ -101,12 +100,11 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              encodeTrackModalIds,
                                              urlModalId,
                                              selectModalId,
-                                             igvxhr,
                                              GtexUtils,
                                              trackRegistryFile,
                                              trackLoadHandler) {
 
-    createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, igvxhr, trackLoadHandler)
+    createTrackWidgets($igvMain, $localFileInput, $dropboxButton, googleEnabled, $googleDriveButton, encodeTrackModalIds, urlModalId, trackLoadHandler)
 
     const $genericSelectModal = $(createGenericSelectModal(selectModalId, `${selectModalId}-select`));
     $igvMain.append($genericSelectModal);
