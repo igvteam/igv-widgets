@@ -59,8 +59,7 @@ function createTrackWidgets($igvMain,
             $dropboxButton,
             $googleDriveButton: googleEnabled ? $googleDriveButton : undefined,
             fileLoadHandler: trackLoadHandler,
-            multipleFileSelection: true,
-            igvxhr
+            multipleFileSelection: true
         };
 
     multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig)

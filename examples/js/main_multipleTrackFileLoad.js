@@ -2,7 +2,8 @@ import FileLoadWidget from "../../src/fileLoadWidget.js";
 import FileLoadManager from "../../src/fileLoadManager.js";
 import MultipleTrackFileLoad from "../../src/multipleTrackFileLoad.js";
 
-let fileLoadWidget = undefined;
+let fileLoadWidget = undefined
+let multipleTrackFileLoad = undefined
 document.addEventListener("DOMContentLoaded", () => {
 
     const multipleTrackFileLoadConfig =
@@ -10,14 +11,11 @@ document.addEventListener("DOMContentLoaded", () => {
             $localFileInput: $('#local-file-load-button'),
             $dropboxButton: $('#dropbox-load-button'),
             $googleDriveButton: undefined,
-            fileLoadHandler: configurations => {
-                console.log(configurations)
-            },
-            multipleFileSelection: true,
-            igvxhr: undefined
+            fileLoadHandler: configurations => console.log(configurations),
+            multipleFileSelection: true
         };
 
-    const multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig)
+    multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig)
 
     const config =
         {

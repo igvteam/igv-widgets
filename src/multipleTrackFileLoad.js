@@ -26,10 +26,9 @@ import { FileUtils, URIUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive
 
 class MultipleTrackFileLoad {
 
-    constructor({$localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection, igvxhr}) {
+    constructor({ $localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
 
         this.fileLoadHandler = fileLoadHandler;
-        this.igvxhr = igvxhr;
 
         $localFileInput.on('change', async () => {
 
