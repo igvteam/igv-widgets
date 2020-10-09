@@ -1,13 +1,28 @@
 import FileLoadWidget from "../../src/fileLoadWidget.js";
 import FileLoadManager from "../../src/fileLoadManager.js";
+import MultipleTrackFileLoad from "../../src/multipleTrackFileLoad.js";
 
 let fileLoadWidget = undefined;
 document.addEventListener("DOMContentLoaded", () => {
 
+    const multipleTrackFileLoadConfig =
+        {
+            $localFileInput: $('#local-file-load-button'),
+            $dropboxButton: $('#dropbox-load-button'),
+            $googleDriveButton: undefined,
+            fileLoadHandler: configurations => {
+                console.log(configurations)
+            },
+            multipleFileSelection: true,
+            igvxhr: undefined
+        };
+
+    const multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig)
+
     const config =
         {
             widgetParent: document.querySelector('.card-body'),
-            dataTitle: 'Data',
+            dataTitle: 'Track',
             indexTitle: 'Index',
             mode: 'url',
             fileLoadManager: new FileLoadManager(),
@@ -17,14 +32,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fileLoadWidget = new FileLoadWidget(config);
 
-    $('#submit-button').on('click', () => {
+    $('#url-load-button').on('click', async () => {
         const paths = fileLoadWidget.retrievePaths();
-        let str = '';
-        for (let path of paths) {
-            str = `${ str } ${ path }`;
-        }
 
-        alert(`${ str }`);
+        // let str = '';
+        // for (let path of paths) {
+        //     str = `${ str } ${ path }`;
+        // }
+        //
+        // alert(`${ str }`);
+
+        await multipleTrackFileLoad.loadPaths(paths);
+        return true;
+
     });
 
 });
