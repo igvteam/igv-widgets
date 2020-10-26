@@ -156,13 +156,13 @@ async function doIngestPaths({paths, fileLoadHandler}) {
                 const {indexURL, indexFilename} = indexLUT.get(name)
                 configurations.push({url: dataPath, name, indexURL, indexFilename, format})
             } else if (requireIndex.has(FileUtils.getExtension(name))) {
-                throw new Error(`ERROR: ${ name } does not have an index file.`)
+                throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
             } else {
                 configurations.push({ url: dataPath, name, format })
             }
 
         } else {
-            throw new Error(`ERROR: Unable to load track file ${ name }. Unknown format.`)
+            throw new Error(`Unable to load track file ${ name } - unknown file format`)
         }
 
     }
