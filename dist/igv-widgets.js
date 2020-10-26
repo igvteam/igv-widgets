@@ -7767,8 +7767,9 @@ const referenceSet = new Set(['fai', 'fa', 'fasta']);
 const dataSet = new Set(['fna', 'fa', 'fasta']);
 const indexSet = new Set(['fai']);
 
-// const errorString = 'ERROR: Load either: 1) single JSON file. 2) data file (.fa or .fasta ) & index file (.fai).';
-const errorString = 'ERROR: Select both a sequence file (.fa or .fasta) and an index file (.fai).';
+// const errorString = 'ERROR: Select both a sequence file (.fa or .fasta) and an index file (.fai).'
+const errorString = 'Genome not loaded - you must select both a sequence file (.fa or .fasta) and an index file (.fai)';
+
 class GenomeFileLoad extends FileLoad {
 
     constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr }) {
@@ -8132,13 +8133,13 @@ async function doIngestPaths({paths, fileLoadHandler}) {
                 const {indexURL, indexFilename} = indexLUT.get(name);
                 configurations.push({url: dataPath, name, indexURL, indexFilename, format});
             } else if (requireIndex.has(getExtension(name))) {
-                throw new Error(`ERROR: ${ name } does not have an index file.`)
+                throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
             } else {
                 configurations.push({ url: dataPath, name, format });
             }
 
         } else {
-            throw new Error(`ERROR: Unable to load track file ${ name }. Unknown format.`)
+            throw new Error(`Unable to load track file ${ name } - unknown file format`)
         }
 
     }
