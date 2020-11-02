@@ -1,7 +1,4 @@
-import ModalTable from '../node_modules/data-modal/js/modalTable.js'
-import EncodeTrackDatasource from "../node_modules/data-modal/js/encodeTrackDatasource.js"
-import {encodeTrackDatasourceSignalConfigurator} from "../node_modules/data-modal/js/encodeTrackDatasourceSignalConfig.js"
-import {encodeTrackDatasourceOtherConfigurator} from "../node_modules/data-modal/js/encodeTrackDatasourceOtherConfig.js"
+import { ModalTable, EncodeTrackDatasource, encodeTrackDatasourceSignalConfigurator, encodeTrackDatasourceOtherConfigurator } from '../node_modules/data-modal/js/index.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
 import {createTrackURLModal} from './trackURLModal.js'
 import EventBus from "./eventBus.js"
