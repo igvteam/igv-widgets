@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/igvteam/igv-widgets#readme",
   "dependencies": {
-    "data-modal": "github:igvteam/data-modal#8a5fd7fa",
+    "data-modal": "github:igvteam/data-modal#6934164b",
     "igv-utils": "github:igvteam/igv-utils#36c425bb"
   }
 }
