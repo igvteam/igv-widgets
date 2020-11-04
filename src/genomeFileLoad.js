@@ -1,6 +1,6 @@
+import {AlertSingleton} from '../node_modules/igv-ui/dist/igv-ui.js'
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
-import AlertSingleton from './alertSingleton.js'
 
 const referenceSet = new Set(['fai', 'fa', 'fasta']);
 const dataSet = new Set(['fna', 'fa', 'fasta']);

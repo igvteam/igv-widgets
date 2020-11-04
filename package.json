@@ -7,7 +7,7 @@
     "src/**"
   ],
   "scripts": {
-    "build": "npx rollup --config",
+    "build": "node scripts/generateEmbedCss.js && npx rollup --config",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -24,8 +24,13 @@
     "url": "https://github.com/igvteam/igv-widgets/issues"
   },
   "homepage": "https://github.com/igvteam/igv-widgets#readme",
+  "devDependencies": {
+    "@rollup/plugin-strip": "^2.0.0",
+    "rollup": "^2.33.1"
+  },
   "dependencies": {
     "data-modal": "github:igvteam/data-modal#6934164b",
+    "igv-ui": "github:igvteam/igv-ui#136661f5",
     "igv-utils": "github:igvteam/igv-utils#36c425bb"
   }
 }
