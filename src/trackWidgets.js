@@ -1,4 +1,5 @@
 import { ModalTable, EncodeTrackDatasource, encodeTrackDatasourceSignalConfigurator, encodeTrackDatasourceOtherConfigurator } from '../node_modules/data-modal/js/index.js'
+import {AlertSingleton} from '../node_modules/igv-ui/dist/igv-ui.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
 import {createTrackURLModal} from './trackURLModal.js'
 import EventBus from "./eventBus.js"
@@ -6,8 +7,6 @@ import FileLoadManager from "./fileLoadManager.js"
 import FileLoadWidget from "./fileLoadWidget.js"
 import MultipleTrackFileLoad from "./multipleTrackFileLoad.js"
 import * as Utils from './utils.js'
-import AlertSingleton from './alertSingleton.js'
-
 
 let fileLoadWidget;
 let multipleTrackFileLoad;

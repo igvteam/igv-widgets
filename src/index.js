@@ -14,6 +14,24 @@ import { createURLModal } from "./urlModal.js";
 import { dropboxButtonImageBase64, googleDriveButtonImageBase64, dropboxDropdownItem, googleDriveDropdownItem } from './markupFactory.js'
 import { createGenericSelectModal } from './genericSelectModal.js'
 import { createTrackURLModal } from './trackURLModal.js'
+import embedCSS from "./embedCSS.js"
+
+if(typeof document !== 'undefined') {
+    if (!stylesheetExists("file-load-widget.css")) {
+        console.log('igv-widgets. will call embedCSS(file-load-widget.css) ...');
+        embedCSS();
+        console.log('... done.');
+    }
+    function stylesheetExists(stylesheetName) {
+        for (let ss of document.styleSheets) {
+            ss = ss.href ? ss.href.replace(/^.*[\\\/]/, '') : '';
+            if (ss === stylesheetName) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
 
 export {
     EventBus,
