@@ -21,7 +21,7 @@
  *
  */
 
-import {AlertSingleton} from '../node_modules/igv-ui/dist/igv-ui.js'
+import AlertSingleton from './alertSingleton.js'
 import { FileUtils, URIUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
 
 class MultipleTrackFileLoad {

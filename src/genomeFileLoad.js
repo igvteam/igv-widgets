@@ -1,4 +1,4 @@
-import {AlertSingleton} from '../node_modules/igv-ui/dist/igv-ui.js'
+import AlertSingleton from './alertSingleton.js'
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
 
