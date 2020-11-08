@@ -1,5 +1,6 @@
 import EventBus from "./eventBus.js";
 import { QRCode } from './qrcode.js';
+import AlertSingleton from './alertSingleton.js'
 import FileLoadManager from './fileLoadManager.js';
 import FileLoadWidget from './fileLoadWidget.js';
 import FileLoad from "./fileLoad.js";
@@ -17,10 +18,10 @@ import { createTrackURLModal } from './trackURLModal.js'
 import embedCSS from "./embedCSS.js"
 
 if(typeof document !== 'undefined') {
-    if (!stylesheetExists("file-load-widget.css")) {
-        console.log('igv-widgets. will call embedCSS(file-load-widget.css) ...');
+    if (!stylesheetExists("igv-widgets.css")) {
+        //console.log('igv-widgets. will call embedCSS(igv-widgets.css) ...');
         embedCSS();
-        console.log('... done.');
+        //console.log('... done.');
     }
     function stylesheetExists(stylesheetName) {
         for (let ss of document.styleSheets) {
@@ -36,6 +37,7 @@ if(typeof document !== 'undefined') {
 export {
     EventBus,
     QRCode,
+    AlertSingleton,
     Utils,
     FileLoadManager,
     FileLoadWidget,

@@ -1,5 +1,5 @@
 import { ModalTable, EncodeTrackDatasource, encodeTrackDatasourceSignalConfigurator, encodeTrackDatasourceOtherConfigurator } from '../node_modules/data-modal/js/index.js'
-import {AlertSingleton} from '../node_modules/igv-ui/dist/igv-ui.js'
+import AlertSingleton from './alertSingleton.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
 import {createTrackURLModal} from './trackURLModal.js'
 import EventBus from "./eventBus.js"
