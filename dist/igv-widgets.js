@@ -9412,7 +9412,9 @@ function embedCSS() {
 
 if(typeof document !== 'undefined') {
     if (!stylesheetExists("igv-widgets.css")) {
+        //console.log('igv-widgets. will call embedCSS(igv-widgets.css) ...');
         embedCSS();
+        //console.log('... done.');
     }
     function stylesheetExists(stylesheetName) {
         for (let ss of document.styleSheets) {
