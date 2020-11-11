@@ -6532,6 +6532,176 @@ if(typeof btoa === 'undefined') {
     _btoa = btoa;
 }
 
+function isGoogleDriveURL(url) {
+    return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
+}
+
+function driveDownloadURL(link) {
+    // Return a google drive download url for the sharable link
+    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var id = getGoogleDriveFileID(link);
+    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
+}
+
+function getGoogleDriveFileID(link) {
+
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var i1, i2;
+
+    if (link.includes("/open?id=")) {
+        i1 = link.indexOf("/open?id=") + 9;
+        i2 = link.indexOf("&");
+        if (i1 > 0 && i2 > i1) {
+            return link.substring(i1, i2)
+        } else if (i1 > 0) {
+            return link.substring(i1);
+        }
+
+    } else if (link.includes("/file/d/")) {
+        i1 = link.indexOf("/file/d/") + 8;
+        i2 = link.lastIndexOf("/");
+        return link.substring(i1, i2);
+    }
+}
+
+// Convenience functions for the gapi oAuth library.
+
+const FIVE_MINUTES = 5 * 60 * 1000;
+
+let inProgress = false;
+
+async function getAccessToken(scope) {
+
+    if (typeof gapi === "undefined") {
+        throw Error("Google authentication requires the 'gapi' library")
+    }
+    if (!gapi.auth2) {
+        throw Error("Google 'auth2' has not been initialized")
+    }
+
+    if (inProgress) {
+        return new Promise(function (resolve, reject) {
+            let intervalID;
+            const checkForToken = () => {    // Wait for inProgress to equal "false"
+                try {
+                    if (inProgress === false) {
+                        //console.log("Delayed resolution for " + scope);
+                        resolve(getAccessToken(scope));
+                        clearInterval(intervalID);
+                    }
+                } catch (e) {
+                    clearInterval(intervalID);
+                    reject(e);
+                }
+            };
+            intervalID = setInterval(checkForToken, 100);
+        })
+    } else {
+        inProgress = true;
+        try {
+            let currentUser = gapi.auth2.getAuthInstance().currentUser.get();
+            let token;
+            if (currentUser.isSignedIn()) {
+                if (!currentUser.hasGrantedScopes(scope)) {
+                    await currentUser.grant({scope});
+                }
+                const {access_token, expires_at} = currentUser.getAuthResponse();
+                if (Date.now() < (expires_at - FIVE_MINUTES)) {
+                    token = {access_token, expires_at};
+                } else {
+                    const {access_token, expires_at} = currentUser.reloadAuthResponse();
+                    token = {access_token, expires_at};
+                }
+            } else {
+                currentUser = await signIn(scope);
+                const {access_token, expires_at} = currentUser.getAuthResponse();
+                token = {access_token, expires_at};
+            }
+            return token;
+        } finally {
+            inProgress = false;
+        }
+    }
+}
+
+async function signIn(scope) {
+
+    const options = new gapi.auth2.SigninOptionsBuilder();
+    options.setPrompt('select_account');
+    options.setScope(scope);
+    return gapi.auth2.getAuthInstance().signIn(options)
+}
+
+function getApiKey() {
+    return gapi.apiKey;
+}
+
+async function getDriveFileInfo(googleDriveURL) {
+
+    const id = getGoogleDriveFileID(googleDriveURL);
+    let endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true";
+    const apiKey = getApiKey();
+    if (apiKey) {
+        endPoint += "&key=" + apiKey;
+    }
+    const response = await fetch(endPoint);
+    let json = await response.json();
+    if (json.error && json.error.code === 404) {
+        const {access_token} = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
+        if (access_token) {
+            const response = await fetch(endPoint, {
+                headers: {
+                    'Authorization': `Bearer ${access_token}`
+                }
+            });
+            json = await response.json();
+            if (json.error) {
+                throw Error(json.error);
+            }
+        } else {
+            throw Error(json.error);
+        }
+    }
+    return json;
+}
+
+if (typeof process === 'object' && typeof window === 'undefined') {
+    global.atob = function (str) {
+        return Buffer.from(str, 'base64').toString('binary');
+    };
+}
+
+function parseUri(str) {
+
+    var o = options,
+        m = o.parser[ "loose"].exec(str),
+        uri = {},
+        i = 14;
+
+    while (i--) uri[o.key[i]] = m[i] || "";
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+        if ($1) uri[o.q.name][$1] = $2;
+    });
+
+    return uri;
+}
+
+const options = {
+    strictMode: false,
+    key: ["source", "protocol", "authority", "userInfo", "user", "password", "host", "port", "relative", "path", "directory", "file", "query", "anchor"],
+    q: {
+        name: "queryKey",
+        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+        loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+
 function getExtension(url) {
 
     if (undefined === url) {
@@ -6685,120 +6855,6 @@ function inferFileFormat(fn) {
 
 }
 
-if (typeof process === 'object' && typeof window === 'undefined') {
-    global.atob = function (str) {
-        return Buffer.from(str, 'base64').toString('binary');
-    };
-}
-
-function parseUri(str) {
-
-    var o = options,
-        m = o.parser[ "loose"].exec(str),
-        uri = {},
-        i = 14;
-
-    while (i--) uri[o.key[i]] = m[i] || "";
-
-    uri[o.q.name] = {};
-    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-        if ($1) uri[o.q.name][$1] = $2;
-    });
-
-    return uri;
-}
-
-const options = {
-    strictMode: false,
-    key: ["source", "protocol", "authority", "userInfo", "user", "password", "host", "port", "relative", "path", "directory", "file", "query", "anchor"],
-    q: {
-        name: "queryKey",
-        parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-    },
-    parser: {
-        strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-        loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-    }
-};
-
-function isGoogleDriveURL(url) {
-    return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
-}
-
-function driveDownloadURL(link) {
-    // Return a google drive download url for the sharable link
-    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var id = getGoogleDriveFileID(link);
-    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
-}
-
-function getGoogleDriveFileID(link) {
-
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var i1, i2;
-
-    if (link.includes("/open?id=")) {
-        i1 = link.indexOf("/open?id=") + 9;
-        i2 = link.indexOf("&");
-        if (i1 > 0 && i2 > i1) {
-            return link.substring(i1, i2)
-        } else if (i1 > 0) {
-            return link.substring(i1);
-        }
-
-    } else if (link.includes("/file/d/")) {
-        i1 = link.indexOf("/file/d/") + 8;
-        i2 = link.lastIndexOf("/");
-        return link.substring(i1, i2);
-    }
-}
-
-// Convenience functions for the gapi oAuth library.
-
-const FIVE_MINUTES = 5 * 60 * 1000;
-
-async function getAccessToken(scope) {
-
-    if(typeof gapi === "undefined") {
-        throw Error("Google authentication requires the 'gapi' library")
-    }
-    if(!gapi.auth2) {
-        throw Error("Google 'auth2' has not been initialized")
-    }
-
-
-    let currentUser = gapi.auth2.getAuthInstance().currentUser.get();
-    if (currentUser.isSignedIn()) {
-        if (!currentUser.hasGrantedScopes(scope)) {
-            await currentUser.grant({scope});
-        }
-        const {access_token, expires_at} = currentUser.getAuthResponse();
-        if (Date.now() < (expires_at - FIVE_MINUTES)) {
-            return {access_token, expires_at};
-        } else {
-            const {access_token, expires_at} = currentUser.reloadAuthResponse();
-            return {access_token, expires_at};
-        }
-    } else {
-        currentUser = await signIn(scope);
-        const {access_token, expires_at} = currentUser.getAuthResponse();
-        return {access_token, expires_at};
-    }
-}
-
-async function signIn(scope) {
-
-    const options = new gapi.auth2.SigninOptionsBuilder();
-    options.setPrompt('select_account');
-    options.setScope(scope);
-    return gapi.auth2.getAuthInstance().signIn(options)
-}
-
-function getApiKey() {
-    return gapi.apiKey;
-}
-
 /*
  *  Author: Jim Robinson, 2020
  *
@@ -6878,35 +6934,6 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
     } else {
         throw Error("Sign into Google before using picker");
     }
-}
-
-async function getDriveFileInfo(googleDriveURL) {
-
-    const id = getGoogleDriveFileID(googleDriveURL);
-    let endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true";
-    const apiKey = getApiKey();
-    if (apiKey) {
-        endPoint += "&key=" + apiKey;
-    }
-    const response = await fetch(endPoint);
-    let json = await response.json();
-    if (json.error && json.error.code === 404) {
-        const {access_token} = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
-        if (access_token) {
-            const response = await fetch(endPoint, {
-                headers: {
-                    'Authorization': `Bearer ${access_token}`
-                }
-            });
-            json = await response.json();
-            if (json.error) {
-                throw Error(json.error);
-            }
-        } else {
-            throw Error(json.error);
-        }
-    }
-    return json;
 }
 
 /**
