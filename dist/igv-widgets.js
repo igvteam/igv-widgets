@@ -8813,7 +8813,7 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
 
         rowHandler: row => {
             const name = constructName(row);
-            const url = `https://www.encodeproject.org/${row['HREF']}`;
+            const url = `https://www.encodeproject.org${row['HREF']}`;
             const color = colorForTarget(row['Target']);
             return {name, url, color}
         }
