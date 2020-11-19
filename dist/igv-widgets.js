@@ -8822,6 +8822,13 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
 }
 
 
+function supportsGenome(genomeId) {
+    const knownGenomes = new Set(["ce10", "ce11", "dm3", "dm6", "GRCh38", "hg19", "mm9", "mm10"]);
+    const id = canonicalId(genomeId);
+    return knownGenomes.has(id)
+}
+
+
 function canonicalId(genomeId) {
 
     switch (genomeId) {
@@ -9120,7 +9127,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         receiveEvent: async ({data}) => {
             const {genomeID} = data;
 
-            const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID);
+            const encodeIsSupported = supportsGenome(genomeID);
             if (encodeIsSupported) {
                 //console.log(`ENCODE supports genome ${genomeID}`)
                 encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')));

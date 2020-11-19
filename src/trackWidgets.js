@@ -1,5 +1,5 @@
 import { ModalTable, GenericDataSource } from '../node_modules/data-modal/js/index.js'
-import {encodeTrackDatasourceConfigurator} from './encodeTrackDatasourceConfigurator.js'
+import {encodeTrackDatasourceConfigurator, supportsGenome} from './encodeTrackDatasourceConfigurator.js'
 import AlertSingleton from './alertSingleton.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
 import {createTrackURLModal} from './trackURLModal.js'
@@ -144,7 +144,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         receiveEvent: async ({data}) => {
             const {genomeID} = data;
 
-            const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID)
+            const encodeIsSupported = supportsGenome(genomeID)
             if (encodeIsSupported) {
                 //console.log(`ENCODE supports genome ${genomeID}`)
                 encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
