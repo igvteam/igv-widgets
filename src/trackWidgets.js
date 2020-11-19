@@ -1,4 +1,5 @@
-import { ModalTable, EncodeTrackDatasource, encodeTrackDatasourceSignalConfigurator, encodeTrackDatasourceOtherConfigurator } from '../node_modules/data-modal/js/index.js'
+import { ModalTable, GenericDataSource } from '../node_modules/data-modal/js/index.js'
+import {encodeTrackDatasourceConfigurator} from './encodeTrackDatasourceConfigurator.js'
 import AlertSingleton from './alertSingleton.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
 import {createTrackURLModal} from './trackURLModal.js'
@@ -67,7 +68,7 @@ function createTrackWidgets($igvMain,
                 title: 'ENCODE',
                 selectionStyle: 'multi',
                 pageLength: 100,
-                selectHandler: trackLoadHandler
+                okHandler: trackLoadHandler
             }
 
         encodeModalTables.push(new ModalTable(encodeModalTableConfig))
@@ -78,8 +79,8 @@ function createTrackWidgets($igvMain,
 
         receiveEvent: async ({data}) => {
             const {genomeID} = data;
-            encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)))
-            encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)))
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
         }
     }
 
@@ -146,8 +147,8 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
             const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID)
             if (encodeIsSupported) {
                 //console.log(`ENCODE supports genome ${genomeID}`)
-                encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)))
-                encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)))
+                encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
+                encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
             } else {
                 //console.log(`ENCODE DOES NOT support genome ${genomeID}`)
             }
@@ -204,7 +205,7 @@ async function updateTrackMenus(genomeID,
         if ('ENCODE' === json.type) {
 
             let i = 0;
-            for (let config of [encodeTrackDatasourceSignalConfigurator(genomeID), encodeTrackDatasourceOtherConfigurator(json.genomeID)]) {
+            for (let config of [encodeTrackDatasourceConfigurator(genomeID, 'signals'), encodeTrackDatasourceConfigurator(json.genomeID, 'other')]) {
                 encodeModalTables[i++].setDatasource(new EncodeTrackDatasource(config))
             }
 

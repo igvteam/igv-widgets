@@ -8354,104 +8354,6 @@ function configureSaveSessionModal$1($rootContainer, prefix, JSONProvider, sessi
 
 }
 
-class GenericMapDatasource {
-
-    constructor(config) {
-
-        this.isJSON = config.isJSON || false;
-
-        if (config.genomeId) {
-            this.genomeId = config.genomeId;
-        }
-
-        if (config.dataSetPathPrefix) {
-            this.dataSetPathPrefix = config.dataSetPathPrefix;
-        }
-
-        if (config.urlPrefix) {
-            this.urlPrefix = config.urlPrefix;
-        }
-
-        if (config.dataSetPath) {
-            this.path = config.dataSetPath;
-        }
-
-        this.addIndexColumn = config.addIndexColumn || false;
-
-        this.columnDictionary = {};
-
-        for (let column of config.columns) {
-            this.columnDictionary[ column ] = column;
-        }
-
-        if (config.hiddenColumns || config.titles) {
-
-            this.columnDefs = [];
-            const keys = Object.keys(this.columnDictionary);
-
-            if (config.hiddenColumns) {
-                for (let column of config.hiddenColumns) {
-                    this.columnDefs.push({ visible: false, searchable: false, targets: keys.indexOf(column) });
-                }
-            }
-
-            if (config.titles) {
-                for (let [ column, title ] of Object.entries(config.titles)) {
-                    this.columnDefs.push({ title, targets: keys.indexOf(column) });
-                }
-            }
-
-        } else {
-            this.columnDefs = undefined;
-        }
-
-        if (config.parser) {
-            this.parser = config.parser;
-        }
-
-        if (config.selectionHandler) {
-            this.selectionHandler = config.selectionHandler;
-        }
-
-    }
-
-    async tableColumns() {
-        return Object.keys(this.columnDictionary);
-    }
-
-    async tableData() {
-
-        let response = undefined;
-
-        try {
-            response = await fetch(this.path);
-        } catch (e) {
-            console.error(e);
-            return undefined;
-        }
-
-        if (response) {
-
-            if (true === this.isJSON) {
-                const obj = await response.json();
-                return this.parser(obj, this.columnDictionary, this.addIndexColumn);
-            } else {
-                const str = await response.text();
-                return this.parser(str, this.columnDictionary, this.addIndexColumn);
-            }
-        }
-    }
-
-    tableSelectionHandler(selectionList) {
-        if (this.selectionHandler) {
-            return this.selectionHandler(selectionList)
-        } else {
-            return selectionList
-        }
-    };
-
-}
-
 /*
  * The MIT License (MIT)
  *
@@ -8560,65 +8462,127 @@ ByteArrayDataWrapper.prototype.nextLine = function () {
 // The ByteArrayDataWrapper does not do any trimming by default, can reuse the function
 ByteArrayDataWrapper.prototype.nextLineNoTrim = ByteArrayDataWrapper.prototype.nextLine;
 
-class EncodeTrackDatasource extends GenericMapDatasource {
+class GenericDataSource {
 
     constructor(config) {
 
-        super(config);
-
-        if (config.filter) {
-            this.filter = config.filter;
+        if (config.rowHandler) {
+            this.rowHandler = config.rowHandler;
         }
 
-        this.suffix = config.suffix || '.txt';
+        if (config.data) {
+            this.data = config.data;  // Explcitly set table rows as array of json objects
+        } else {
+            this.url = config.url;     // URL to data source
+            this.isJSON = config.isJSON || false;
+            if (config.parser) {
+                this.parser = parser;
+            }
+            if (config.filter) {
+                this.filter = config.filter;
+            }
+            if (config.sort) {
+                this.sort = config.sort;
+            }
+        }
+
+        this.configureColumns(config);
+
+    }
+
+    configureColumns(config) {
+
+        this.columnDictionary = {};
+
+        for (let column of config.columns) {
+            this.columnDictionary[column] = column;
+        }
+
+        if (config.hiddenColumns || config.titles) {
+
+            this.columnDefs = [];
+            const keys = Object.keys(this.columnDictionary);
+
+            if (config.hiddenColumns) {
+                for (let column of config.hiddenColumns) {
+                    this.columnDefs.push({visible: false, searchable: false, targets: keys.indexOf(column)});
+                }
+            }
+
+            if (config.titles) {
+                for (let [column, title] of Object.entries(config.titles)) {
+                    this.columnDefs.push({title, targets: keys.indexOf(column)});
+                }
+            }
+
+        } else {
+            this.columnDefs = undefined;
+        }
+    }
+
+    async tableColumns() {
+        return Object.keys(this.columnDictionary);
     }
 
     async tableData() {
 
-        let response = undefined;
+        if (!this.data) {
+            let response = undefined;
+            try {
+                const url = this.url;
+                response = await fetch(url);
+            } catch (e) {
+                console.error(e);
+                return undefined;
+            }
 
-        try {
-            const url = `${ this.urlPrefix }${ canonicalId(this.genomeId) }${ this.suffix }`;
-            response = await fetch(url);
-        } catch (e) {
-            console.error(e);
-            return undefined;
+            if (response) {
+
+                const str = await response.text();
+
+                let records;
+                if (this.parser) {
+                    records = this.parser.parse(str);
+                } else if (this.isJSON) {
+                    records = JSON.parse(str);
+                    if (typeof this.filter === 'function') {
+                        records = records.filter(this.filter);
+                    }
+                } else {
+                    records = this.parseTabData(str, this.filter);
+                }
+
+                if (typeof this.sort === 'function') {
+                    records.sort(this.sort);
+                }
+                this.data = records;
+            }
         }
-
-        if (response) {
-            const str = await response.text();
-            const records = this.parseTabData(str, this.filter, this.columnDictionary);
-            records.sort(encodeSort);
-            return records
-        }
-
+        return this.data;
     }
 
-    parseTabData(str, filter, columnDictionary) {
+    parseTabData(str, filter) {
 
         const dataWrapper = getDataWrapper(str);
 
-        dataWrapper.nextLine();  // Skip header
+        const headerLine = dataWrapper.nextLine();  // Skip header
+        const headers = headerLine.split('\t');
 
         const records = [];
         let line;
-
-        const keys = Object.keys(columnDictionary);
 
         while (line = dataWrapper.nextLine()) {
 
             const record = {};
 
-            const tokens = line.split("\t");
-
-            for (let key of keys) {
-                record[ key ] = tokens[ keys.indexOf(key) ];
+            const tokens = line.split(`\t`);
+            if (tokens.length !== headers.length) {
+                throw Error("Number of values must equal number of headers in file " + this.url);
             }
 
-            // additions and edits
-            record[ 'Experiment' ] = record[ 'ID' ].substr(13).replace("/", "");
-            record['HREF'] = `${ this.dataSetPathPrefix }${ record['HREF'] }`;
-            record[ 'name' ] = constructName(record);
+            for (let i = 0; i < headers.length; i++) {
+                record[headers[i]] = tokens[i];
+            }
 
             if (undefined === filter || filter(record)) {
                 records.push(record);
@@ -8629,87 +8593,6 @@ class EncodeTrackDatasource extends GenericMapDatasource {
         return records;
     }
 
-    static supportsGenome(genomeId) {
-        const knownGenomes = new Set(["ce10", "ce11", "dm3", "dm6", "GRCh38", "hg19", "mm9", "mm10"]);
-        const id = canonicalId(genomeId);
-        return knownGenomes.has(id)
-    }
-
-}
-
-function constructName(record) {
-
-    let name = record["Biosample"] || "";
-
-    if (record["Target"]) {
-        name += " " + record["Target"];
-    }
-    if (record["AssayType"].toLowerCase() !== "chip-seq") {
-        name += " " + record["AssayType"];
-    }
-
-
-    return name
-
-}
-
-function encodeSort(a, b) {
-    var aa1,
-        aa2,
-        cc1,
-        cc2,
-        tt1,
-        tt2;
-
-    aa1 = a['Assay Type'];
-    aa2 = b['Assay Type'];
-    cc1 = a['Biosample'];
-    cc2 = b['Biosample'];
-    tt1 = a['Target'];
-    tt2 = b['Target'];
-
-    if (aa1 === aa2) {
-        if (cc1 === cc2) {
-            if (tt1 === tt2) {
-                return 0;
-            } else if (tt1 < tt2) {
-                return -1;
-            } else {
-                return 1;
-            }
-        } else if (cc1 < cc2) {
-            return -1;
-        } else {
-            return 1;
-        }
-    } else {
-        if (aa1 < aa2) {
-            return -1;
-        } else {
-            return 1;
-        }
-    }
-}
-
-function canonicalId(genomeId) {
-
-    switch(genomeId) {
-        case "hg38":
-            return "GRCh38"
-        case "CRCh37":
-            return "hg19"
-        case "GRCm38":
-            return "mm10"
-        case "NCBI37":
-            return "mm9"
-        case "WBcel235":
-            return "ce11"
-        case "WS220":
-            return "ce10"
-        default:
-            return genomeId
-    }
-
 }
 
 class ModalTable {
@@ -8717,12 +8600,12 @@ class ModalTable {
     constructor(args) {
 
         this.datasource = args.datasource;
-        this.selectHandler = args.selectHandler;
+        this.okHandler = args.okHandler;
 
         this.pageLength = args.pageLength || 10;
 
         if (args.selectionStyle) {
-            this.select = { style: args.selectionStyle };
+            this.select = {style: args.selectionStyle};
         } else {
             this.select = true;
         }
@@ -8784,8 +8667,8 @@ class ModalTable {
 
         $okButton.on('click', (e) => {
             const selected = this.getSelectedTableRowsData.call(this, this.$dataTable.$('tr.selected'));
-            if (selected && this.selectHandler) {
-                this.selectHandler(selected);
+            if (selected && this.okHandler) {
+                this.okHandler(selected);
             }
         });
     }
@@ -8800,7 +8683,7 @@ class ModalTable {
         this.$table = undefined;
     }
 
-    async buildTable () {
+    async buildTable() {
 
         if (!this.$table && this.datasource) {
 
@@ -8816,7 +8699,7 @@ class ModalTable {
                 const config =
                     {
                         data: tableData,
-                        columns: tableColumns.map(c => ({ title: c, data: c })),
+                        columns: tableColumns.map(c => ({title: c, data: c})),
                         pageLength: this.pageLength,
                         select: this.select,
                         autoWidth: false,
@@ -8862,19 +8745,22 @@ class ModalTable {
                 const index = api.row(this).index();
                 result.push(tableData[index]);
             });
-            return this.datasource.tableSelectionHandler(result)
+            if(typeof this.datasource.rowHandler === 'function')  {
+                return result.map(selectedRow => this.datasource.rowHandler(selectedRow));
+            } else {
+                return result;
+            }
         } else {
             return undefined;
         }
-
     }
 
-    startSpinner () {
+    startSpinner() {
         if (this.$spinner)
             this.$spinner.show();
     }
 
-    stopSpinner () {
+    stopSpinner() {
         if (this.$spinner)
             this.$spinner.hide();
     }
@@ -8882,10 +8768,135 @@ class ModalTable {
 }
 
 /**
- * Return a color for the ChIP target, or undefined if no color is assigned.
- * @param target
- * @returns {string}
+ * Factory function to create a configuration object for the EncodeTrackDatasource give a genomidId and type
+ * @param genomeId
+ * @param type - 'signals' | 'other
+ * @returns {{genomeId: *, selectionHandler: (function(*): *|Uint8Array|BigInt64Array|{color, name, url}[]|Float64Array|Int8Array|Float32Array|Int32Array|Uint32Array|Uint8ClampedArray|BigUint64Array|Int16Array|Uint16Array), hiddenColumns: [string, string, string], addIndexColumn: boolean, parser: undefined, isJSON: boolean, urlPrefix: string, columns: string[], dataSetPath: undefined, titles: {AssayType: string, BioRep: string, OutputType: string, TechRep: string}, suffix: *, dataSetPathPrefix: string}}
  */
+function encodeTrackDatasourceConfigurator(genomeId, type) {
+
+    const suffix = ('other' === type ? '.other.txt' : ('signals' === type ? '.signals.txt' : undefined));
+
+    return {
+        isJSON: false,
+        url: `https://s3.amazonaws.com/igv.org.app/encode/${canonicalId(genomeId)}${suffix}`,
+        sort: encodeSort,
+        columns:
+            [
+                'ID',           // hide
+                'Assembly',     // hide
+                'Biosample',
+                'AssayType',
+                'Target',
+                'BioRep',
+                'TechRep',
+                'OutputType',
+                'Format',
+                'Lab',
+                'HREF',         // hide
+                'Accession',
+                'Experiment'
+            ],
+        titles:
+            {
+                AssayType: 'Assay Type',
+                OutputType: 'Output Type',
+                BioRep: 'Bio Rep',
+                TechRep: 'Tech Rep'
+            },
+        hiddenColumns:
+            [
+                'ID',
+                'Assembly',
+                'HREF'
+            ],
+
+        rowHandler: row => {
+            const name = constructName(row);
+            const url = `https://www.encodeproject.org/${row['HREF']}`;
+            const color = colorForTarget(row['Target']);
+            return {name, url, color}
+        }
+
+    }
+}
+
+
+function canonicalId(genomeId) {
+
+    switch (genomeId) {
+        case "hg38":
+            return "GRCh38"
+        case "CRCh37":
+            return "hg19"
+        case "GRCm38":
+            return "mm10"
+        case "NCBI37":
+            return "mm9"
+        case "WBcel235":
+            return "ce11"
+        case "WS220":
+            return "ce10"
+        default:
+            return genomeId
+    }
+}
+
+function constructName(record) {
+
+    let name = record["Biosample"] || "";
+
+    if (record["Target"]) {
+        name += " " + record["Target"];
+    }
+    if (record["AssayType"].toLowerCase() !== "chip-seq") {
+        name += " " + record["AssayType"];
+    }
+
+
+    return name
+
+}
+
+
+function encodeSort(a, b) {
+    var aa1,
+        aa2,
+        cc1,
+        cc2,
+        tt1,
+        tt2;
+
+    aa1 = a['Assay Type'];
+    aa2 = b['Assay Type'];
+    cc1 = a['Biosample'];
+    cc2 = b['Biosample'];
+    tt1 = a['Target'];
+    tt2 = b['Target'];
+
+    if (aa1 === aa2) {
+        if (cc1 === cc2) {
+            if (tt1 === tt2) {
+                return 0;
+            } else if (tt1 < tt2) {
+                return -1;
+            } else {
+                return 1;
+            }
+        } else if (cc1 < cc2) {
+            return -1;
+        } else {
+            return 1;
+        }
+    } else {
+        if (aa1 < aa2) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+}
+
 function colorForTarget(target) {
 
     const t = target.toLowerCase();
@@ -8903,106 +8914,6 @@ function colorForTarget(target) {
         return undefined;
     }
 }
-
-const encodeTrackDatasourceOtherConfigurator = genomeId => {
-
-    return {
-        isJSON: false,
-        genomeId,
-        suffix: '.other.txt',
-        dataSetPathPrefix: 'https://www.encodeproject.org',
-        urlPrefix: 'https://s3.amazonaws.com/igv.org.app/encode/',
-        dataSetPath: undefined,
-        addIndexColumn: false,
-        columns:
-            [
-                'ID',           // hide
-                'Assembly',     // hide
-                'Biosample',
-                'AssayType',
-                'Target',
-                'BioRep',
-                'TechRep',
-                'OutputType',
-                'Format',
-                'Lab',
-                'HREF',         // hide
-                'Accession',
-                'Experiment'
-            ],
-        titles:
-            {
-                AssayType: 'Assay Type',
-                OutputType: 'Output Type',
-                BioRep: 'Bio Rep',
-                TechRep: 'Tech Rep'
-            },
-        hiddenColumns:
-            [
-                'ID',
-                'Assembly',
-                'HREF'
-            ],
-        parser: undefined,
-        selectionHandler: selectionList => {
-            return selectionList.map(({ name, HREF, Target }) => {
-                return { name, url: HREF, color: colorForTarget(Target) }
-            })
-        }
-
-    }
-
-};
-
-const encodeTrackDatasourceSignalConfigurator = genomeId => {
-
-    return {
-        isJSON: false,
-        genomeId,
-        suffix: '.signals.txt',
-        dataSetPathPrefix: 'https://www.encodeproject.org',
-        urlPrefix: 'https://s3.amazonaws.com/igv.org.app/encode/',
-        dataSetPath: undefined,
-        addIndexColumn: false,
-        columns:
-            [
-                'ID',           // hide
-                'Assembly',     // hide
-                'Biosample',
-                'AssayType',
-                'Target',
-                'BioRep',
-                'TechRep',
-                'OutputType',
-                'Format',
-                'Lab',
-                'HREF',         // hide
-                'Accession',
-                'Experiment'
-            ],
-        titles:
-            {
-                AssayType: 'Assay Type',
-                OutputType: 'Output Type',
-                BioRep: 'Bio Rep',
-                TechRep: 'Tech Rep'
-            },
-        hiddenColumns:
-            [
-                'ID',
-                'Assembly',
-                'HREF'
-            ],
-        parser: undefined,
-        selectionHandler: selectionList => {
-            return selectionList.map(({ name, HREF, Target }) => {
-                return { name, url: HREF, color: colorForTarget(Target) }
-            })
-        }
-
-    }
-
-};
 
 function createGenericSelectModal(id, select_id) {
 
@@ -9133,7 +9044,7 @@ function createTrackWidgets($igvMain,
                 title: 'ENCODE',
                 selectionStyle: 'multi',
                 pageLength: 100,
-                selectHandler: trackLoadHandler
+                okHandler: trackLoadHandler
             };
 
         encodeModalTables.push(new ModalTable(encodeModalTableConfig));
@@ -9144,8 +9055,8 @@ function createTrackWidgets($igvMain,
 
         receiveEvent: async ({data}) => {
             const {genomeID} = data;
-            encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)));
-            encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)));
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')));
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')));
         }
     };
 
@@ -9212,8 +9123,8 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
             const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID);
             if (encodeIsSupported) {
                 //console.log(`ENCODE supports genome ${genomeID}`)
-                encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeID)));
-                encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeID)));
+                encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceConfigurator(genomeID, 'signals')));
+                encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceConfigurator(genomeID, 'other')));
             }
 
             await updateTrackMenus(genomeID, GtexUtils, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
@@ -9268,7 +9179,7 @@ async function updateTrackMenus(genomeID,
         if ('ENCODE' === json.type) {
 
             let i = 0;
-            for (let config of [encodeTrackDatasourceSignalConfigurator(genomeID), encodeTrackDatasourceOtherConfigurator(json.genomeID)]) {
+            for (let config of [encodeTrackDatasourceConfigurator(genomeID, 'signals'), encodeTrackDatasourceConfigurator(json.genomeID, 'other')]) {
                 encodeModalTables[i++].setDatasource(new EncodeTrackDatasource(config));
             }
 
