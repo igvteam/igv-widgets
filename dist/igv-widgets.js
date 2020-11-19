@@ -8783,8 +8783,8 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
         sort: encodeSort,
         columns:
             [
-                'ID',           // hide
-                'Assembly',     // hide
+                //'ID',           // hide
+                //'Assembly',     // hide
                 'Biosample',
                 'AssayType',
                 'Target',
@@ -8793,7 +8793,7 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
                 'OutputType',
                 'Format',
                 'Lab',
-                'HREF',         // hide
+                //'HREF',         // hide
                 'Accession',
                 'Experiment'
             ],
@@ -8804,12 +8804,6 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
                 BioRep: 'Bio Rep',
                 TechRep: 'Tech Rep'
             },
-        hiddenColumns:
-            [
-                'ID',
-                'Assembly',
-                'HREF'
-            ],
 
         rowHandler: row => {
             const name = constructName(row);
