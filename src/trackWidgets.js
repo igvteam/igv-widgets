@@ -147,8 +147,8 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
             const encodeIsSupported = EncodeTrackDatasource.supportsGenome(genomeID)
             if (encodeIsSupported) {
                 //console.log(`ENCODE supports genome ${genomeID}`)
-                encodeModalTables[0].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
-                encodeModalTables[1].setDatasource(new EncodeTrackDatasource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
+                encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
+                encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
             } else {
                 //console.log(`ENCODE DOES NOT support genome ${genomeID}`)
             }
@@ -206,7 +206,7 @@ async function updateTrackMenus(genomeID,
 
             let i = 0;
             for (let config of [encodeTrackDatasourceConfigurator(genomeID, 'signals'), encodeTrackDatasourceConfigurator(json.genomeID, 'other')]) {
-                encodeModalTables[i++].setDatasource(new EncodeTrackDatasource(config))
+                encodeModalTables[i++].setDatasource(new GenericDataSource(config))
             }
 
             buttonConfigurations.push(json);
