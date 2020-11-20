@@ -8466,67 +8466,29 @@ class GenericDataSource {
 
     constructor(config) {
 
-        if (config.rowHandler) {
-            this.rowHandler = config.rowHandler;
-        }
+        this.columns = config.columns;   // Required for now, could default to all columns
+        this.columnDefs = config.columnDefs;       // optional
+        this.rowHandler = config.rowHandler;      // optional
 
         if (config.data) {
             this.data = config.data;  // Explcitly set table rows as array of json objects
         } else {
-            this.url = config.url;     // URL to data source
-            this.isJSON = config.isJSON || false;
-            if (config.parser) {
-                this.parser = parser;
-            }
-            if (config.filter) {
-                this.filter = config.filter;
-            }
-            if (config.sort) {
-                this.sort = config.sort;
-            }
-        }
-
-        this.configureColumns(config);
-
-    }
-
-    configureColumns(config) {
-
-        this.columnDictionary = {};
-
-        for (let column of config.columns) {
-            this.columnDictionary[column] = column;
-        }
-
-        if (config.hiddenColumns || config.titles) {
-
-            this.columnDefs = [];
-            const keys = Object.keys(this.columnDictionary);
-
-            if (config.hiddenColumns) {
-                for (let column of config.hiddenColumns) {
-                    this.columnDefs.push({visible: false, searchable: false, targets: keys.indexOf(column)});
-                }
-            }
-
-            if (config.titles) {
-                for (let [column, title] of Object.entries(config.titles)) {
-                    this.columnDefs.push({title, targets: keys.indexOf(column)});
-                }
-            }
-
-        } else {
-            this.columnDefs = undefined;
+            this.url = config.url;     // URL to data source -- required
+            this.isJSON = config.isJSON || false;   // optional, defaults to false (tab delimited)
+            this.parser = config.parser;                   // optional
+            this.filter = config.filter;             // optional
+            this.sort = config.sort;                // optional
         }
     }
 
     async tableColumns() {
-        return Object.keys(this.columnDictionary);
+        return this.columns;
     }
 
     async tableData() {
 
         if (!this.data) {
+
             let response = undefined;
             try {
                 const url = this.url;
@@ -8695,11 +8657,17 @@ class ModalTable {
 
                 const tableData = await this.datasource.tableData();
                 const tableColumns = await this.datasource.tableColumns();
-
+                const columnDefs = this.datasource.columnDefs;
                 const config =
                     {
                         data: tableData,
-                        columns: tableColumns.map(c => ({title: c, data: c})),
+                        columns: tableColumns.map(c => {
+                            if (columnDefs && columnDefs[c]) {
+                                return Object.assign({}, columnDefs[c], {data: c});
+                            } else {
+                                return {title: c, data: c}
+                            }
+                        }),
                         pageLength: this.pageLength,
                         select: this.select,
                         autoWidth: false,
@@ -8708,9 +8676,6 @@ class ModalTable {
                         scrollY: '400px',
                     };
 
-                if (this.datasource.columnDefs) {
-                    config.columnDefs = this.datasource.columnDefs;
-                }
 
                 // API object
                 this.api = this.$table.DataTable(config);
@@ -8745,7 +8710,7 @@ class ModalTable {
                 const index = api.row(this).index();
                 result.push(tableData[index]);
             });
-            if(typeof this.datasource.rowHandler === 'function')  {
+            if (typeof this.datasource.rowHandler === 'function') {
                 return result.map(selectedRow => this.datasource.rowHandler(selectedRow));
             } else {
                 return result;
@@ -8797,12 +8762,12 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
                 'Accession',
                 'Experiment'
             ],
-        titles:
+        columnDefs:
             {
-                AssayType: 'Assay Type',
-                OutputType: 'Output Type',
-                BioRep: 'Bio Rep',
-                TechRep: 'Tech Rep'
+                AssayType: {title: 'Assay Type'},
+                OutputType: {title: 'Output Type'},
+                BioRep: {title: 'Bio Rep'},
+                TechRep: {title: 'Tech Rep'}
             },
 
         rowHandler: row => {

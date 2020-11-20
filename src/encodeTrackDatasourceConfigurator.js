@@ -28,12 +28,12 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
                 'Accession',
                 'Experiment'
             ],
-        titles:
+        columnDefs:
             {
-                AssayType: 'Assay Type',
-                OutputType: 'Output Type',
-                BioRep: 'Bio Rep',
-                TechRep: 'Tech Rep'
+                AssayType: {title: 'Assay Type'},
+                OutputType: {title: 'Output Type'},
+                BioRep: {title: 'Bio Rep'},
+                TechRep: {title: 'Tech Rep'}
             },
 
         rowHandler: row => {
