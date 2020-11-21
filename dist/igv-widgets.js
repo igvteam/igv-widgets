@@ -7021,7 +7021,7 @@ class AlertDialog {
     constructor(parent) {
 
         // container
-        this.container = div({class: "igv-widgets-alert-dialog-container"});
+        this.container = div({class: "igv-ui-alert-dialog-container"});
         parent.appendChild(this.container);
         this.container.setAttribute('tabIndex', '-1');
 
@@ -7029,16 +7029,16 @@ class AlertDialog {
         const header = div();
         this.container.appendChild(header);
 
-        const error = div();
-        header.appendChild(error);
-        // error.textContent = "ERROR";
+        this.errorHeadline = div();
+        header.appendChild(this.errorHeadline);
+        this.errorHeadline.textContent = '';
 
         // body container
-        let bodyContainer = div({id: 'igv-widgets-alert-dialog-body'});
+        let bodyContainer = div({id: 'igv-ui-alert-dialog-body'});
         this.container.appendChild(bodyContainer);
 
         // body copy
-        this.body = div({id: 'igv-widgets-alert-dialog-body-copy'});
+        this.body = div({id: 'igv-ui-alert-dialog-body-copy'});
         bodyContainer.appendChild(this.body);
 
         // ok container
@@ -7082,10 +7082,14 @@ class AlertDialog {
     }
 
     present(alert, callback) {
+
+        this.errorHeadline.textContent = alert.message ? 'ERROR' : '';
         let string = alert.message || alert;
+
         if (httpMessages.hasOwnProperty(string)) {
             string = httpMessages[string];
         }
+
         this.body.innerHTML = string;
         this.callback = callback;
         show(this.container);
@@ -7803,7 +7807,7 @@ class GenomeFileLoad extends FileLoad {
 
                 this.loadHandler(o);
             } else {
-                AlertSingleton$1.present(`${ errorString }`);
+                AlertSingleton$1.present(new Error(errorString));
             }
 
         } else if (2 === paths.length) {
@@ -7813,7 +7817,7 @@ class GenomeFileLoad extends FileLoad {
             });
 
             if (false === GenomeFileLoad.extensionValidator(a, b)) {
-                AlertSingleton$1.present(`${ errorString }`);
+                AlertSingleton$1.present(new Error(errorString));
                 return;
             }
 
@@ -7822,7 +7826,7 @@ class GenomeFileLoad extends FileLoad {
             await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
 
         } else {
-            AlertSingleton$1.present(`${ errorString }`);
+            AlertSingleton$1.present(new Error(errorString));
         }
 
     };
