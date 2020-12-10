@@ -141,19 +141,9 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
     genomeChangeListener = {
 
-        receiveEvent: async ({data}) => {
-            const {genomeID} = data;
-
-            const encodeIsSupported = supportsGenome(genomeID)
-            if (encodeIsSupported) {
-                //console.log(`ENCODE supports genome ${genomeID}`)
-                encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
-                encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
-            } else {
-                //console.log(`ENCODE DOES NOT support genome ${genomeID}`)
-            }
-
-            await updateTrackMenus(genomeID, GtexUtils, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
+        receiveEvent: async ({ data }) => {
+            const {genomeID} = data
+            await updateTrackMenus(genomeID, GtexUtils, supportsGenome(genomeID), encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal)
         }
     }
 
@@ -204,10 +194,8 @@ async function updateTrackMenus(genomeID,
 
         if ('ENCODE' === json.type) {
 
-            let i = 0;
-            for (let config of [encodeTrackDatasourceConfigurator(genomeID, 'signals'), encodeTrackDatasourceConfigurator(json.genomeID, 'other')]) {
-                encodeModalTables[i++].setDatasource(new GenericDataSource(config))
-            }
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
 
             buttonConfigurations.push(json);
         } else if ('GTEX' === json.type) {
@@ -262,7 +250,7 @@ async function updateTrackMenus(genomeID,
 
     }
 
-};
+}
 
 function createDropdownButton($divider, buttonText, id_prefix) {
     const $button = $('<button>', {class: 'dropdown-item', type: 'button'})
