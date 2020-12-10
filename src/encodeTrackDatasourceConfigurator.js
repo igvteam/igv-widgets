@@ -1,5 +1,5 @@
 /**
- * Factory function to create a configuration object for the EncodeTrackDatasource give a genomidId and type
+ * Factory function to create a configuration object for the EncodeTrackDatasource given a genomicId and type
  * @param genomeId
  * @param type - 'signals' | 'other
  * @returns {{genomeId: *, selectionHandler: (function(*): *|Uint8Array|BigInt64Array|{color, name, url}[]|Float64Array|Int8Array|Float32Array|Int32Array|Uint32Array|Uint8ClampedArray|BigUint64Array|Int16Array|Uint16Array), hiddenColumns: [string, string, string], addIndexColumn: boolean, parser: undefined, isJSON: boolean, urlPrefix: string, columns: string[], dataSetPath: undefined, titles: {AssayType: string, BioRep: string, OutputType: string, TechRep: string}, suffix: *, dataSetPathPrefix: string}}
