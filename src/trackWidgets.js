@@ -8,11 +8,22 @@ import FileLoadManager from "./fileLoadManager.js"
 import FileLoadWidget from "./fileLoadWidget.js"
 import MultipleTrackFileLoad from "./multipleTrackFileLoad.js"
 import * as Utils from './utils.js'
+import { DOMUtils } from "../node_modules/igv-utils/src/index.js"
 
-let fileLoadWidget;
-let multipleTrackFileLoad;
-let encodeModalTables = [];
+let fileLoadWidget
+let multipleTrackFileLoad
+let encodeModalTables = []
 let genomeChangeListener
+let customModalTable
+
+const defaultCustomModalTableConfig =
+    {
+        // id: modalID,
+        // title: 'ENCODE',
+        selectionStyle: 'multi',
+        pageLength: 100,
+        // okHandler: trackLoadHandler
+    }
 
 function createTrackWidgets($igvMain,
                             $localFileInput,
@@ -60,11 +71,11 @@ function createTrackWidgets($igvMain,
 
     multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig)
 
-    for (let encodeTrackModalId of encodeTrackModalIds) {
+    for (let modalID of encodeTrackModalIds) {
 
         const encodeModalTableConfig =
             {
-                id: encodeTrackModalId,
+                id: modalID,
                 title: 'ENCODE',
                 selectionStyle: 'multi',
                 pageLength: 100,
@@ -75,12 +86,17 @@ function createTrackWidgets($igvMain,
 
     }
 
+    customModalTable = new ModalTable({ id: 'igv-custom-modal', title: 'UNTITLED', okHandler: trackLoadHandler, ...defaultCustomModalTableConfig })
+
     genomeChangeListener = {
 
         receiveEvent: async ({data}) => {
-            const {genomeID} = data;
-            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
-            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
+            const {genomeID} = data
+
+            if (supportsGenome(genomeID)) {
+                encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
+                encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
+            }
         }
     }
 
@@ -141,19 +157,9 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
     genomeChangeListener = {
 
-        receiveEvent: async ({data}) => {
-            const {genomeID} = data;
-
-            const encodeIsSupported = supportsGenome(genomeID)
-            if (encodeIsSupported) {
-                //console.log(`ENCODE supports genome ${genomeID}`)
-                encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
-                encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
-            } else {
-                //console.log(`ENCODE DOES NOT support genome ${genomeID}`)
-            }
-
-            await updateTrackMenus(genomeID, GtexUtils, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
+        receiveEvent: async ({ data }) => {
+            const {genomeID} = data
+            await updateTrackMenus(genomeID, GtexUtils, supportsGenome(genomeID), encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal, trackLoadHandler)
         }
     }
 
@@ -167,7 +173,8 @@ async function updateTrackMenus(genomeID,
                                 encodeModalTables,
                                 trackRegistryFile,
                                 $dropdownMenu,
-                                $genericSelectModal) {
+                                $genericSelectModal,
+                                trackLoadHandler) {
 
     const id_prefix = 'genome_specific_';
 
@@ -202,46 +209,50 @@ async function updateTrackMenus(genomeID,
 
     for (let json of jsons) {
 
-        if ('ENCODE' === json.type) {
-
-            let i = 0;
-            for (let config of [encodeTrackDatasourceConfigurator(genomeID, 'signals'), encodeTrackDatasourceConfigurator(json.genomeID, 'other')]) {
-                encodeModalTables[i++].setDatasource(new GenericDataSource(config))
-            }
-
+        if (true === encodeIsSupported && 'ENCODE' === json.type) {
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
             buttonConfigurations.push(json);
         } else if ('GTEX' === json.type) {
 
-            let info = undefined;
+            let info = undefined
             try {
-                info = await GtexUtils.getTissueInfo(json.datasetId);
+                info = await GtexUtils.getTissueInfo(json.datasetId)
             } catch (e) {
-                AlertSingleton.present(e.message);
+                AlertSingleton.present(e.message)
             }
 
             if (info) {
-                json.tracks = info.tissueInfo.map(tissue => GtexUtils.trackConfiguration(tissue));
-                buttonConfigurations.push(json);
+                json.tracks = info.tissueInfo.map(tissue => GtexUtils.trackConfiguration(tissue))
+                buttonConfigurations.push(json)
             }
 
         } else {
-            buttonConfigurations.push(json);
+            buttonConfigurations.push(json)
         }
 
     } // for (json)
 
-
     let encodeConfiguration
     let configurations = []
-    for (let config of buttonConfigurations) {
-        if (config.type && 'ENCODE' === config.type) {
-            encodeConfiguration = config
+    for (let json of buttonConfigurations) {
+        if (json.type && 'custom-data-modal' === json.type) {
+
+            createDropdownButton($divider, json.label, id_prefix)
+                .on('click', () => {
+                    customModalTable.setDatasource(new GenericDataSource(json))
+                    customModalTable.setTitle(json.label)
+                    customModalTable.$modal.modal('show')
+                });
+
+        } else if (json.type && 'ENCODE' === json.type) {
+            encodeConfiguration = json
         } else {
-            configurations.unshift(config)
+            configurations.unshift(json)
         }
     }
 
-    if (encodeIsSupported) {
+    if (true === encodeIsSupported) {
 
         createDropdownButton($divider, 'ENCODE Other', id_prefix)
             .on('click', () => encodeModalTables[1].$modal.modal('show'));
@@ -262,7 +273,7 @@ async function updateTrackMenus(genomeID,
 
     }
 
-};
+}
 
 function createDropdownButton($divider, buttonText, id_prefix) {
     const $button = $('<button>', {class: 'dropdown-item', type: 'button'})
