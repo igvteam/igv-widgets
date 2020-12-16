@@ -40,7 +40,7 @@ class MultipleTrackFileLoad {
 
                 input.value = '';
 
-                await ingestPaths({ paths, fileLoadHandler });
+                await this.loadPaths(paths)
             }
 
         });
@@ -49,7 +49,7 @@ class MultipleTrackFileLoad {
 
             const obj =
                 {
-                    success: dbFiles => ingestPaths({ paths: dbFiles.map(({link}) => link), fileLoadHandler }),
+                    success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
                     cancel: () => { },
                     linkType: "preview",
                     multiselect: multipleFileSelection,
@@ -60,20 +60,7 @@ class MultipleTrackFileLoad {
         });
 
         if ($googleDriveButton) {
-
-            $googleDriveButton.on('click', () => {
-
-                GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => {
-
-                    // const paths = responses.map(async ({ name, url }) => {
-                    //     return { url: GoogleUtils.driveDownloadURL(url), name, filename: name, format: TrackUtils.inferFileFormat(name) }
-                    // });
-
-                    await ingestPaths({ paths : responses.map(({ name, url }) => url), fileLoadHandler });
-                });
-
-            });
-
+            $googleDriveButton.on('click', () => GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => await this.loadPaths(responses.map(({ name, url }) => url))))
         }
 
     }
@@ -106,10 +93,6 @@ class MultipleTrackFileLoad {
 
 }
 
-const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai'])
-
-const requireIndex = new Set(['bam', 'cram'])
-
 async function ingestPaths({ paths, fileLoadHandler }) {
     try {
         await doIngestPaths({paths, fileLoadHandler})
@@ -118,6 +101,10 @@ async function ingestPaths({ paths, fileLoadHandler }) {
         AlertSingleton.present(e.message);
     }
 }
+
+const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai'])
+
+const requireIndex = new Set(['bam', 'cram'])
 
 async function doIngestPaths({paths, fileLoadHandler}) {
 
@@ -147,22 +134,15 @@ async function doIngestPaths({paths, fileLoadHandler}) {
 
         const name = await MultipleTrackFileLoad.getFilename(dataPath)
 
-        const format = TrackUtils.inferFileFormat(name);
+        if (indexLUT.has(name)) {
 
-        if (format) {
+            const {indexURL, indexFilename} = indexLUT.get(name)
+            configurations.push({url: dataPath, name, indexURL, indexFilename })
 
-            if (indexLUT.has(name)) {
-
-                const {indexURL, indexFilename} = indexLUT.get(name)
-                configurations.push({url: dataPath, name, indexURL, indexFilename, format})
-            } else if (requireIndex.has(FileUtils.getExtension(name))) {
-                throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
-            } else {
-                configurations.push({ url: dataPath, name, format })
-            }
-
+        } else if (requireIndex.has(FileUtils.getExtension(name))) {
+            throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
         } else {
-            throw new Error(`Unable to load track file ${ name } - unknown file format`)
+            configurations.push({ url: dataPath, name })
         }
 
     }
