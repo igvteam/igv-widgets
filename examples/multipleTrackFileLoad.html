@@ -4,52 +4,69 @@
     <meta charset="UTF-8">
     <title>File Load Widget Example</title>
 
-    <!-- Bootstrap 4 CSS -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <!-- Bootstrap 5 Beta CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- APP CSS -->
     <link rel="stylesheet" href="css/app-file-load-widget.css">
 
-    <!-- Bootstrap 4 and Dependancies -->
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <!--  jQuery  -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 
-    <!-- Dropbox Chooser API-->
+    <!-- Dropbox API-->
     <script id="dropboxjs" src="https://www.dropbox.com/static/api/2/dropins.js" data-app-key="8glijwyao9fq8we"></script>
 
     <script type="module" src="js/main_multipleTrackFileLoad.js"></script>
 
 </head>
+
 <body>
 
 <div id="root-container" class="container">
 
-    <div class="card">
-        <div class="card-body">
+    <div class="card mt-2">
+
+        <div class="card-header text-center">
             File Load Widget Example
         </div>
+
+        <div id="igv-widgets-file-load-widget" class="card-body">
+        </div>
+
+        <div class="card-footer text-center">
+            <button id="igv-widgets-file-load-button" type="button" class="btn btn-secondary">Load URL</button>
+        </div>
+
     </div>
 
-    <!-- URL Load -->
-    <div class="w-25 mx-auto pt-4">
-        <button id="url-load-button" type="button" class="btn btn-secondary">Load URL</button>
+    <div class="card mt-4">
+
+        <div class="card-header text-center">
+            Load Local File
+        </div>
+
+        <div class="card-body text-center">
+            <input id="igv-widgets-local-button" type="file" name="file" multiple>
+        </div>
+
     </div>
 
-    <!-- Local File Load -->
-    <div class="w-25 mx-auto pt-4">
-        <input id="local-file-load-button" type="file" name="file" multiple>
+    <div class="card mt-4">
+
+        <div class="card-header text-center">
+            Dropbox Widget
+        </div>
+
+        <div class="card-body text-center">
+            <button id="igv-widgets-dropbox-button" type="button" class="btn btn-secondary">Load Dropbox</button>
+        </div>
+
     </div>
-
-
-    <!-- Dropbox Load -->
-    <div class="w-25 mx-auto pt-4">
-        <button id="dropbox-load-button" type="button" class="btn btn-secondary">Load Dropbox</button>
-    </div>
-
 
 </div>
 
+<!-- Bootstrap 5 Beta JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 
