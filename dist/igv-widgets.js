@@ -6746,116 +6746,6 @@ function download  (filename, data) {
 }
 
 /*
- * The MIT License (MIT)
- *
- * Copyright (c) 2014 Broad Institute
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-const knownFileExtensions = new Set([
-
-    "narrowpeak",
-    "broadpeak",
-    "regionpeak",
-    "peaks",
-    "bedgraph",
-    "wig",
-    "gff3",
-    "gff",
-    "gtf",
-    "fusionjuncspan",
-    "refflat",
-    "seg",
-    "aed",
-    "bed",
-    "vcf",
-    "bb",
-    "bigbed",
-    "bw",
-    "bigwig",
-    "bam",
-    "tdf",
-    "refgene",
-    "genepred",
-    "genepredext",
-    "bedpe",
-    "bp",
-    "snp",
-    "rmsk",
-    "cram",
-    "gwas"
-]);
-
-function inferFileFormat(fn) {
-
-    var idx, ext;
-
-    fn = fn.toLowerCase();
-
-    // Special case -- UCSC refgene files
-    if (fn.endsWith("refgene.txt.gz") ||
-        fn.endsWith("refgene.txt.bgz") ||
-        fn.endsWith("refgene.txt") ||
-        fn.endsWith("refgene.sorted.txt.gz") ||
-        fn.endsWith("refgene.sorted.txt.bgz")) {
-        return "refgene";
-    }
-
-
-    //Strip parameters -- handle local files later
-    idx = fn.indexOf("?");
-    if (idx > 0) {
-        fn = fn.substr(0, idx);
-    }
-
-    //Strip aux extensions .gz, .tab, and .txt
-    if (fn.endsWith(".gz")) {
-        fn = fn.substr(0, fn.length - 3);
-    }
-
-    if (fn.endsWith(".txt") || fn.endsWith(".tab") || fn.endsWith(".bgz")) {
-        fn = fn.substr(0, fn.length - 4);
-    }
-
-
-    idx = fn.lastIndexOf(".");
-    ext = idx < 0 ? fn : fn.substr(idx + 1);
-
-    switch (ext) {
-        case "bw":
-            return "bigwig";
-        case "bb":
-            return "bigbed";
-
-        default:
-            if (knownFileExtensions.has(ext)) {
-                return ext;
-            } else {
-                return undefined;
-            }
-    }
-
-}
-
-/*
  *  Author: Jim Robinson, 2020
  *
  * Wrapper functions for the Google picker API
@@ -8020,26 +7910,26 @@ class MultipleTrackFileLoad {
 
         this.fileLoadHandler = fileLoadHandler;
 
-        $localFileInput.on('change', async () => {
+        const localFileInput = $localFileInput.get(0);
+        const dropboxButton = $dropboxButton.get(0);
+        const googleDriveButton = $googleDriveButton ? $googleDriveButton.get(0) : undefined;
 
-            if (true === MultipleTrackFileLoad.isValidLocalFileInput($localFileInput)) {
+        localFileInput.addEventListener('change', async () => {
 
-                const input = $localFileInput.get(0);
-                const { files } = input;
+            if (true === MultipleTrackFileLoad.isValidLocalFileInput(localFileInput)) {
+                const { files } = localFileInput;
                 const paths = Array.from(files);
-
-                input.value = '';
-
-                await ingestPaths({ paths, fileLoadHandler });
+                localFileInput.value = '';
+                await this.loadPaths(paths);
             }
 
         });
 
-        $dropboxButton.on('click', () => {
+        dropboxButton.addEventListener('click', async () => {
 
             const obj =
                 {
-                    success: dbFiles => ingestPaths({ paths: dbFiles.map(({link}) => link), fileLoadHandler }),
+                    success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
                     cancel: () => { },
                     linkType: "preview",
                     multiselect: multipleFileSelection,
@@ -8049,19 +7939,11 @@ class MultipleTrackFileLoad {
             Dropbox.choose(obj);
         });
 
-        if ($googleDriveButton) {
 
-            $googleDriveButton.on('click', () => {
+        if (googleDriveButton) {
 
-                createDropdownButtonPicker(multipleFileSelection, async responses => {
-
-                    // const paths = responses.map(async ({ name, url }) => {
-                    //     return { url: GoogleUtils.driveDownloadURL(url), name, filename: name, format: TrackUtils.inferFileFormat(name) }
-                    // });
-
-                    await ingestPaths({ paths : responses.map(({ name, url }) => url), fileLoadHandler });
-                });
-
+            googleDriveButton.addEventListener('click', () => {
+                createDropdownButtonPicker(multipleFileSelection, async responses => await this.loadPaths(responses.map(({ name, url }) => url)));
             });
 
         }
@@ -8072,8 +7954,8 @@ class MultipleTrackFileLoad {
         await ingestPaths({ paths, fileLoadHandler: this.fileLoadHandler });
     }
 
-    static isValidLocalFileInput($input) {
-        return ($input.get(0).files && $input.get(0).files.length > 0);
+    static isValidLocalFileInput(input) {
+        return (input.files && input.files.length > 0)
     }
 
     static async getFilename(path ){
@@ -8096,10 +7978,6 @@ class MultipleTrackFileLoad {
 
 }
 
-const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai']);
-
-const requireIndex = new Set(['bam', 'cram']);
-
 async function ingestPaths({ paths, fileLoadHandler }) {
     try {
         await doIngestPaths({paths, fileLoadHandler});
@@ -8108,6 +7986,10 @@ async function ingestPaths({ paths, fileLoadHandler }) {
         AlertSingleton$1.present(e.message);
     }
 }
+
+const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai']);
+
+const requireIndex = new Set(['bam', 'cram']);
 
 async function doIngestPaths({paths, fileLoadHandler}) {
 
@@ -8137,22 +8019,15 @@ async function doIngestPaths({paths, fileLoadHandler}) {
 
         const name = await MultipleTrackFileLoad.getFilename(dataPath);
 
-        const format = inferFileFormat(name);
+        if (indexLUT.has(name)) {
 
-        if (format) {
+            const {indexURL, indexFilename} = indexLUT.get(name);
+            configurations.push({url: dataPath, name, indexURL, indexFilename });
 
-            if (indexLUT.has(name)) {
-
-                const {indexURL, indexFilename} = indexLUT.get(name);
-                configurations.push({url: dataPath, name, indexURL, indexFilename, format});
-            } else if (requireIndex.has(getExtension(name))) {
-                throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
-            } else {
-                configurations.push({ url: dataPath, name, format });
-            }
-
+        } else if (requireIndex.has(getExtension(name))) {
+            throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
         } else {
-            throw new Error(`Unable to load track file ${ name } - unknown file format`)
+            configurations.push({ url: dataPath, name });
         }
 
     }

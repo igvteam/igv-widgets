@@ -22,30 +22,30 @@
  */
 
 import AlertSingleton from './alertSingleton.js'
-import { FileUtils, URIUtils, GooglePicker, TrackUtils, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
+import { FileUtils, URIUtils, GooglePicker, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
 
 class MultipleTrackFileLoad {
 
     constructor({ $localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
 
-        this.fileLoadHandler = fileLoadHandler;
+        this.fileLoadHandler = fileLoadHandler
 
-        $localFileInput.on('change', async () => {
+        const localFileInput = $localFileInput.get(0)
+        const dropboxButton = $dropboxButton.get(0)
+        const googleDriveButton = $googleDriveButton ? $googleDriveButton.get(0) : undefined
 
-            if (true === MultipleTrackFileLoad.isValidLocalFileInput($localFileInput)) {
+        localFileInput.addEventListener('change', async () => {
 
-                const input = $localFileInput.get(0);
-                const { files } = input;
-                const paths = Array.from(files);
-
-                input.value = '';
-
+            if (true === MultipleTrackFileLoad.isValidLocalFileInput(localFileInput)) {
+                const { files } = localFileInput
+                const paths = Array.from(files)
+                localFileInput.value = ''
                 await this.loadPaths(paths)
             }
 
-        });
+        })
 
-        $dropboxButton.on('click', () => {
+        dropboxButton.addEventListener('click', async () => {
 
             const obj =
                 {
@@ -56,11 +56,16 @@ class MultipleTrackFileLoad {
                     folderselect: false,
                 };
 
-            Dropbox.choose(obj);
-        });
+            Dropbox.choose(obj)
+        })
 
-        if ($googleDriveButton) {
-            $googleDriveButton.on('click', () => GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => await this.loadPaths(responses.map(({ name, url }) => url))))
+
+        if (googleDriveButton) {
+
+            googleDriveButton.addEventListener('click', () => {
+                GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => await this.loadPaths(responses.map(({ name, url }) => url)))
+            })
+
         }
 
     }
@@ -69,8 +74,8 @@ class MultipleTrackFileLoad {
         await ingestPaths({ paths, fileLoadHandler: this.fileLoadHandler })
     }
 
-    static isValidLocalFileInput($input) {
-        return ($input.get(0).files && $input.get(0).files.length > 0);
+    static isValidLocalFileInput(input) {
+        return (input.files && input.files.length > 0)
     }
 
     static async getFilename(path ){
