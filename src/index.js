@@ -10,7 +10,7 @@ import SessionController from "./sessionController.js";
 import MultipleTrackFileLoad from "./multipleTrackFileLoad.js";
 import * as Utils from './utils.js';
 import { createSessionWidgets } from "./sessionWidgets.js";
-import { createTrackWidgets, createTrackWidgetsWithTrackRegistry } from './trackWidgets.js'
+import { createTrackWidgetsWithTrackRegistry } from './trackWidgets.js'
 import { createURLModal } from "./urlModal.js";
 import { dropboxButtonImageBase64, googleDriveButtonImageBase64, dropboxDropdownItem, googleDriveDropdownItem } from './markupFactory.js'
 import { createGenericSelectModal } from './genericSelectModal.js'
@@ -47,7 +47,6 @@ export {
     SessionController,
     MultipleTrackFileLoad,
     createSessionWidgets,
-    createTrackWidgets,
     createTrackWidgetsWithTrackRegistry,
     createURLModal,
     dropboxButtonImageBase64,
