@@ -4,12 +4,13 @@ import MultipleTrackFileLoad from "../../src/multipleTrackFileLoad.js";
 
 let fileLoadWidget = undefined
 let multipleTrackFileLoad = undefined
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const multipleTrackFileLoadConfig =
         {
-            $localFileInput: $('#local-file-load-button'),
-            $dropboxButton: $('#dropbox-load-button'),
+            $localFileInput: $('#igv-widgets-local-button'),
+            $dropboxButton: $('#igv-widgets-dropbox-button'),
             $googleDriveButton: undefined,
             fileLoadHandler: configurations => console.log(configurations),
             multipleFileSelection: true
@@ -17,9 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     multipleTrackFileLoad = new MultipleTrackFileLoad(multipleTrackFileLoadConfig)
 
-    const config =
+    const fileLoadWidgetConfig =
         {
-            widgetParent: document.querySelector('.card-body'),
+            widgetParent: document.querySelector('#igv-widgets-file-load-widget'),
             dataTitle: 'Track',
             indexTitle: 'Index',
             mode: 'url',
@@ -28,21 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
             doURL: undefined
         };
 
-    fileLoadWidget = new FileLoadWidget(config);
+    fileLoadWidget = new FileLoadWidget(fileLoadWidgetConfig);
 
-    $('#url-load-button').on('click', async () => {
-        const paths = fileLoadWidget.retrievePaths();
-
-        // let str = '';
-        // for (let path of paths) {
-        //     str = `${ str } ${ path }`;
-        // }
-        //
-        // alert(`${ str }`);
-
-        await multipleTrackFileLoad.loadPaths(paths);
-        return true;
-
+    $('#igv-widgets-file-load-button').on('click', async () => {
+        const paths = fileLoadWidget.retrievePaths()
+        await multipleTrackFileLoad.loadPaths(paths)
+        return true
     });
 
 });
