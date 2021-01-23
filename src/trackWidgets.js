@@ -204,33 +204,45 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
 
         if (buttonConfiguration.type && 'custom-data-modal' === buttonConfiguration.type) {
 
+            if (buttonConfiguration.description) {
+                customModalTable.setDescription(buttonConfiguration.description)
+            }
+
             createDropdownButton($divider, buttonConfiguration.label, id_prefix)
                 .on('click', () => {
                     customModalTable.setDatasource(new GenericDataSource(buttonConfiguration))
                     customModalTable.setTitle(buttonConfiguration.label)
                     customModalTable.$modal.modal('show')
-                });
+                })
 
         } else if (buttonConfiguration.type && 'ENCODE' === buttonConfiguration.type) {
 
             if (true === encodeIsSupported) {
 
+                if (buttonConfiguration.description) {
+                    encodeModalTables[0].setDescription(buttonConfiguration.description)
+                    encodeModalTables[1].setDescription(buttonConfiguration.description)
+                }
+
                 createDropdownButton($divider, 'ENCODE Other', id_prefix)
-                    .on('click', () => encodeModalTables[1].$modal.modal('show'));
+                    .on('click', () => {
+                        encodeModalTables[1].$modal.modal('show')
+                    })
 
                 createDropdownButton($divider, 'ENCODE Signals', id_prefix)
-                    .on('click', () => encodeModalTables[0].$modal.modal('show'));
+                    .on('click', () => {
+                        encodeModalTables[0].$modal.modal('show')
+                    })
 
             }
 
         } else if ($genericSelectModal) {
 
-            const $button = createDropdownButton($divider, buttonConfiguration.label, id_prefix)
-
-            $button.on('click', () => {
-                configureSelectModal($genericSelectModal, buttonConfiguration);
-                $genericSelectModal.modal('show');
-            })
+            createDropdownButton($divider, buttonConfiguration.label, id_prefix)
+                .on('click', () => {
+                    configureSelectModal($genericSelectModal, buttonConfiguration);
+                    $genericSelectModal.modal('show')
+                })
 
         }
     } // for (buttonConfigurations)
@@ -246,12 +258,6 @@ function createDropdownButton($divider, buttonText, id_prefix) {
 }
 
 function configureSelectModal($genericSelectModal, buttonConfiguration) {
-
-    let markup = `<div>${buttonConfiguration.label}</div>`
-
-    // if (buttonConfiguration.description) {
-    //     markup += `<div>${ buttonConfiguration.description }</div>`
-    // }
 
     $genericSelectModal.find('.modal-title').text(`${buttonConfiguration.label}`);
 

@@ -8407,10 +8407,14 @@ class GenericDataSource {
                 if (typeof this.sort === 'function') {
                     records.sort(this.sort);
                 }
+
+
+
                 this.data = records;
             }
         }
-        return this.data;
+
+        return this.data
     }
 
     parseTabData(str, filter) {
@@ -8488,6 +8492,10 @@ class ModalTable {
                         <div id="${id}-datatable-container">
         
                         </div>
+                        
+                        <!-- description -->
+                        <div>
+                        </div>
                     </div>
         
                     <div class="modal-footer">
@@ -8523,6 +8531,14 @@ class ModalTable {
                 this.okHandler(selected);
             }
         });
+    }
+
+    setTitle(title) {
+        this.$modal.find('.modal-title').text(`${ title }`);
+    }
+
+    setDescription(description) {
+        this.$modal.find('.modal-body').children().last().html(`${ description }`);
     }
 
     remove() {
@@ -9036,6 +9052,10 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
 
         if (buttonConfiguration.type && 'custom-data-modal' === buttonConfiguration.type) {
 
+            if (buttonConfiguration.description) {
+                customModalTable.setDescription(buttonConfiguration.description);
+            }
+
             createDropdownButton($divider, buttonConfiguration.label, id_prefix)
                 .on('click', () => {
                     customModalTable.setDatasource(new GenericDataSource(buttonConfiguration));
@@ -9047,22 +9067,30 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
 
             if (true === encodeIsSupported) {
 
+                if (buttonConfiguration.description) {
+                    encodeModalTables[0].setDescription(buttonConfiguration.description);
+                    encodeModalTables[1].setDescription(buttonConfiguration.description);
+                }
+
                 createDropdownButton($divider, 'ENCODE Other', id_prefix)
-                    .on('click', () => encodeModalTables[1].$modal.modal('show'));
+                    .on('click', () => {
+                        encodeModalTables[1].$modal.modal('show');
+                    });
 
                 createDropdownButton($divider, 'ENCODE Signals', id_prefix)
-                    .on('click', () => encodeModalTables[0].$modal.modal('show'));
+                    .on('click', () => {
+                        encodeModalTables[0].$modal.modal('show');
+                    });
 
             }
 
         } else if ($genericSelectModal) {
 
-            const $button = createDropdownButton($divider, buttonConfiguration.label, id_prefix);
-
-            $button.on('click', () => {
-                configureSelectModal($genericSelectModal, buttonConfiguration);
-                $genericSelectModal.modal('show');
-            });
+            createDropdownButton($divider, buttonConfiguration.label, id_prefix)
+                .on('click', () => {
+                    configureSelectModal($genericSelectModal, buttonConfiguration);
+                    $genericSelectModal.modal('show');
+                });
 
         }
     } // for (buttonConfigurations)
@@ -9078,12 +9106,6 @@ function createDropdownButton($divider, buttonText, id_prefix) {
 }
 
 function configureSelectModal($genericSelectModal, buttonConfiguration) {
-
-    `<div>${buttonConfiguration.label}</div>`;
-
-    // if (buttonConfiguration.description) {
-    //     markup += `<div>${ buttonConfiguration.description }</div>`
-    // }
 
     $genericSelectModal.find('.modal-title').text(`${buttonConfiguration.label}`);
 
