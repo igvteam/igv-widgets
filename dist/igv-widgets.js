@@ -14932,7 +14932,7 @@ class GenericDataSource {
             }
         } else if (Array.isArray(this.data)) {
             return this.data
-        } else if ('csv' === getExtension$1(this.data)) {
+        } else if ('csv' === getExtension$1(this.data) || 'tsv' === getExtension$1(this.data)) {
 
             let str;
             try {
@@ -14943,18 +14943,7 @@ class GenericDataSource {
             }
 
             if (str) {
-                // const list = str.split('\n')
-                // const keys = list.shift().split(',').map(key => key.trim())
-                //
-                // const records = list.map(line => {
-                //     const keyValues = line.split(',').map((value, index) => [ keys[ index ], value.trim() ])
-                //     const entries = new Map(keyValues)
-                //     return Object.fromEntries(entries)
-                // })
-                //
-                // this.data = records
-
-                this.data = parseCSV(str);
+                this.data = 'csv' === getExtension$1(this.data) ? parseCSV(str) : this.parseTabData(str);
             }
 
         }
