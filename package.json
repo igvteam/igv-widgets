@@ -29,7 +29,7 @@
     "rollup": "^2.33.1"
   },
   "dependencies": {
-    "data-modal": "github:igvteam/data-modal#0dde9be0",
+    "data-modal": "github:igvteam/data-modal#7476bfef",
     "igv-utils": "github:igvteam/igv-utils#v1.2.2"
   }
 }
