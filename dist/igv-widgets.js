@@ -13989,33 +13989,6 @@ const options$1 = {
     }
 };
 
-function getExtension$1(url) {
-
-    if (undefined === url) {
-        return undefined;
-    }
-
-    let path = (isFilePath$1(url) || url.google_url) ? url.name : url;
-    let filename = path.toLowerCase();
-
-    //Strip parameters -- handle local files later
-    let index = filename.indexOf("?");
-    if (index > 0) {
-        filename = filename.substr(0, index);
-    }
-
-    //Strip aux extensions .gz, .tab, and .txt
-    if (filename.endsWith(".gz")) {
-        filename = filename.substr(0, filename.length - 3);
-    } else if (filename.endsWith(".txt") || filename.endsWith(".tab") || filename.endsWith(".bgz")) {
-        filename = filename.substr(0, filename.length - 4);
-    }
-
-    index = filename.lastIndexOf(".");
-
-    return index < 0 ? filename : filename.substr(1 + index);
-}
-
 /**
  * Return the filename from the path.   Example
  *   https://foo.com/bar.bed?param=2   => bar.bed
@@ -14040,10 +14013,6 @@ function getFilename (urlOrFile) {
     } else {
         throw Error(`Expected File or string, got ${typeof urlOrFile}`);
     }
-}
-
-function isFilePath$1 (path) {
-    return (path instanceof File);
 }
 
 // Uncompress data,  assumed to be series of bgzipped blocks
@@ -14872,6 +14841,7 @@ async function getFilename$1(url) {
     }
 }
 
+const extensions = new Set([ 'csv', 'tab', 'json' ]);
 class GenericDataSource {
 
     constructor(config) {
@@ -14932,23 +14902,29 @@ class GenericDataSource {
             }
         } else if (Array.isArray(this.data)) {
             return this.data
-        } else if ('csv' === getExtension$1(this.data) || 'tab' === getExtension$1(this.data)) {
+        } else if (extensions.has( GenericDataSource.getExtension(this.data) )) {
 
-            let str;
+            let result;
             try {
-                str = await igvxhr.loadString(this.data);
+                result = 'json' === GenericDataSource.getExtension(this.data) ? await igvxhr.loadJson(this.data) : await igvxhr.loadString(this.data);
             } catch (e){
                 console.error(e);
-                return undefined;
+                return undefined
             }
 
-            if (str) {
-                this.data = 'csv' === getExtension$1(this.data) ? parseCSV(str) : this.parseTabData(str);
+            if (result) {
+                if ('csv' === GenericDataSource.getExtension(this.data)) {
+                    return parseCSV(result)
+                } else if ('tab' === GenericDataSource.getExtension(this.data)) {
+                    return this.parseTabData(result)
+                } else {
+                    return result
+                }
             }
 
         }
 
-        return this.data
+        return undefined
     }
 
     parseTabData(str, filter) {
@@ -14981,6 +14957,16 @@ class GenericDataSource {
         } // while(line)
 
         return records;
+    }
+
+    static getExtension(url) {
+
+        const path = (url instanceof File) ? url.name : url;
+        const filename = path.toLowerCase();
+
+        const index = filename.lastIndexOf(".");
+
+        return index < 0 ? filename : filename.substr(1 + index)
     }
 
 }
