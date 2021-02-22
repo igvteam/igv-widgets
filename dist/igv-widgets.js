@@ -14932,7 +14932,7 @@ class GenericDataSource {
             }
         } else if (Array.isArray(this.data)) {
             return this.data
-        } else if ('csv' === getExtension$1(this.data) || 'tsv' === getExtension$1(this.data)) {
+        } else if ('csv' === getExtension$1(this.data) || 'tab' === getExtension$1(this.data)) {
 
             let str;
             try {
