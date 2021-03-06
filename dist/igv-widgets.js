@@ -14925,7 +14925,7 @@ class GenericDataSource {
                 if ('json' === extension) {
                     return result
                 } else {
-                    switch (this.delimiter) {
+                    switch ( getDelimiter(this.data, this.delimiter) ) {
                         case 'comma' : return parseCSV(result)
                         case 'tab'   : return this.parseTabData(result)
                     }
