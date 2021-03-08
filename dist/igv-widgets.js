@@ -14841,7 +14841,7 @@ async function getFilename(url) {
     }
 }
 
-const delimiters = new Set([ 'tab', 'comma' ]);
+const delimiters = new Set([ '\t', ',' ]);
 class GenericDataSource {
 
     constructor(config) {
@@ -14911,6 +14911,7 @@ class GenericDataSource {
         } else if ('json' === GenericDataSource.getExtension(this.data) || delimiters.has( getDelimiter(this.data, this.delimiter) )) {
 
             const extension = GenericDataSource.getExtension(this.data);
+            const delimiter = getDelimiter(this.data, this.delimiter);
 
             let result;
             try {
@@ -14924,10 +14925,11 @@ class GenericDataSource {
 
                 if ('json' === extension) {
                     return result
-                } else {
-                    switch ( getDelimiter(this.data, this.delimiter) ) {
-                        case 'comma' : return parseCSV(result)
-                        case 'tab'   : return this.parseTabData(result)
+                } else if (delimiter) {
+
+                    switch ( delimiter ) {
+                        case '\t'   : return this.parseTabData(result)
+                        case ','    : return parseCSV(result)
                     }
                 }
 
@@ -14991,17 +14993,15 @@ class GenericDataSource {
 }
 
 function getDelimiter(data, delimiter) {
+    return delimiter || getDelimiterForExtension( GenericDataSource.getExtension(data) )
 
-    if (undefined === delimiter) {
-        const extension = GenericDataSource.getExtension(data);
+}
 
-        switch (extension) {
-            case 'tab' : return 'tab'
-            case 'csv' : return 'comma'
-            default: return undefined
-        }
-    } else {
-        return delimiters.has(delimiter) ? delimiter : undefined
+function getDelimiterForExtension(extension) {
+    switch (extension) {
+        case 'tab' : return '\t'
+        case 'csv' : return ','
+        default: return undefined
     }
 }
 
