@@ -3,9 +3,7 @@ import * as Utils from './utils.js'
 
 class FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, igvxhr }) {
-
-        this.igvxhr = igvxhr;
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton }) {
 
         localFileInput.addEventListener('change', async () => {
 

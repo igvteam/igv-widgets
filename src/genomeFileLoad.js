@@ -1,97 +1,51 @@
 import AlertSingleton from './alertSingleton.js'
-import {FileUtils} from "../node_modules/igv-utils/src/index.js"
+import {FileUtils, igvxhr} from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
 
-const referenceSet = new Set(['fai', 'fa', 'fasta']);
-const dataSet = new Set(['fna', 'fa', 'fasta']);
+const singleSet = new Set([ 'json' ])
 const indexSet = new Set(['fai']);
 
-// const errorString = 'ERROR: Select both a sequence file (.fa or .fasta) and an index file (.fai).'
-const errorString = 'Genome not loaded - you must select both a sequence file (.fa or .fasta) and an index file (.fai)'
+const isGZip = path => FileUtils.getFilename(path).endsWith('.gz')
 
 class GenomeFileLoad extends FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr }) {
-        super(
-            { localFileInput, dropboxButton, googleEnabled, googleDriveButton, igvxhr });
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
         this.loadHandler = loadHandler;
     }
 
     async loadPaths(paths) {
 
-        if (1 === paths.length) {
+        if (paths.some(isGZip)) {
+            AlertSingleton.present(new Error('Genome did not load - gzip file is not allowed'))
+        } else {
 
-            const path = paths[ 0 ];
-            if ('json' === FileUtils.getExtension(path)) {
-                const json = await this.igvxhr.loadJson((path.google_url || path));
-                this.loadHandler(json);
-            } else if ('xml' === FileUtils.getExtension(path)) {
+            // If one of the paths is .json, unpack and send to loader
+            const single = paths.filter(path => singleSet.has( FileUtils.getExtension(path) ))
 
-                const key = true === FileUtils.isFilePath(path) ? 'file' : 'url';
-                const o = {};
-                o[ key ] = path;
+            if (single.length >= 1) {
+                const json = await igvxhr.loadJson(single[ 0 ])
+                this.loadHandler(json)
+            } else if (2 === paths.length) {
 
-                this.loadHandler(o);
+                const [ _0, _1 ] = paths.map(path => FileUtils.getExtension(path))
+
+                if (indexSet.has(_0)) {
+                    await this.loadHandler({ fastaURL: paths[ 1 ], indexURL: paths[ 0 ] })
+                } else if (indexSet.has(_1)) {
+                    await this.loadHandler({ fastaURL: paths[ 0 ], indexURL: paths[ 1 ] })
+                } else {
+                    AlertSingleton.present(new Error('Genome did not load - invalid data and/or index file'))
+                }
+
             } else {
-                AlertSingleton.present(new Error(errorString));
+                AlertSingleton.present(new Error('Genome did not load - invalid file'))
             }
 
-        } else if (2 === paths.length) {
-
-            let [ a, b ] = paths.map(path => {
-                return FileUtils.getExtension(path)
-            });
-
-            if (false === GenomeFileLoad.extensionValidator(a, b)) {
-                AlertSingleton.present(new Error(errorString));
-                return;
-            }
-
-            const [ dataPath, indexPath ] = GenomeFileLoad.retrieveDataPathAndIndexPath(paths);
-
-            await this.loadHandler({ fastaURL: dataPath, indexURL: indexPath });
-
-        } else {
-            AlertSingleton.present(new Error(errorString));
         }
+
 
     };
-
-    static retrieveDataPathAndIndexPath(paths) {
-
-        let [ a, b ] = paths.map(path => FileUtils.getExtension(path))
-
-        const [ la, lb ] = paths;
-
-        let pa;
-        let pb;
-        if (dataSet.has(a) && indexSet.has(b)) {
-            pa = la.google_url || la;
-            pb = lb.google_url || lb;
-        } else {
-            pa = lb.google_url || lb;
-            pb = la.google_url || la;
-        }
-
-        return [ pa, pb ];
-
-    };
-
-    static extensionValidator(a, b) {
-        if (dataSet.has(a) && indexSet.has(b)) {
-            return true;
-        } else {
-            return dataSet.has(b) && indexSet.has(a);
-        }
-    }
-
-    static pathValidator(extension) {
-        return referenceSet.has(extension);
-    }
-
-    static configurationHandler(dataKey, dataValue, indexPaths) {
-        return { fastaURL: dataValue, indexURL: FileLoad.getIndexURL(indexPaths[ dataKey ]) };
-    }
 
 }
 

@@ -21,7 +21,7 @@
  *
  */
 
-import { FileUtils } from "../node_modules/igv-utils/src/index.js"
+import {FileUtils, TrackUtils} from "../node_modules/igv-utils/src/index.js"
 
 function getIndexObjectWithDataName  (name) {
     let extension,
