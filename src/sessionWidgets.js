@@ -8,7 +8,6 @@ import * as Utils from './utils.js'
 let fileLoadWidget;
 
 function createSessionWidgets($rootContainer,
-                              igvxhr,
                               prefix,
                               localFileInputId,
                               dropboxButtonId,
@@ -45,8 +44,7 @@ function createSessionWidgets($rootContainer,
             dropboxButton: document.querySelector(`#${dropboxButtonId}`),
             googleEnabled,
             googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),
-            loadHandler,
-            igvxhr
+            loadHandler
         };
 
     const sessionFileLoad = new SessionFileLoad(sessionFileLoadConfig)

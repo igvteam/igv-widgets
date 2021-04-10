@@ -1,10 +1,11 @@
-import FileLoad from "./fileLoad.js";
+import { igvxhr } from '../node_modules/igv-utils/src/index.js';
 import {FileUtils} from "../node_modules/igv-utils/src/index.js"
+import FileLoad from "./fileLoad.js";
 
 class SessionFileLoad extends FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, igvxhr });
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
         this.loadHandler = loadHandler;
     }
 
@@ -12,7 +13,7 @@ class SessionFileLoad extends FileLoad {
 
         const path = paths[ 0 ];
         if ('json' === FileUtils.getExtension(path)) {
-            const json = await this.igvxhr.loadJson((path.google_url || path));
+            const json = await igvxhr.loadJson((path.google_url || path));
             this.loadHandler(json);
         } else if ('xml' === FileUtils.getExtension(path)) {
 
