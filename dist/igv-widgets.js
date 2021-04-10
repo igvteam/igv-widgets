@@ -8732,8 +8732,8 @@ class GenomeFileLoad extends FileLoad {
 
 class SessionFileLoad extends FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler, igvxhr }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, igvxhr });
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
         this.loadHandler = loadHandler;
     }
 
@@ -8741,7 +8741,7 @@ class SessionFileLoad extends FileLoad {
 
         const path = paths[ 0 ];
         if ('json' === getExtension(path)) {
-            const json = await this.igvxhr.loadJson((path.google_url || path));
+            const json = await igvxhr$1.loadJson((path.google_url || path));
             this.loadHandler(json);
         } else if ('xml' === getExtension(path)) {
 
@@ -9065,7 +9065,6 @@ const createURLModal = (id, title) => {
 let fileLoadWidget$1;
 
 function createSessionWidgets($rootContainer,
-                              igvxhr,
                               prefix,
                               localFileInputId,
                               dropboxButtonId,
@@ -9102,8 +9101,7 @@ function createSessionWidgets($rootContainer,
             dropboxButton: document.querySelector(`#${dropboxButtonId}`),
             googleEnabled,
             googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),
-            loadHandler,
-            igvxhr
+            loadHandler
         };
 
     const sessionFileLoad = new SessionFileLoad(sessionFileLoadConfig);
