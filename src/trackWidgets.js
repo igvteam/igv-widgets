@@ -12,8 +12,8 @@ import * as Utils from './utils.js'
 let fileLoadWidget
 let multipleTrackFileLoad
 let encodeModalTables = []
-let genomeChangeListener
 let customModalTable
+let $genericSelectModal = undefined
 
 const defaultCustomModalTableConfig =
     {
@@ -90,8 +90,6 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
     customModalTable = new ModalTable({ id: 'igv-custom-modal', title: 'UNTITLED', okHandler: trackLoadHandler, ...defaultCustomModalTableConfig })
 
-    let $genericSelectModal = undefined
-
     if (selectModalIdOrUndefined) {
 
         $genericSelectModal = $(createGenericSelectModal(selectModalIdOrUndefined, `${selectModalIdOrUndefined}-select`));
@@ -132,18 +130,9 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
     }
 
-    genomeChangeListener = {
-        receiveEvent: async ({ data }) => {
-            const {genomeID} = data
-            await updateTrackMenus(genomeID, GtexUtilsOrUndefined, supportsGenome(genomeID), encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal)
-        }
-    }
-
-    EventBus.globalBus.subscribe('DidChangeGenome', genomeChangeListener);
-
 }
 
-async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal) {
+async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFile, $dropdownMenu) {
 
     const id_prefix = 'genome_specific_';
 
@@ -178,7 +167,7 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
 
     for (let json of jsons) {
 
-        if (true === encodeIsSupported && 'ENCODE' === json.type) {
+        if (true === supportsGenome(genomeID) && 'ENCODE' === json.type) {
             encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
             encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
         } else if (GtexUtilsOrUndefined && 'GTEX' === json.type) {
@@ -217,7 +206,7 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
 
         } else if (buttonConfiguration.type && 'ENCODE' === buttonConfiguration.type) {
 
-            if (true === encodeIsSupported) {
+            if (true === supportsGenome(genomeID)) {
 
                 if (buttonConfiguration.description) {
                     encodeModalTables[0].setDescription(buttonConfiguration.description)
@@ -304,4 +293,4 @@ async function getPathsWithTrackRegistryFile(genomeID, trackRegistryFile) {
 
 }
 
-export {createTrackWidgetsWithTrackRegistry}
+export {updateTrackMenus, createTrackWidgetsWithTrackRegistry}
