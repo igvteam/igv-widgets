@@ -1,11 +1,10 @@
 import AlertSingleton from './alertSingleton.js'
 import {FileUtils, igvxhr} from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
+import MultipleTrackFileLoad from './multipleTrackFileLoad.js'
 
 const singleSet = new Set([ 'json' ])
 const indexSet = new Set(['fai']);
-
-const isGZip = path => FileUtils.getFilename(path).endsWith('.gz')
 
 class GenomeFileLoad extends FileLoad {
 
@@ -16,7 +15,9 @@ class GenomeFileLoad extends FileLoad {
 
     async loadPaths(paths) {
 
-        if (paths.some(isGZip)) {
+        const status = await GenomeFileLoad.isGZip(paths)
+
+        if (status) {
             AlertSingleton.present(new Error('Genome did not load - gzip file is not allowed'))
         } else {
 
@@ -28,7 +29,7 @@ class GenomeFileLoad extends FileLoad {
                 this.loadHandler(json)
             } else if (2 === paths.length) {
 
-                const [ _0, _1 ] = paths.map(path => FileUtils.getExtension(path))
+                const [ _0, _1 ] = await GenomeFileLoad.getExtension(paths)
 
                 if (indexSet.has(_0)) {
                     await this.loadHandler({ fastaURL: paths[ 1 ], indexURL: paths[ 0 ] })
@@ -45,7 +46,29 @@ class GenomeFileLoad extends FileLoad {
         }
 
 
-    };
+    }
+
+    static async isGZip(paths) {
+
+        for (let path of paths) {
+            const filename = await MultipleTrackFileLoad.getFilename(path)
+            if (true === filename.endsWith('.gz')) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    static async getExtension(paths) {
+
+        const a = await MultipleTrackFileLoad.getFilename(paths[ 0 ])
+        const b = await MultipleTrackFileLoad.getFilename(paths[ 1 ])
+
+        return [a, b].map(name => FileUtils.getExtension(name))
+
+    }
+
 
 }
 
