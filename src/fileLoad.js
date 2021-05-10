@@ -38,19 +38,21 @@ class FileLoad {
 
             googleDriveButton.addEventListener('click', () => {
 
-                GooglePicker.createDropdownButtonPicker(true, responses => {
+                GooglePicker.createDropdownButtonPicker(true, async responses => await this.loadPaths(responses.map(({ url }) => url)))
 
-                    const paths = responses
-                        .map(({ name, url }) => {
-                            return {
-                                filename: name,
-                                name,
-                                google_url: GoogleUtils.driveDownloadURL(url)
-                            };
-                        });
-
-                    this.loadPaths(paths);
-                });
+                // GooglePicker.createDropdownButtonPicker(true, responses => {
+                //
+                //     const paths = responses
+                //         .map(({ name, url }) => {
+                //             return {
+                //                 filename: name,
+                //                 name,
+                //                 google_url: GoogleUtils.driveDownloadURL(url)
+                //             };
+                //         });
+                //
+                //     this.loadPaths(paths);
+                // });
 
             });
 

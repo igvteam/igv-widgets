@@ -8570,19 +8570,21 @@ class FileLoad {
 
             googleDriveButton.addEventListener('click', () => {
 
-                createDropdownButtonPicker(true, responses => {
+                createDropdownButtonPicker(true, async responses => await this.loadPaths(responses.map(({ url }) => url)));
 
-                    const paths = responses
-                        .map(({ name, url }) => {
-                            return {
-                                filename: name,
-                                name,
-                                google_url: driveDownloadURL$1(url)
-                            };
-                        });
-
-                    this.loadPaths(paths);
-                });
+                // GooglePicker.createDropdownButtonPicker(true, responses => {
+                //
+                //     const paths = responses
+                //         .map(({ name, url }) => {
+                //             return {
+                //                 filename: name,
+                //                 name,
+                //                 google_url: GoogleUtils.driveDownloadURL(url)
+                //             };
+                //         });
+                //
+                //     this.loadPaths(paths);
+                // });
 
             });
 
@@ -8680,175 +8682,6 @@ class FileLoad {
         }, {});
 
     }
-
-}
-
-const singleSet = new Set([ 'json' ]);
-const indexSet = new Set(['fai']);
-
-const isGZip = path => getFilename$3(path).endsWith('.gz');
-
-class GenomeFileLoad extends FileLoad {
-
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
-        this.loadHandler = loadHandler;
-    }
-
-    async loadPaths(paths) {
-
-        if (paths.some(isGZip)) {
-            AlertSingleton$1.present(new Error('Genome did not load - gzip file is not allowed'));
-        } else {
-
-            // If one of the paths is .json, unpack and send to loader
-            const single = paths.filter(path => singleSet.has( getExtension(path) ));
-
-            if (single.length >= 1) {
-                const json = await igvxhr$1.loadJson(single[ 0 ]);
-                this.loadHandler(json);
-            } else if (2 === paths.length) {
-
-                const [ _0, _1 ] = paths.map(path => getExtension(path));
-
-                if (indexSet.has(_0)) {
-                    await this.loadHandler({ fastaURL: paths[ 1 ], indexURL: paths[ 0 ] });
-                } else if (indexSet.has(_1)) {
-                    await this.loadHandler({ fastaURL: paths[ 0 ], indexURL: paths[ 1 ] });
-                } else {
-                    AlertSingleton$1.present(new Error('Genome did not load - invalid data and/or index file'));
-                }
-
-            } else {
-                AlertSingleton$1.present(new Error('Genome did not load - invalid file'));
-            }
-
-        }
-
-
-    };
-
-}
-
-class SessionFileLoad extends FileLoad {
-
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
-        this.loadHandler = loadHandler;
-    }
-
-    async loadPaths(paths) {
-
-        const path = paths[ 0 ];
-        if ('json' === getExtension(path)) {
-            const json = await igvxhr$1.loadJson((path.google_url || path));
-            this.loadHandler(json);
-        } else if ('xml' === getExtension(path)) {
-
-            const key = true === isFilePath(path) ? 'file' : 'url';
-            const o = {};
-            o[ key ] = path;
-
-            this.loadHandler(o);
-        }
-
-    };
-
-}
-
-/*
- *  The MIT License (MIT)
- *
- * Copyright (c) 2016-2017 The Regents of the University of California
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial
- * portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
-class SessionController {
-
-    constructor({ prefix, sessionLoadModal, sessionSaveModal, sessionFileLoad, JSONProvider}) {
-
-        let config =
-            {
-                widgetParent: sessionLoadModal.querySelector('.modal-body'),
-                dataTitle: 'Load Session',
-                indexTitle: undefined,
-                mode: 'url',
-                fileLoadManager: new FileLoadManager(),
-                dataOnly: true,
-                doURL: undefined
-            };
-
-        this.urlWidget = new FileLoadWidget(config);
-
-        // Configure load session modal
-        configureModal(this.urlWidget, sessionLoadModal, async fileLoadWidget => {
-            await sessionFileLoad.loadPaths(fileLoadWidget.retrievePaths());
-            return true;
-        });
-
-        // Configure save session modal
-        configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal);
-
-    }
-
-}
-
-
-function configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal) {
-
-    let input = sessionSaveModal.querySelector('input');
-
-    let okHandler = () => {
-
-        const extensions = new Set(['json', 'xml']);
-
-        let filename = input.value;
-
-        if (undefined === filename || '' === filename) {
-            filename = input.getAttribute('placeholder');
-        } else if (false === extensions.has(getExtension(filename))) {
-            filename = filename + '.json';
-        }
-
-        const json = JSONProvider();
-        const jsonString = JSON.stringify(json, null, '\t');
-        const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
-
-        download(filename, data);
-
-        $(sessionSaveModal).modal('hide');
-    };
-
-    const $ok = $(sessionSaveModal).find('.modal-footer button:nth-child(2)');
-    $ok.on('click', okHandler);
-
-    $(sessionSaveModal).on('show.bs.modal', (e) => {
-        input.value = `${ prefix }-session.json`;
-    });
-
-    input.addEventListener('keyup', e => {
-
-        // enter key key-up
-        if (13 === e.keyCode) {
-            okHandler();
-        }
-    });
 
 }
 
@@ -9026,6 +8859,197 @@ const createIndexLUTKey = (name, extension) => {
     }
 
 };
+
+const singleSet = new Set([ 'json' ]);
+const indexSet = new Set(['fai']);
+
+class GenomeFileLoad extends FileLoad {
+
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+        this.loadHandler = loadHandler;
+    }
+
+    async loadPaths(paths) {
+
+        const status = await GenomeFileLoad.isGZip(paths);
+
+        if (status) {
+            AlertSingleton$1.present(new Error('Genome did not load - gzip file is not allowed'));
+        } else {
+
+            // If one of the paths is .json, unpack and send to loader
+            const single = paths.filter(path => singleSet.has( getExtension(path) ));
+
+            if (single.length >= 1) {
+                const json = await igvxhr$1.loadJson(single[ 0 ]);
+                this.loadHandler(json);
+            } else if (2 === paths.length) {
+
+                const [ _0, _1 ] = await GenomeFileLoad.getExtension(paths);
+
+                if (indexSet.has(_0)) {
+                    await this.loadHandler({ fastaURL: paths[ 1 ], indexURL: paths[ 0 ] });
+                } else if (indexSet.has(_1)) {
+                    await this.loadHandler({ fastaURL: paths[ 0 ], indexURL: paths[ 1 ] });
+                } else {
+                    AlertSingleton$1.present(new Error('Genome did not load - invalid data and/or index file'));
+                }
+
+            } else {
+                AlertSingleton$1.present(new Error('Genome did not load - invalid file'));
+            }
+
+        }
+
+
+    }
+
+    static async isGZip(paths) {
+
+        for (let path of paths) {
+            const filename = await MultipleTrackFileLoad.getFilename(path);
+            if (true === filename.endsWith('.gz')) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    static async getExtension(paths) {
+
+        const a = await MultipleTrackFileLoad.getFilename(paths[ 0 ]);
+        const b = await MultipleTrackFileLoad.getFilename(paths[ 1 ]);
+
+        return [a, b].map(name => getExtension(name))
+
+    }
+
+
+}
+
+class SessionFileLoad extends FileLoad {
+
+    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+        this.loadHandler = loadHandler;
+    }
+
+    async loadPaths(paths) {
+
+        const path = paths[ 0 ];
+        if ('json' === getExtension(path)) {
+            const json = await igvxhr$1.loadJson((path.google_url || path));
+            this.loadHandler(json);
+        } else if ('xml' === getExtension(path)) {
+
+            const key = true === isFilePath(path) ? 'file' : 'url';
+            const o = {};
+            o[ key ] = path;
+
+            this.loadHandler(o);
+        }
+
+    };
+
+}
+
+/*
+ *  The MIT License (MIT)
+ *
+ * Copyright (c) 2016-2017 The Regents of the University of California
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
+class SessionController {
+
+    constructor({ prefix, sessionLoadModal, sessionSaveModal, sessionFileLoad, JSONProvider}) {
+
+        let config =
+            {
+                widgetParent: sessionLoadModal.querySelector('.modal-body'),
+                dataTitle: 'Load Session',
+                indexTitle: undefined,
+                mode: 'url',
+                fileLoadManager: new FileLoadManager(),
+                dataOnly: true,
+                doURL: undefined
+            };
+
+        this.urlWidget = new FileLoadWidget(config);
+
+        // Configure load session modal
+        configureModal(this.urlWidget, sessionLoadModal, async fileLoadWidget => {
+            await sessionFileLoad.loadPaths(fileLoadWidget.retrievePaths());
+            return true;
+        });
+
+        // Configure save session modal
+        configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal);
+
+    }
+
+}
+
+
+function configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal) {
+
+    let input = sessionSaveModal.querySelector('input');
+
+    let okHandler = () => {
+
+        const extensions = new Set(['json', 'xml']);
+
+        let filename = input.value;
+
+        if (undefined === filename || '' === filename) {
+            filename = input.getAttribute('placeholder');
+        } else if (false === extensions.has(getExtension(filename))) {
+            filename = filename + '.json';
+        }
+
+        const json = JSONProvider();
+        const jsonString = JSON.stringify(json, null, '\t');
+        const data = URL.createObjectURL(new Blob([jsonString], {type: "application/octet-stream"}));
+
+        download(filename, data);
+
+        $(sessionSaveModal).modal('hide');
+    };
+
+    const $ok = $(sessionSaveModal).find('.modal-footer button:nth-child(2)');
+    $ok.on('click', okHandler);
+
+    $(sessionSaveModal).on('show.bs.modal', (e) => {
+        input.value = `${ prefix }-session.json`;
+    });
+
+    input.addEventListener('keyup', e => {
+
+        // enter key key-up
+        if (13 === e.keyCode) {
+            okHandler();
+        }
+    });
+
+}
 
 const createURLModal = (id, title) => {
 
