@@ -26,7 +26,7 @@
  *
  */
 
-import { ModalTable, GenericDataSource } from '../../node_modules/data-modal/js/index.js'
+import { ModalTable, GenericDataSource } from '../../node_modules/data-modal/dist/data-modal.js'
 import { encodeTrackDatasourceConfigurator } from '../../src/encodeTrackDatasourceConfigurator.js'
 
 const encodeModalConfig =

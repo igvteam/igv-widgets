@@ -6513,10 +6513,6 @@ Zlib$1.Deflate.prototype.compress = function() {
   return output;
 };
 
-if(typeof btoa === 'undefined') {
-    require('btoa');
-}
-
 /**
  * Covers string literals and String objects
  * @param x
@@ -6602,28 +6598,84 @@ function isGoogleDriveURL$1(url) {
     return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
 }
 
+/**
+ * Translate gs:// urls to https
+ * See https://cloud.google.com/storage/docs/json_api/v1
+ * @param gsUrl
+ * @returns {string|*}
+ */
 function translateGoogleCloudURL$1(gsUrl) {
 
-    var i, bucket, object, qIdx, objectString, paramString;
+    let {bucket, object} = parseBucketName$1(gsUrl);
+    object = encode$1(object);
 
-    i = gsUrl.indexOf('/', 5);
-    qIdx = gsUrl.indexOf('?');
+    const qIdx = gsUrl.indexOf('?');
+    const paramString = (qIdx > 0) ? gsUrl.substring(qIdx) + "&alt=media" : "?alt=media";
 
-    if (i < 0) {
-        return gsUrl;
+    return `https://storage.googleapis.com/storage/v1/b/${bucket}/o/${object}${paramString}`
+}
+
+/**
+ * Parse a google bucket and object name from a google storage URL.  Known forms include
+ *
+ * gs://BUCKET_NAME/OBJECT_NAME
+ * https://storage.googleapis.com/BUCKET_NAME/OBJECT_NAME
+ * https://storage.googleapis.com/storage/v1/b/BUCKET_NAME/o/OBJECT_NAME
+ * https://www.googleapis.com/storage/v1/b/BUCKET_NAME/o/OBJECT_NAME"
+ * https://storage.googleapis.com/download/storage/v1/b/BUCKET_NAME/o/OBJECT_NAME
+ *
+ * @param url
+ */
+function parseBucketName$1(url) {
+
+    let bucket;
+    let object;
+
+    if (url.startsWith("gs://")) {
+        const i = url.indexOf('/', 5);
+        if (i >= 0) {
+            bucket = url.substring(5, i);
+            const qIdx = url.indexOf('?');
+            object = (qIdx < 0) ? url.substring(i + 1) : url.substring(i + 1, qIdx);
+        }
+
+    } else if (url.startsWith("https://storage.googleapis.com") || url.startsWith("https://storage.cloud.google.com")) {
+        const bucketIdx = url.indexOf("/v1/b/", 8);
+        if (bucketIdx > 0) {
+            const objIdx = url.indexOf("/o/", bucketIdx);
+            if (objIdx > 0) {
+                const queryIdx = url.indexOf("?", objIdx);
+                bucket = url.substring(bucketIdx + 6, objIdx);
+                object = queryIdx > 0 ? url.substring(objIdx + 3, queryIdx) : url.substring(objIdx + 3);
+            }
+
+        } else {
+            const idx1 = url.indexOf("/", 8);
+            const idx2 = url.indexOf("/", idx1+1);
+            const idx3 = url.indexOf("?", idx2);
+            if (idx2 > 0) {
+                bucket = url.substring(idx1+1, idx2);
+                object = idx3 < 0 ? url.substring(idx2+1) : url.substring(idx2+1, idx3);
+            }
+        }
+
+    } else if (url.startsWith("https://www.googleapis.com/storage/v1/b")) {
+        const bucketIdx = url.indexOf("/v1/b/", 8);
+        const objIdx = url.indexOf("/o/", bucketIdx);
+        if (objIdx > 0) {
+            const queryIdx = url.indexOf("?", objIdx);
+            bucket = url.substring(bucketIdx + 6, objIdx);
+            object = queryIdx > 0 ? url.substring(objIdx + 3, queryIdx) : url.substring(objIdx + 3);
+        }
     }
 
-    bucket = gsUrl.substring(5, i);
-
-    objectString = (qIdx < 0) ? gsUrl.substring(i + 1) : gsUrl.substring(i + 1, qIdx);
-    object = encodeURIComponent(objectString);
-
-    if (qIdx > 0) {
-        paramString = gsUrl.substring(qIdx);
+    if (bucket && object) {
+        return {
+            bucket, object
+        }
+    } else {
+        throw Error(`Unrecognized Google Storage URI: ${url}`)
     }
-
-    return "https://www.googleapis.com/storage/v1/b/" + bucket + "/o/" + object +
-        (paramString ? paramString + "&alt=media" : "?alt=media");
 
 }
 
@@ -6658,7 +6710,7 @@ function getGoogleDriveFileID$1(link) {
         let i1 = link.indexOf("/files/");
         const i2 = link.indexOf("?");
         if (i1 > 0) {
-           i1 += 7;
+            i1 += 7;
             return i2 > 0 ?
                 link.substring(i1, i2) :
                 link.substring(i1)
@@ -6669,6 +6721,50 @@ function getGoogleDriveFileID$1(link) {
 
 
 }
+
+
+/**
+ * Percent a GCS object name.  See https://cloud.google.com/storage/docs/request-endpoints
+ * Specific characters to encode:
+ *   !, #, $, &, ', (, ), *, +, ,, /, :, ;, =, ?, @, [, ], and space characters.
+ * @param obj
+ */
+
+function encode$1(objectName) {
+
+    let result = '';
+    objectName.split('').forEach(function(letter) {
+        if(encodings$1.has(letter)) {
+            result += encodings$1.get(letter);
+        } else {
+            result += letter;
+        }
+    });
+    return result;
+}
+
+//	%23	%24	%25	%26	%27	%28	%29	%2A	%2B	%2C	%2F	%3A	%3B	%3D	%3F	%40	%5B	%5D
+const encodings$1 = new Map();
+encodings$1.set("!", "%21");
+encodings$1.set("#", "%23");
+encodings$1.set("$", "%24");
+encodings$1.set("%", "%25");
+encodings$1.set("&", "%26");
+encodings$1.set("'", "%27");
+encodings$1.set("(", "%28");
+encodings$1.set(")", "%29");
+encodings$1.set("*", "%2A");
+encodings$1.set("+", "%2B");
+encodings$1.set(",", "%2C");
+encodings$1.set("/", "%2F");
+encodings$1.set(":", "%3A");
+encodings$1.set(";", "%3B");
+encodings$1.set("=", "%3D");
+encodings$1.set("?", "%3F");
+encodings$1.set("@", "%40");
+encodings$1.set("[", "%5B");
+encodings$1.set("]", "%5D");
+encodings$1.set(" ", "%20");
 
 // Convenience functions for the gapi oAuth library.
 
@@ -7470,12 +7566,8 @@ async function loadURL$1(url, options) {
 
         // Various Google tansformations
         if (isGoogleURL$1(url)) {
-            if (url.startsWith("gs://")) {
+            if (isGoogleStorageURL$1(url)) {
                 url = translateGoogleCloudURL$1(url);
-            } else if (isGoogleStorageURL$1(url)) {
-                if (!url.includes("altMedia=")) {
-                    url += (url.includes("?") ? "&altMedia=true" : "?altMedia=true");
-                }
             }
             url = addApiKey$1(url);
 
@@ -7917,6 +8009,48 @@ async function getFilename$2(url) {
         return getFilename$3(url);
     }
 }
+
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Broad Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+/** An implementation of an interval tree, following the explanation.
+ * from CLR.
+ *
+ * Public interface:
+ *   Constructor  IntervalTree
+ *   Insertion    insert
+ *   Search       findOverlapping
+ */
+
+var BLACK$1 = 1;
+
+var NIL$1 = {};
+NIL$1.color = BLACK$1;
+NIL$1.parent = NIL$1;
+NIL$1.left = NIL$1;
+NIL$1.right = NIL$1;
 
 const httpMessages =
     {
@@ -14686,10 +14820,6 @@ Zlib.Deflate.prototype.compress = function() {
   return output;
 };
 
-if(typeof btoa === 'undefined') {
-    require('btoa');
-}
-
 /**
  * Covers string literals and String objects
  * @param x
@@ -14716,28 +14846,84 @@ function isGoogleDriveURL(url) {
     return url.indexOf("drive.google.com") >= 0 || url.indexOf("www.googleapis.com/drive") > 0
 }
 
+/**
+ * Translate gs:// urls to https
+ * See https://cloud.google.com/storage/docs/json_api/v1
+ * @param gsUrl
+ * @returns {string|*}
+ */
 function translateGoogleCloudURL(gsUrl) {
 
-    var i, bucket, object, qIdx, objectString, paramString;
+    let {bucket, object} = parseBucketName(gsUrl);
+    object = encode(object);
 
-    i = gsUrl.indexOf('/', 5);
-    qIdx = gsUrl.indexOf('?');
+    const qIdx = gsUrl.indexOf('?');
+    const paramString = (qIdx > 0) ? gsUrl.substring(qIdx) + "&alt=media" : "?alt=media";
 
-    if (i < 0) {
-        return gsUrl;
+    return `https://storage.googleapis.com/storage/v1/b/${bucket}/o/${object}${paramString}`
+}
+
+/**
+ * Parse a google bucket and object name from a google storage URL.  Known forms include
+ *
+ * gs://BUCKET_NAME/OBJECT_NAME
+ * https://storage.googleapis.com/BUCKET_NAME/OBJECT_NAME
+ * https://storage.googleapis.com/storage/v1/b/BUCKET_NAME/o/OBJECT_NAME
+ * https://www.googleapis.com/storage/v1/b/BUCKET_NAME/o/OBJECT_NAME"
+ * https://storage.googleapis.com/download/storage/v1/b/BUCKET_NAME/o/OBJECT_NAME
+ *
+ * @param url
+ */
+function parseBucketName(url) {
+
+    let bucket;
+    let object;
+
+    if (url.startsWith("gs://")) {
+        const i = url.indexOf('/', 5);
+        if (i >= 0) {
+            bucket = url.substring(5, i);
+            const qIdx = url.indexOf('?');
+            object = (qIdx < 0) ? url.substring(i + 1) : url.substring(i + 1, qIdx);
+        }
+
+    } else if (url.startsWith("https://storage.googleapis.com") || url.startsWith("https://storage.cloud.google.com")) {
+        const bucketIdx = url.indexOf("/v1/b/", 8);
+        if (bucketIdx > 0) {
+            const objIdx = url.indexOf("/o/", bucketIdx);
+            if (objIdx > 0) {
+                const queryIdx = url.indexOf("?", objIdx);
+                bucket = url.substring(bucketIdx + 6, objIdx);
+                object = queryIdx > 0 ? url.substring(objIdx + 3, queryIdx) : url.substring(objIdx + 3);
+            }
+
+        } else {
+            const idx1 = url.indexOf("/", 8);
+            const idx2 = url.indexOf("/", idx1+1);
+            const idx3 = url.indexOf("?", idx2);
+            if (idx2 > 0) {
+                bucket = url.substring(idx1+1, idx2);
+                object = idx3 < 0 ? url.substring(idx2+1) : url.substring(idx2+1, idx3);
+            }
+        }
+
+    } else if (url.startsWith("https://www.googleapis.com/storage/v1/b")) {
+        const bucketIdx = url.indexOf("/v1/b/", 8);
+        const objIdx = url.indexOf("/o/", bucketIdx);
+        if (objIdx > 0) {
+            const queryIdx = url.indexOf("?", objIdx);
+            bucket = url.substring(bucketIdx + 6, objIdx);
+            object = queryIdx > 0 ? url.substring(objIdx + 3, queryIdx) : url.substring(objIdx + 3);
+        }
     }
 
-    bucket = gsUrl.substring(5, i);
-
-    objectString = (qIdx < 0) ? gsUrl.substring(i + 1) : gsUrl.substring(i + 1, qIdx);
-    object = encodeURIComponent(objectString);
-
-    if (qIdx > 0) {
-        paramString = gsUrl.substring(qIdx);
+    if (bucket && object) {
+        return {
+            bucket, object
+        }
+    } else {
+        throw Error(`Unrecognized Google Storage URI: ${url}`)
     }
-
-    return "https://www.googleapis.com/storage/v1/b/" + bucket + "/o/" + object +
-        (paramString ? paramString + "&alt=media" : "?alt=media");
 
 }
 
@@ -14772,7 +14958,7 @@ function getGoogleDriveFileID(link) {
         let i1 = link.indexOf("/files/");
         const i2 = link.indexOf("?");
         if (i1 > 0) {
-           i1 += 7;
+            i1 += 7;
             return i2 > 0 ?
                 link.substring(i1, i2) :
                 link.substring(i1)
@@ -14783,6 +14969,50 @@ function getGoogleDriveFileID(link) {
 
 
 }
+
+
+/**
+ * Percent a GCS object name.  See https://cloud.google.com/storage/docs/request-endpoints
+ * Specific characters to encode:
+ *   !, #, $, &, ', (, ), *, +, ,, /, :, ;, =, ?, @, [, ], and space characters.
+ * @param obj
+ */
+
+function encode(objectName) {
+
+    let result = '';
+    objectName.split('').forEach(function(letter) {
+        if(encodings.has(letter)) {
+            result += encodings.get(letter);
+        } else {
+            result += letter;
+        }
+    });
+    return result;
+}
+
+//	%23	%24	%25	%26	%27	%28	%29	%2A	%2B	%2C	%2F	%3A	%3B	%3D	%3F	%40	%5B	%5D
+const encodings = new Map();
+encodings.set("!", "%21");
+encodings.set("#", "%23");
+encodings.set("$", "%24");
+encodings.set("%", "%25");
+encodings.set("&", "%26");
+encodings.set("'", "%27");
+encodings.set("(", "%28");
+encodings.set(")", "%29");
+encodings.set("*", "%2A");
+encodings.set("+", "%2B");
+encodings.set(",", "%2C");
+encodings.set("/", "%2F");
+encodings.set(":", "%3A");
+encodings.set(";", "%3B");
+encodings.set("=", "%3D");
+encodings.set("?", "%3F");
+encodings.set("@", "%40");
+encodings.set("[", "%5B");
+encodings.set("]", "%5D");
+encodings.set(" ", "%20");
 
 // Convenience functions for the gapi oAuth library.
 
@@ -15387,12 +15617,8 @@ async function loadURL(url, options) {
 
         // Various Google tansformations
         if (isGoogleURL(url)) {
-            if (url.startsWith("gs://")) {
+            if (isGoogleStorageURL(url)) {
                 url = translateGoogleCloudURL(url);
-            } else if (isGoogleStorageURL(url)) {
-                if (!url.includes("altMedia=")) {
-                    url += (url.includes("?") ? "&altMedia=true" : "?altMedia=true");
-                }
             }
             url = addApiKey(url);
 
@@ -15834,6 +16060,48 @@ async function getFilename(url) {
         return getFilename$1(url);
     }
 }
+
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2014 Broad Institute
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+/** An implementation of an interval tree, following the explanation.
+ * from CLR.
+ *
+ * Public interface:
+ *   Constructor  IntervalTree
+ *   Insertion    insert
+ *   Search       findOverlapping
+ */
+
+var BLACK = 1;
+
+var NIL = {};
+NIL.color = BLACK;
+NIL.parent = NIL;
+NIL.left = NIL;
+NIL.right = NIL;
 
 const delimiters = new Set([ '\t', ',' ]);
 class GenericDataSource {

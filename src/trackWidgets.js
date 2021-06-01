@@ -1,4 +1,4 @@
-import { ModalTable, GenericDataSource } from '../node_modules/data-modal/js/index.js'
+import { ModalTable, GenericDataSource } from '../node_modules/data-modal/dist/data-modal.js'
 import {encodeTrackDatasourceConfigurator, supportsGenome} from './encodeTrackDatasourceConfigurator.js'
 import AlertSingleton from './alertSingleton.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
