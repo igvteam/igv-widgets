@@ -21,58 +21,6 @@
  *
  */
 
-import {FileUtils, TrackUtils} from "../node_modules/igv-utils/src/index.js"
-
-function getIndexObjectWithDataName  (name) {
-    let extension,
-        dataSuffix,
-        lookup,
-        indexObject,
-        aa;
-
-    extension = FileUtils.getExtension(name);
-
-    if (false === isKnownFileExtension(extension)) {
-        return undefined;
-    }
-
-    dataSuffix = name.split('.').pop();
-
-    lookup = indexLookup(dataSuffix);
-
-    indexObject = {};
-
-    // aa
-    aa = name + '.' + lookup.index;
-
-    indexObject[aa] = {};
-    indexObject[aa].data = name;
-    indexObject[aa].isOptional = lookup.isOptional;
-
-
-    if ('bam' === extension || 'cram' === extension) {
-        let bb,
-            parts;
-
-        // bb
-        parts = name.split('.');
-        parts.pop();
-        bb = parts.join('.') + '.' + lookup.index;
-
-        indexObject[bb] = {};
-        indexObject[bb].data = name;
-        indexObject[bb].isOptional = lookup.isOptional;
-    }
-
-    return indexObject;
-};
-
-function isKnownFileExtension  (extension)  {
-    let fasta = new Set(['fa', 'fasta']);
-    let union = new Set([...(TrackUtils.knownFileExtensions), ...fasta]);
-    return union.has(extension);
-};
-
 function configureModal  (fileLoadWidget, modal, okHandler) {
 
     const doDismiss = () => {
@@ -110,68 +58,6 @@ function configureModal  (fileLoadWidget, modal, okHandler) {
             doOK()
         }
     });
-};
-
-function indexLookup  (dataSuffix)  {
-
-    const fa =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const fasta =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const bam =
-        {
-            index: 'bai',
-            isOptional: false
-        };
-
-    const cram =
-        {
-            index: 'crai',
-            isOptional: false
-        };
-
-    const gz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const bgz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const any =
-        {
-            index: 'idx',
-            isOptional: true
-        };
-
-    const lut =
-        {
-            fa,
-            fasta,
-            bam,
-            cram,
-            gz,
-            bgz
-        };
-
-    if (lut[dataSuffix]) {
-        return lut[dataSuffix];
-    } else {
-        return any;
-    }
-
 }
 
-export { getIndexObjectWithDataName, isKnownFileExtension, configureModal };
+export { configureModal };
