@@ -6522,65 +6522,6 @@ function isString$1(x) {
     return typeof x === "string" || x instanceof String
 }
 
-/*
- * The MIT License (MIT)
- *
- * Copyright (c) 2014 Broad Institute
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
-
-const knownFileExtensions = new Set([
-
-    "narrowpeak",
-    "broadpeak",
-    "regionpeak",
-    "peaks",
-    "bedgraph",
-    "wig",
-    "gff3",
-    "gff",
-    "gtf",
-    "fusionjuncspan",
-    "refflat",
-    "seg",
-    "aed",
-    "bed",
-    "vcf",
-    "bb",
-    "bigbed",
-    "bw",
-    "bigwig",
-    "bam",
-    "tdf",
-    "refgene",
-    "genepred",
-    "genepredext",
-    "bedpe",
-    "bp",
-    "snp",
-    "rmsk",
-    "cram",
-    "gwas"
-]);
-
 function isGoogleURL$1(url) {
     return (url.includes("googleapis") && !url.includes("urlshortener")) ||
         isGoogleStorageURL$1(url) ||
@@ -8489,184 +8430,6 @@ class FileLoadWidget {
 
 }
 
-/*
- *  The MIT License (MIT)
- *
- * Copyright (c) 2016-2017 The Regents of the University of California
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
- * associated documentation files (the "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all copies or substantial
- * portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
- * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- */
-
-function getIndexObjectWithDataName  (name) {
-    let extension,
-        dataSuffix,
-        lookup,
-        indexObject,
-        aa;
-
-    extension = getExtension(name);
-
-    if (false === isKnownFileExtension(extension)) {
-        return undefined;
-    }
-
-    dataSuffix = name.split('.').pop();
-
-    lookup = indexLookup(dataSuffix);
-
-    indexObject = {};
-
-    // aa
-    aa = name + '.' + lookup.index;
-
-    indexObject[aa] = {};
-    indexObject[aa].data = name;
-    indexObject[aa].isOptional = lookup.isOptional;
-
-
-    if ('bam' === extension || 'cram' === extension) {
-        let bb,
-            parts;
-
-        // bb
-        parts = name.split('.');
-        parts.pop();
-        bb = parts.join('.') + '.' + lookup.index;
-
-        indexObject[bb] = {};
-        indexObject[bb].data = name;
-        indexObject[bb].isOptional = lookup.isOptional;
-    }
-
-    return indexObject;
-}
-function isKnownFileExtension  (extension)  {
-    let fasta = new Set(['fa', 'fasta']);
-    let union = new Set([...(knownFileExtensions), ...fasta]);
-    return union.has(extension);
-}
-function configureModal  (fileLoadWidget, modal, okHandler) {
-
-    const doDismiss = () => {
-        fileLoadWidget.dismiss();
-        $(modal).modal('hide');
-    };
-
-    const doOK = async () => {
-
-        const result = await okHandler(fileLoadWidget);
-
-        if (true === result) {
-            fileLoadWidget.dismiss();
-            $(modal).modal('hide');
-        }
-    };
-
-    let dismiss;
-
-    // upper dismiss - x - button
-    dismiss = modal.querySelector('.modal-header button');
-    dismiss.addEventListener('click', doDismiss);
-
-    // lower dismiss - close - button
-    dismiss = modal.querySelector('.modal-footer button:nth-child(1)');
-    dismiss.addEventListener('click', doDismiss);
-
-    // ok - button
-    const ok = modal.querySelector('.modal-footer button:nth-child(2)');
-
-    ok.addEventListener('click', doOK);
-
-    modal.addEventListener('keypress', event => {
-        if ('Enter' === event.key) {
-            doOK();
-        }
-    });
-}
-function indexLookup  (dataSuffix)  {
-
-    const fa =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const fasta =
-        {
-            index: 'fai',
-            isOptional: false
-        };
-
-    const bam =
-        {
-            index: 'bai',
-            isOptional: false
-        };
-
-    const cram =
-        {
-            index: 'crai',
-            isOptional: false
-        };
-
-    const gz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const bgz =
-        {
-            index: 'tbi',
-            isOptional: true
-        };
-
-    const any =
-        {
-            index: 'idx',
-            isOptional: true
-        };
-
-    const lut =
-        {
-            fa,
-            fasta,
-            bam,
-            cram,
-            gz,
-            bgz
-        };
-
-    if (lut[dataSuffix]) {
-        return lut[dataSuffix];
-    } else {
-        return any;
-    }
-
-}
-
-var utils = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    getIndexObjectWithDataName: getIndexObjectWithDataName,
-    isKnownFileExtension: isKnownFileExtension,
-    configureModal: configureModal
-});
-
 class FileLoad {
 
     constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton }) {
@@ -8703,23 +8466,7 @@ class FileLoad {
         if (true === googleEnabled && googleDriveButton) {
 
             googleDriveButton.addEventListener('click', () => {
-
                 createDropdownButtonPicker(true, async responses => await this.loadPaths(responses.map(({ url }) => url)));
-
-                // GooglePicker.createDropdownButtonPicker(true, responses => {
-                //
-                //     const paths = responses
-                //         .map(({ name, url }) => {
-                //             return {
-                //                 filename: name,
-                //                 name,
-                //                 google_url: GoogleUtils.driveDownloadURL(url)
-                //             };
-                //         });
-                //
-                //     this.loadPaths(paths);
-                // });
-
             });
 
         }
@@ -8732,89 +8479,6 @@ class FileLoad {
 
     static isValidLocalFileInput(input) {
         return (input.files && input.files.length > 0);
-    }
-
-    static getIndexURL(indexValue) {
-
-        if (indexValue) {
-
-            if        (indexValue[ 0 ]) {
-                return indexValue[ 0 ].path;
-            } else if (indexValue[ 1 ]) {
-                return indexValue[ 1 ].path;
-            } else {
-                return undefined;
-            }
-
-        } else {
-            return undefined;
-        }
-
-    }
-
-    static getIndexPaths(dataPathNames, indexPathCandidates) {
-
-        // add info about presence and requirement (or not) of an index path
-        const list = Object.keys(dataPathNames)
-            .map(function (dataPathName) {
-                let indexObject;
-
-                // assess the data files need/requirement for index files
-                indexObject  = getIndexObjectWithDataName(dataPathName);
-
-                // identify the presence/absence of associated index files
-                for (let p in indexObject) {
-                    if (indexObject.hasOwnProperty(p)) {
-                        indexObject[ p ].missing = (undefined === indexPathCandidates[ p ]);
-                    }
-                }
-
-                return indexObject;
-            })
-            .filter(function (indexObject) {
-
-                // prune optional AND missing index files
-                if (1 === Object.keys(indexObject).length) {
-
-                    let obj;
-
-                    obj = indexObject[ Object.keys(indexObject)[ 0 ] ];
-                    if( true === obj.missing &&  true === obj.isOptional) {
-                        return false;
-                    } else if (false === obj.missing && false === obj.isOptional) {
-                        return true;
-                    } else if ( true === obj.missing && false === obj.isOptional) {
-                        return true;
-                    } else /*( false === obj.missing && true === obj.isOptional)*/ {
-                        return true;
-                    }
-
-                } else {
-                    return true;
-                }
-
-            });
-
-        return list.reduce(function(accumulator, indexObject) {
-
-            for (let key in indexObject) {
-
-                if (indexObject.hasOwnProperty(key)) {
-                    let value;
-
-                    value = indexObject[ key ];
-
-                    if (undefined === accumulator[ value.data ]) {
-                        accumulator[ value.data ] = [];
-                    }
-
-                    accumulator[ value.data ].push(((false === value.missing) ? { name: key, path: indexPathCandidates[ key ] } : undefined));
-                }
-            }
-
-            return accumulator;
-        }, {});
-
     }
 
 }
@@ -9088,6 +8752,73 @@ class SessionFileLoad extends FileLoad {
     };
 
 }
+
+/*
+ *  The MIT License (MIT)
+ *
+ * Copyright (c) 2016-2017 The Regents of the University of California
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
+ * associated documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the
+ * following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ * BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,  FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ *
+ */
+
+function configureModal  (fileLoadWidget, modal, okHandler) {
+
+    const doDismiss = () => {
+        fileLoadWidget.dismiss();
+        $(modal).modal('hide');
+    };
+
+    const doOK = async () => {
+
+        const result = await okHandler(fileLoadWidget);
+
+        if (true === result) {
+            fileLoadWidget.dismiss();
+            $(modal).modal('hide');
+        }
+    };
+
+    let dismiss;
+
+    // upper dismiss - x - button
+    dismiss = modal.querySelector('.modal-header button');
+    dismiss.addEventListener('click', doDismiss);
+
+    // lower dismiss - close - button
+    dismiss = modal.querySelector('.modal-footer button:nth-child(1)');
+    dismiss.addEventListener('click', doDismiss);
+
+    // ok - button
+    const ok = modal.querySelector('.modal-footer button:nth-child(2)');
+
+    ok.addEventListener('click', doOK);
+
+    modal.addEventListener('keypress', event => {
+        if ('Enter' === event.key) {
+            doOK();
+        }
+    });
+}
+
+var utils = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    configureModal: configureModal
+});
 
 /*
  *  The MIT License (MIT)
