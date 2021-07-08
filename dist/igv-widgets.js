@@ -8948,7 +8948,9 @@ const createURLModal = (id, title) => {
 
         </div>`;
 
-    return html;
+    const fragment = document.createRange().createContextualFragment(html);
+
+    return fragment.firstChild;
 };
 
 let fileLoadWidget$1;
@@ -8964,8 +8966,8 @@ function createSessionWidgets($rootContainer,
                               loadHandler,
                               JSONProvider) {
 
-    const $urlModal = $(createURLModal(urlModalId, 'Session URL'));
-    $rootContainer.append($urlModal);
+    const urlModal = createURLModal(urlModalId, 'Session URL');
+    $rootContainer.get(0).appendChild(urlModal);
 
     if (!googleEnabled) {
         $(`#${googleDriveButtonId}`).parent().hide();
@@ -8973,7 +8975,7 @@ function createSessionWidgets($rootContainer,
 
     const fileLoadWidgetConfig =
         {
-            widgetParent: $urlModal.find('.modal-body').get(0),
+            widgetParent: urlModal.querySelector('.modal-body'),
             dataTitle: 'Session',
             indexTitle: undefined,
             mode: 'url',
@@ -8995,7 +8997,7 @@ function createSessionWidgets($rootContainer,
 
     const sessionFileLoad = new SessionFileLoad(sessionFileLoadConfig);
 
-    configureModal(fileLoadWidget$1, $urlModal.get(0), async fileLoadWidget => {
+    configureModal(fileLoadWidget$1, urlModal, async fileLoadWidget => {
         await sessionFileLoad.loadPaths(fileLoadWidget.retrievePaths());
         return true;
     });

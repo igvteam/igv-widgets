@@ -18,8 +18,8 @@ function createSessionWidgets($rootContainer,
                               loadHandler,
                               JSONProvider) {
 
-    const $urlModal = $(createURLModal(urlModalId, 'Session URL'))
-    $rootContainer.append($urlModal);
+    const urlModal = createURLModal(urlModalId, 'Session URL');
+    $rootContainer.get(0).appendChild(urlModal);
 
     if (!googleEnabled) {
         $(`#${googleDriveButtonId}`).parent().hide();
@@ -27,7 +27,7 @@ function createSessionWidgets($rootContainer,
 
     const fileLoadWidgetConfig =
         {
-            widgetParent: $urlModal.find('.modal-body').get(0),
+            widgetParent: urlModal.querySelector('.modal-body'),
             dataTitle: 'Session',
             indexTitle: undefined,
             mode: 'url',
@@ -49,7 +49,7 @@ function createSessionWidgets($rootContainer,
 
     const sessionFileLoad = new SessionFileLoad(sessionFileLoadConfig)
 
-    Utils.configureModal(fileLoadWidget, $urlModal.get(0), async fileLoadWidget => {
+    Utils.configureModal(fileLoadWidget, urlModal, async fileLoadWidget => {
         await sessionFileLoad.loadPaths(fileLoadWidget.retrievePaths());
         return true;
     });
