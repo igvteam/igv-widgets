@@ -8916,7 +8916,7 @@ function configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal) {
 
 }
 
-const createURLModal = (id, title) => {
+function createURLModal(id, title){
 
     const html =
         `<div id="${ id }" class="modal">
@@ -8951,7 +8951,7 @@ const createURLModal = (id, title) => {
     const fragment = document.createRange().createContextualFragment(html);
 
     return fragment.firstChild;
-};
+}
 
 let fileLoadWidget$1;
 
@@ -16415,7 +16415,10 @@ const createTrackURLModal = id => {
 
         </div>`;
 
-    return html;
+    const fragment = document.createRange().createContextualFragment(html);
+
+    return fragment.firstChild;
+
 };
 
 let fileLoadWidget;
@@ -16445,12 +16448,12 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              trackRegistryFile,
                                              trackLoadHandler) {
 
-    const $urlModal = $(createTrackURLModal(urlModalId));
-    $igvMain.append($urlModal);
+    const urlModal = createTrackURLModal(urlModalId);
+    $igvMain.get(0).appendChild(urlModal);
 
     let fileLoadWidgetConfig =
         {
-            widgetParent: $urlModal.find('.modal-body').get(0),
+            widgetParent: urlModal.querySelector('.modal-body'),
             dataTitle: 'Track',
             indexTitle: 'Index',
             mode: 'url',
@@ -16461,7 +16464,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
     fileLoadWidget = new FileLoadWidget(fileLoadWidgetConfig);
 
-    configureModal(fileLoadWidget, $urlModal.get(0), async fileLoadWidget => {
+    configureModal(fileLoadWidget, urlModal, async fileLoadWidget => {
         const paths = fileLoadWidget.retrievePaths();
         await multipleTrackFileLoad.loadPaths(paths);
         return true;

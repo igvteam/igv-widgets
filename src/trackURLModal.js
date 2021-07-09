@@ -30,7 +30,10 @@ const createTrackURLModal = id => {
 
         </div>`;
 
-    return html;
+    const fragment = document.createRange().createContextualFragment(html);
+
+    return fragment.firstChild;
+
 };
 
 export { createTrackURLModal };

@@ -3,7 +3,6 @@ import {encodeTrackDatasourceConfigurator, supportsGenome} from './encodeTrackDa
 import AlertSingleton from './alertSingleton.js'
 import {createGenericSelectModal} from './genericSelectModal.js'
 import {createTrackURLModal} from './trackURLModal.js'
-import EventBus from "./eventBus.js"
 import FileLoadManager from "./fileLoadManager.js"
 import FileLoadWidget from "./fileLoadWidget.js"
 import MultipleTrackFileLoad from "./multipleTrackFileLoad.js"
@@ -36,12 +35,12 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              trackRegistryFile,
                                              trackLoadHandler) {
 
-    const $urlModal = $(createTrackURLModal(urlModalId))
-    $igvMain.append($urlModal);
+    const urlModal = createTrackURLModal(urlModalId)
+    $igvMain.get(0).appendChild(urlModal);
 
     let fileLoadWidgetConfig =
         {
-            widgetParent: $urlModal.find('.modal-body').get(0),
+            widgetParent: urlModal.querySelector('.modal-body'),
             dataTitle: 'Track',
             indexTitle: 'Index',
             mode: 'url',
@@ -52,7 +51,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
     fileLoadWidget = new FileLoadWidget(fileLoadWidgetConfig)
 
-    Utils.configureModal(fileLoadWidget, $urlModal.get(0), async fileLoadWidget => {
+    Utils.configureModal(fileLoadWidget, urlModal, async fileLoadWidget => {
         const paths = fileLoadWidget.retrievePaths();
         await multipleTrackFileLoad.loadPaths(paths);
         return true;
