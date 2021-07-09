@@ -1,4 +1,4 @@
-const createURLModal = (id, title) => {
+function createURLModal(id, title){
 
     const html =
         `<div id="${ id }" class="modal">
@@ -30,7 +30,9 @@ const createURLModal = (id, title) => {
 
         </div>`;
 
-    return html;
-};
+    const fragment = document.createRange().createContextualFragment(html);
 
-export { createURLModal };
+    return fragment.firstChild;
+}
+
+export { createURLModal }
