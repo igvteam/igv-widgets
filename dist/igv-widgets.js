@@ -8437,7 +8437,13 @@ class FileLoad {
         localFileInput.addEventListener('change', async () => {
 
             if (true === FileLoad.isValidLocalFileInput(localFileInput)) {
-                await this.loadPaths( Array.from(localFileInput.files) );
+
+                try {
+                    await this.loadPaths( Array.from(localFileInput.files) );
+                } catch (e) {
+                    console.error(e);
+                    AlertSingleton$1.present(e);
+                }
                 localFileInput.value = '';
             }
 
@@ -8447,7 +8453,14 @@ class FileLoad {
 
             const config =
                 {
-                    success: dbFiles => this.loadPaths( dbFiles.map(dbFile => dbFile.link) ),
+                    success: async dbFiles => {
+                        try {
+                            await this.loadPaths( dbFiles.map(dbFile => dbFile.link) );
+                        } catch (e) {
+                            console.error(e);
+                            AlertSingleton$1.present(e);
+                        }
+                    },
                     cancel: () => {},
                     linkType: 'preview',
                     multiselect: true,
@@ -8466,7 +8479,15 @@ class FileLoad {
         if (true === googleEnabled && googleDriveButton) {
 
             googleDriveButton.addEventListener('click', () => {
-                createDropdownButtonPicker(true, async responses => await this.loadPaths(responses.map(({ url }) => url)));
+                createDropdownButtonPicker(true, async responses => {
+
+                    try {
+                        await this.loadPaths(responses.map(({ url }) => url));
+                    } catch (e) {
+                        console.error(e);
+                        AlertSingleton$1.present(e);
+                    }
+                });
             });
 
         }
@@ -8672,34 +8693,34 @@ class GenomeFileLoad extends FileLoad {
 
         const status = await GenomeFileLoad.isGZip(paths);
 
-        if (status) {
-            AlertSingleton$1.present(new Error('Genome did not load - gzip file is not allowed'));
+        if (true === status) {
+            throw new Error('Genome did not load - gzip file is not allowed')
         } else {
 
             // If one of the paths is .json, unpack and send to loader
             const single = paths.filter(path => singleSet.has( getExtension(path) ));
 
+            let configuration = undefined;
+
             if (single.length >= 1) {
-                const json = await igvxhr$1.loadJson(single[ 0 ]);
-                this.loadHandler(json);
+                configuration = await igvxhr$1.loadJson(single[ 0 ]);
             } else if (2 === paths.length) {
-
                 const [ _0, _1 ] = await GenomeFileLoad.getExtension(paths);
-
                 if (indexSet.has(_0)) {
-                    await this.loadHandler({ fastaURL: paths[ 1 ], indexURL: paths[ 0 ] });
+                    configuration = { fastaURL: paths[ 1 ], indexURL: paths[ 0 ] };
                 } else if (indexSet.has(_1)) {
-                    await this.loadHandler({ fastaURL: paths[ 0 ], indexURL: paths[ 1 ] });
-                } else {
-                    AlertSingleton$1.present(new Error('Genome did not load - invalid data and/or index file'));
+                    configuration = { fastaURL: paths[ 0 ], indexURL: paths[ 1 ] };
                 }
-
-            } else {
-                AlertSingleton$1.present(new Error('Genome did not load - invalid file'));
             }
 
-        }
+            if (undefined === configuration) {
+                throw new Error('Genome did not load - invalid data and/or index file(s)')
+            } else {
+                this.loadHandler(configuration);
+            }
 
+
+        }
 
     }
 

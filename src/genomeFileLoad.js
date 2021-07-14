@@ -1,4 +1,3 @@
-import AlertSingleton from './alertSingleton.js'
 import {FileUtils, igvxhr} from "../node_modules/igv-utils/src/index.js"
 import FileLoad from "./fileLoad.js"
 import MultipleTrackFileLoad from './multipleTrackFileLoad.js'
@@ -17,34 +16,34 @@ class GenomeFileLoad extends FileLoad {
 
         const status = await GenomeFileLoad.isGZip(paths)
 
-        if (status) {
-            AlertSingleton.present(new Error('Genome did not load - gzip file is not allowed'))
+        if (true === status) {
+            throw new Error('Genome did not load - gzip file is not allowed')
         } else {
 
             // If one of the paths is .json, unpack and send to loader
             const single = paths.filter(path => singleSet.has( FileUtils.getExtension(path) ))
 
+            let configuration = undefined
+
             if (single.length >= 1) {
-                const json = await igvxhr.loadJson(single[ 0 ])
-                this.loadHandler(json)
+                configuration = await igvxhr.loadJson(single[ 0 ])
             } else if (2 === paths.length) {
-
                 const [ _0, _1 ] = await GenomeFileLoad.getExtension(paths)
-
                 if (indexSet.has(_0)) {
-                    await this.loadHandler({ fastaURL: paths[ 1 ], indexURL: paths[ 0 ] })
+                    configuration = { fastaURL: paths[ 1 ], indexURL: paths[ 0 ] }
                 } else if (indexSet.has(_1)) {
-                    await this.loadHandler({ fastaURL: paths[ 0 ], indexURL: paths[ 1 ] })
-                } else {
-                    AlertSingleton.present(new Error('Genome did not load - invalid data and/or index file'))
+                    configuration = { fastaURL: paths[ 0 ], indexURL: paths[ 1 ] }
                 }
-
-            } else {
-                AlertSingleton.present(new Error('Genome did not load - invalid file'))
             }
 
-        }
+            if (undefined === configuration) {
+                throw new Error('Genome did not load - invalid data and/or index file(s)')
+            } else {
+                this.loadHandler(configuration)
+            }
 
+
+        }
 
     }
 
