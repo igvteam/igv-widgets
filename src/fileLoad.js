@@ -1,3 +1,4 @@
+import AlertSingleton from './alertSingleton.js'
 import { DOMUtils , GooglePicker} from '../node_modules/igv-utils/src/index.js'
 
 class FileLoad {
@@ -7,7 +8,13 @@ class FileLoad {
         localFileInput.addEventListener('change', async () => {
 
             if (true === FileLoad.isValidLocalFileInput(localFileInput)) {
-                await this.loadPaths( Array.from(localFileInput.files) );
+
+                try {
+                    await this.loadPaths( Array.from(localFileInput.files) );
+                } catch (e) {
+                    console.error(e);
+                    AlertSingleton.present(e)
+                }
                 localFileInput.value = '';
             }
 
@@ -17,7 +24,14 @@ class FileLoad {
 
             const config =
                 {
-                    success: dbFiles => this.loadPaths( dbFiles.map(dbFile => dbFile.link) ),
+                    success: async dbFiles => {
+                        try {
+                            await this.loadPaths( dbFiles.map(dbFile => dbFile.link) )
+                        } catch (e) {
+                            console.error(e);
+                            AlertSingleton.present(e)
+                        }
+                    },
                     cancel: () => {},
                     linkType: 'preview',
                     multiselect: true,
@@ -36,7 +50,15 @@ class FileLoad {
         if (true === googleEnabled && googleDriveButton) {
 
             googleDriveButton.addEventListener('click', () => {
-                GooglePicker.createDropdownButtonPicker(true, async responses => await this.loadPaths(responses.map(({ url }) => url)))
+                GooglePicker.createDropdownButtonPicker(true, async responses => {
+
+                    try {
+                        await this.loadPaths(responses.map(({ url }) => url))
+                    } catch (e) {
+                        console.error(e);
+                        AlertSingleton.present(e)
+                    }
+                })
             });
 
         }

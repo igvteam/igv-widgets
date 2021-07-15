@@ -22,6 +22,8 @@ class SessionFileLoad extends FileLoad {
             o[ key ] = path;
 
             this.loadHandler(o);
+        } else {
+            throw new Error('Session file did not load - invalid format')
         }
 
     };
