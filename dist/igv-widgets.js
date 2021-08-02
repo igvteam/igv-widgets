@@ -7545,6 +7545,10 @@ async function loadURL$1(url, options) {
 
         xhr.open(method, url);
 
+        if(options.timeout) {
+            xhr.timeout = options.timeout;
+        }
+
         if (range) {
             var rangeEnd = range.size ? range.start + range.size - 1 : "";
             xhr.setRequestHeader("Range", "bytes=" + range.start + "-" + rangeEnd);
