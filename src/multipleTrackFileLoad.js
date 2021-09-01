@@ -142,7 +142,7 @@ async function doIngestPaths({paths, fileLoadHandler}) {
         if (indexLUT.has(name)) {
 
             const {indexURL, indexFilename} = indexLUT.get(name)
-            configurations.push({url: dataPath, name, indexURL, indexFilename })
+            configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true })
 
         } else if (requireIndex.has(FileUtils.getExtension(name))) {
             throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
