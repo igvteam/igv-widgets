@@ -8654,7 +8654,7 @@ async function doIngestPaths({paths, fileLoadHandler}) {
         } else if (requireIndex.has(getExtension(name))) {
             throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
         } else {
-            configurations.push({ url: dataPath, name });
+            configurations.push({ url: dataPath, name, derivedName: true });
         }
 
     }
