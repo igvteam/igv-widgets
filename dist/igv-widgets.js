@@ -1259,7 +1259,7 @@ Zlib.Zip.CentralDirectorySignature = [0x50, 0x4b, 0x05, 0x06];
 Zlib.Zip.prototype.addFile = function(input, opt_params) {
   opt_params = opt_params || {};
   /** @type {string} */
-   opt_params['filename'];
+  opt_params['filename'];
   /** @type {boolean} */
   var compressed;
   /** @type {number} */
@@ -1267,7 +1267,7 @@ Zlib.Zip.prototype.addFile = function(input, opt_params) {
   /** @type {number} */
   var crc32 = 0;
 
-  if ( input instanceof Array) {
+  if (input instanceof Array) {
     input = new Uint8Array(input);
   }
 
@@ -1452,7 +1452,7 @@ Zlib.Zip.prototype.compress = function() {
 
   // end of central directory
   endOfCentralDirectorySize = 22 + (this.comment ? this.comment.length : 0);
-  output = new ( Uint8Array )(
+  output = new (Uint8Array )(
       localFileSize + centralDirectorySize + endOfCentralDirectorySize
   );
   op1 = 0;
@@ -1799,7 +1799,7 @@ Zlib.Huffman.buildHuffmanTable = function(lengths) {
   }
 
   size = 1 << maxCodeLength;
-  table = new ( Uint32Array )(size);
+  table = new (Uint32Array )(size);
 
   // ビット長の短い順からハフマン符号を割り当てる
   for (bitLength = 1, code = 0, skip = 2; bitLength <= maxCodeLength;) {
@@ -1873,7 +1873,7 @@ Zlib.RawInflate = function(input, opt_params) {
   /** @type {!number} bit stream reader buffer size. */
   this.bitsbuflen = 0;
   /** @type {!(Array.<number>|Uint8Array)} input buffer. */
-  this.input =  new Uint8Array(input) ;
+  this.input = new Uint8Array(input) ;
   /** @type {!(Uint8Array|Array.<number>)} output buffer. */
   this.output;
   /** @type {!number} output buffer pointer. */
@@ -1906,7 +1906,7 @@ Zlib.RawInflate = function(input, opt_params) {
     case Zlib.RawInflate.BufferType.BLOCK:
       this.op = Zlib.RawInflate.MaxBackwardLength;
       this.output =
-          new ( Uint8Array )(
+          new (Uint8Array )(
               Zlib.RawInflate.MaxBackwardLength +
               this.bufferSize +
               Zlib.RawInflate.MaxCopyLength
@@ -1914,7 +1914,7 @@ Zlib.RawInflate = function(input, opt_params) {
       break;
     case Zlib.RawInflate.BufferType.ADAPTIVE:
       this.op = 0;
-      this.output = new ( Uint8Array )(this.bufferSize);
+      this.output = new (Uint8Array )(this.bufferSize);
       break;
     default:
       throw new Error('invalid inflate mode');
@@ -1966,7 +1966,7 @@ Zlib.RawInflate.MaxCopyLength = 258;
  * @type {!(Array.<number>|Uint8Array)}
  */
 Zlib.RawInflate.Order = (function(table) {
-  return  new Uint16Array(table) ;
+  return new Uint16Array(table) ;
 })([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]);
 
 /**
@@ -1975,7 +1975,7 @@ Zlib.RawInflate.Order = (function(table) {
  * @type {!(Array.<number>|Uint16Array)}
  */
 Zlib.RawInflate.LengthCodeTable = (function(table) {
-  return  new Uint16Array(table) ;
+  return new Uint16Array(table) ;
 })([
   0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b,
   0x000d, 0x000f, 0x0011, 0x0013, 0x0017, 0x001b, 0x001f, 0x0023, 0x002b,
@@ -1989,7 +1989,7 @@ Zlib.RawInflate.LengthCodeTable = (function(table) {
  * @type {!(Array.<number>|Uint8Array)}
  */
 Zlib.RawInflate.LengthExtraTable = (function(table) {
-  return  new Uint8Array(table) ;
+  return new Uint8Array(table) ;
 })([
   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5,
   5, 5, 0, 0, 0
@@ -2001,7 +2001,7 @@ Zlib.RawInflate.LengthExtraTable = (function(table) {
  * @type {!(Array.<number>|Uint16Array)}
  */
 Zlib.RawInflate.DistCodeTable = (function(table) {
-  return  new Uint16Array(table) ;
+  return new Uint16Array(table) ;
 })([
   0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0007, 0x0009, 0x000d, 0x0011,
   0x0019, 0x0021, 0x0031, 0x0041, 0x0061, 0x0081, 0x00c1, 0x0101, 0x0181,
@@ -2015,7 +2015,7 @@ Zlib.RawInflate.DistCodeTable = (function(table) {
  * @type {!(Array.<number>|Uint8Array)}
  */
 Zlib.RawInflate.DistExtraTable = (function(table) {
-  return  new Uint8Array(table) ;
+  return new Uint8Array(table) ;
 })([
   0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11,
   11, 12, 12, 13, 13
@@ -2029,7 +2029,7 @@ Zlib.RawInflate.DistExtraTable = (function(table) {
 Zlib.RawInflate.FixedLiteralLengthTable = (function(table) {
   return table;
 })((function() {
-  var lengths = new ( Uint8Array )(288);
+  var lengths = new (Uint8Array )(288);
   var i, il;
 
   for (i = 0, il = lengths.length; i < il; ++i) {
@@ -2051,7 +2051,7 @@ Zlib.RawInflate.FixedLiteralLengthTable = (function(table) {
 Zlib.RawInflate.FixedDistanceTable = (function(table) {
   return table;
 })((function() {
-  var lengths = new ( Uint8Array )(30);
+  var lengths = new (Uint8Array )(30);
   var i, il;
 
   for (i = 0, il = lengths.length; i < il; ++i) {
@@ -2295,7 +2295,7 @@ Zlib.RawInflate.prototype.parseDynamicHuffmanBlock = function() {
   var hclen = this.readBits(4) + 4;
   /** @type {!(Uint8Array|Array.<number>)} code lengths. */
   var codeLengths =
-      new ( Uint8Array )(Zlib.RawInflate.Order.length);
+      new (Uint8Array )(Zlib.RawInflate.Order.length);
   /** @type {!Array} code lengths table. */
   var codeLengthsTable;
   /** @type {!(Uint8Array|Array.<number>)} literal and length code table. */
@@ -2322,7 +2322,7 @@ Zlib.RawInflate.prototype.parseDynamicHuffmanBlock = function() {
 
   // decode length table
   codeLengthsTable = buildHuffmanTable(codeLengths);
-  lengthTable = new ( Uint8Array )(hlit + hdist);
+  lengthTable = new (Uint8Array )(hlit + hdist);
   for (i = 0, il = hlit + hdist; i < il;) {
     code = this.readCodeByTable(codeLengthsTable);
     switch (code) {
@@ -2347,9 +2347,9 @@ Zlib.RawInflate.prototype.parseDynamicHuffmanBlock = function() {
     }
   }
 
-  litlenTable =  buildHuffmanTable(lengthTable.subarray(0, hlit))
+  litlenTable = buildHuffmanTable(lengthTable.subarray(0, hlit))
       ;
-  distTable =  buildHuffmanTable(lengthTable.subarray(hlit))
+  distTable = buildHuffmanTable(lengthTable.subarray(hlit))
       ;
 
   switch (this.bufferType) {
@@ -2514,7 +2514,7 @@ Zlib.RawInflate.prototype.decodeHuffmanAdaptive = function(litlen, dist) {
 Zlib.RawInflate.prototype.expandBufferBlock = function(opt_param) {
   /** @type {!(Array.<number>|Uint8Array)} store buffer. */
   var buffer =
-      new ( Uint8Array )(
+      new (Uint8Array )(
           this.op - Zlib.RawInflate.MaxBackwardLength
       );
   /** @type {number} backward base point */
@@ -2610,7 +2610,7 @@ Zlib.RawInflate.prototype.concatBufferBlock = function() {
   /** @type {!(Array.<number>|Uint8Array)} output block array. */
   var block;
   /** @type {!(Array.<number>|Uint8Array)} output buffer. */
-  var buffer = new ( Uint8Array )(limit);
+  var buffer = new (Uint8Array )(limit);
   /** @type {number} loop counter. */
   var i;
   /** @type {number} loop limiter. */
@@ -2622,7 +2622,7 @@ Zlib.RawInflate.prototype.concatBufferBlock = function() {
 
   // single buffer
   if (blocks.length === 0) {
-    return         this.output.subarray(Zlib.RawInflate.MaxBackwardLength, this.op) ;
+    return this.output.subarray(Zlib.RawInflate.MaxBackwardLength, this.op) ;
   }
 
   // copy to buffer
@@ -2693,9 +2693,9 @@ Zlib.RawInflateStream = function(input, ip, opt_buffersize) {
   /** @type {!number} bit stream reader buffer size. */
   this.bitsbuflen = 0;
   /** @type {!(Array|Uint8Array)} input buffer. */
-  this.input =  new Uint8Array(input) ;
+  this.input = new Uint8Array(input) ;
   /** @type {!(Uint8Array|Array)} output buffer. */
-  this.output = new ( Uint8Array )(this.bufferSize);
+  this.output = new (Uint8Array )(this.bufferSize);
   /** @type {!number} output buffer pointer. */
   this.op = 0;
   /** @type {boolean} is final block flag. */
@@ -2841,7 +2841,7 @@ Zlib.RawInflateStream.MaxCopyLength = 258;
  * @type {!(Array.<number>|Uint8Array)}
  */
 Zlib.RawInflateStream.Order = (function(table) {
-  return  new Uint16Array(table) ;
+  return new Uint16Array(table) ;
 })([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]);
 
 /**
@@ -2850,7 +2850,7 @@ Zlib.RawInflateStream.Order = (function(table) {
  * @type {!(Array.<number>|Uint16Array)}
  */
 Zlib.RawInflateStream.LengthCodeTable = (function(table) {
-  return  new Uint16Array(table) ;
+  return new Uint16Array(table) ;
 })([
   0x0003, 0x0004, 0x0005, 0x0006, 0x0007, 0x0008, 0x0009, 0x000a, 0x000b,
   0x000d, 0x000f, 0x0011, 0x0013, 0x0017, 0x001b, 0x001f, 0x0023, 0x002b,
@@ -2864,7 +2864,7 @@ Zlib.RawInflateStream.LengthCodeTable = (function(table) {
  * @type {!(Array.<number>|Uint8Array)}
  */
 Zlib.RawInflateStream.LengthExtraTable = (function(table) {
-  return  new Uint8Array(table) ;
+  return new Uint8Array(table) ;
 })([
   0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5,
   5, 5, 0, 0, 0
@@ -2876,7 +2876,7 @@ Zlib.RawInflateStream.LengthExtraTable = (function(table) {
  * @type {!(Array.<number>|Uint16Array)}
  */
 Zlib.RawInflateStream.DistCodeTable = (function(table) {
-  return  new Uint16Array(table) ;
+  return new Uint16Array(table) ;
 })([
   0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0007, 0x0009, 0x000d, 0x0011,
   0x0019, 0x0021, 0x0031, 0x0041, 0x0061, 0x0081, 0x00c1, 0x0101, 0x0181,
@@ -2890,7 +2890,7 @@ Zlib.RawInflateStream.DistCodeTable = (function(table) {
  * @type {!(Array.<number>|Uint8Array)}
  */
 Zlib.RawInflateStream.DistExtraTable = (function(table) {
-  return  new Uint8Array(table) ;
+  return new Uint8Array(table) ;
 })([
   0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11,
   11, 12, 12, 13, 13
@@ -2904,7 +2904,7 @@ Zlib.RawInflateStream.DistExtraTable = (function(table) {
 Zlib.RawInflateStream.FixedLiteralLengthTable = (function(table) {
   return table;
 })((function() {
-  var lengths = new ( Uint8Array )(288);
+  var lengths = new (Uint8Array )(288);
   var i, il;
 
   for (i = 0, il = lengths.length; i < il; ++i) {
@@ -2926,7 +2926,7 @@ Zlib.RawInflateStream.FixedLiteralLengthTable = (function(table) {
 Zlib.RawInflateStream.FixedDistanceTable = (function(table) {
   return table;
 })((function() {
-  var lengths = new ( Uint8Array )(30);
+  var lengths = new (Uint8Array )(30);
   var i, il;
 
   for (i = 0, il = lengths.length; i < il; ++i) {
@@ -3182,7 +3182,7 @@ Zlib.RawInflateStream.prototype.parseDynamicHuffmanBlock = function() {
   var hclen;
   /** @type {!(Uint8Array|Array)} code lengths. */
   var codeLengths =
-      new ( Uint8Array )(Zlib.RawInflateStream.Order.length);
+      new (Uint8Array )(Zlib.RawInflateStream.Order.length);
   /** @type {!Array} code lengths table. */
   var codeLengthsTable;
 
@@ -3227,7 +3227,7 @@ Zlib.RawInflateStream.prototype.parseDynamicHuffmanBlock = function() {
 
     // decode length table
     codeLengthsTable = buildHuffmanTable(codeLengths);
-    lengthTable = new ( Uint8Array )(hlit + hdist);
+    lengthTable = new (Uint8Array )(hlit + hdist);
     for (i = 0, il = hlit + hdist; i < il;) {
       code = this.readCodeByTable(codeLengthsTable);
       if (code < 0) {
@@ -3264,9 +3264,9 @@ Zlib.RawInflateStream.prototype.parseDynamicHuffmanBlock = function() {
       }
     }
 
-    this.litlenTable =  buildHuffmanTable(lengthTable.subarray(0, hlit))
+    this.litlenTable = buildHuffmanTable(lengthTable.subarray(0, hlit))
         ;
-    this.distTable =  buildHuffmanTable(lengthTable.subarray(hlit))
+    this.distTable = buildHuffmanTable(lengthTable.subarray(hlit))
         ;
   }
 
@@ -3452,7 +3452,7 @@ Zlib.RawInflateStream.prototype.concatBuffer = function() {
     }
   } else {
     buffer =
-         this.output.subarray(this.sp, op) ;
+        this.output.subarray(this.sp, op) ;
   }
 
   this.sp = op;
@@ -3585,7 +3585,7 @@ Zlib.Inflate.prototype.decompress = function() {
  */
 Zlib.InflateStream = function(input) {
   /** @type {!(Uint8Array|Array)} */
-  this.input = input === void 0 ? new ( Uint8Array )() : input;
+  this.input = input === void 0 ? new (Uint8Array )() : input;
   /** @type {number} */
   this.ip = 0;
   /** @type {Zlib.RawInflateStream} */
@@ -3617,14 +3617,13 @@ Zlib.InflateStream.prototype.decompress = function(input) {
 
   if (this.method === void 0) {
     if(this.readHeader() < 0) {
-      return new ( Uint8Array )();
+      return new (Uint8Array )();
     }
   }
 
   buffer = this.rawinflate.decompress(this.input, this.ip);
   if (this.rawinflate.ip !== 0) {
-    this.input = 
-        this.input.subarray(this.rawinflate.ip) ;
+    this.input = this.input.subarray(this.rawinflate.ip) ;
     this.ip = 0;
   }
 
@@ -4025,7 +4024,7 @@ Zlib.Gzip.prototype.compress = function() {
   var il;
   /** @type {!(Array|Uint8Array)} output buffer. */
   var output =
-      new ( Uint8Array )(Zlib.Gzip.DefaultBufferSize);
+      new (Uint8Array )(Zlib.Gzip.DefaultBufferSize);
   /** @type {number} output buffer pointer. */
   var op = 0;
 
@@ -4129,7 +4128,7 @@ Zlib.Gzip.prototype.compress = function() {
 
   this.ip = ip;
 
-  if ( op < output.length) {
+  if (op < output.length) {
     this.output = output = output.subarray(0, op);
   }
 
@@ -4175,7 +4174,7 @@ Zlib.Gzip.FlagsMask = {
  * @constructor
  */
 Zlib.Heap = function(length) {
-  this.buffer = new ( Uint16Array )(length * 2);
+  this.buffer = new (Uint16Array )(length * 2);
   this.length = 0;
 };
 
@@ -4320,7 +4319,7 @@ Zlib.RawDeflate = function(input, opt_params) {
   this.freqsDist;
   /** @type {!(Array.<number>|Uint8Array)} */
   this.input =
-      ( input instanceof Array) ? new Uint8Array(input) : input;
+      (input instanceof Array) ? new Uint8Array(input) : input;
   /** @type {!(Array.<number>|Uint8Array)} output output buffer. */
   this.output;
   /** @type {number} pos output buffer position. */
@@ -4336,7 +4335,7 @@ Zlib.RawDeflate = function(input, opt_params) {
     }
     if (opt_params['outputBuffer']) {
       this.output =
-          ( opt_params['outputBuffer'] instanceof Array) ?
+          (opt_params['outputBuffer'] instanceof Array) ?
               new Uint8Array(opt_params['outputBuffer']) : opt_params['outputBuffer'];
     }
     if (typeof opt_params['outputIndex'] === 'number') {
@@ -4345,7 +4344,7 @@ Zlib.RawDeflate = function(input, opt_params) {
   }
 
   if (!this.output) {
-    this.output = new ( Uint8Array )(0x8000);
+    this.output = new (Uint8Array )(0x8000);
   }
 };
 
@@ -4436,8 +4435,7 @@ Zlib.RawDeflate.prototype.compress = function() {
     case Zlib.RawDeflate.CompressionType.NONE:
       // each 65535-Byte (length header: 16-bit)
       for (position = 0, length = input.length; position < length;) {
-        blockArray = 
-            input.subarray(position, position + 0xffff) ;
+        blockArray = input.subarray(position, position + 0xffff) ;
         position += blockArray.length;
         this.makeNocompressBlock(blockArray, (position === length));
       }
@@ -4521,8 +4519,7 @@ Zlib.RawDeflate.prototype.makeNocompressBlock =
 Zlib.RawDeflate.prototype.makeFixedHuffmanBlock =
     function(blockArray, isFinalBlock) {
       /** @type {Zlib.BitStream} */
-      var stream = new Zlib.BitStream(
-          new Uint8Array(this.output.buffer) , this.op);
+      var stream = new Zlib.BitStream(new Uint8Array(this.output.buffer) , this.op);
       /** @type {number} */
       var bfinal;
       /** @type {Zlib.RawDeflate.CompressionType} */
@@ -4552,8 +4549,7 @@ Zlib.RawDeflate.prototype.makeFixedHuffmanBlock =
 Zlib.RawDeflate.prototype.makeDynamicHuffmanBlock =
     function(blockArray, isFinalBlock) {
       /** @type {Zlib.BitStream} */
-      var stream = new Zlib.BitStream(
-          new Uint8Array(this.output.buffer) , this.op);
+      var stream = new Zlib.BitStream(new Uint8Array(this.output.buffer) , this.op);
       /** @type {number} */
       var bfinal;
       /** @type {Zlib.RawDeflate.CompressionType} */
@@ -4783,7 +4779,7 @@ Zlib.RawDeflate.Lz77Match = function(length, backwardDistance) {
  * @type {!(Array.<number>|Uint32Array)}
  */
 Zlib.RawDeflate.Lz77Match.LengthCodeTable = (function(table) {
-  return  new Uint32Array(table) ;
+  return new Uint32Array(table) ;
 })((function() {
   /** @type {!Array} */
   var table = [];
@@ -4917,16 +4913,15 @@ Zlib.RawDeflate.prototype.lz77 = function(dataArray) {
   /** @type {Zlib.RawDeflate.Lz77Match} previous longest match */
   var prevMatch;
   /** @type {!(Array.<number>|Uint16Array)} lz77 buffer */
-  var lz77buf = 
-      new Uint16Array(dataArray.length * 2) ;
+  var lz77buf = new Uint16Array(dataArray.length * 2) ;
   /** @type {number} lz77 output buffer pointer */
   var pos = 0;
   /** @type {number} lz77 skip length */
   var skipLength = 0;
   /** @type {!(Array.<number>|Uint32Array)} */
-  var freqsLitLen = new ( Uint32Array )(286);
+  var freqsLitLen = new (Uint32Array )(286);
   /** @type {!(Array.<number>|Uint32Array)} */
-  var freqsDist = new ( Uint32Array )(30);
+  var freqsDist = new (Uint32Array )(30);
   /** @type {number} */
   var lazy = this.lazy;
   /** @type {*} temporary variable */
@@ -5037,7 +5032,7 @@ Zlib.RawDeflate.prototype.lz77 = function(dataArray) {
   this.freqsDist = freqsDist;
 
   return /** @type {!(Uint16Array|Array.<number>)} */ (
-        lz77buf.subarray(0, pos) 
+      lz77buf.subarray(0, pos) 
   );
 };
 
@@ -5108,12 +5103,12 @@ Zlib.RawDeflate.prototype.searchLongestMatch_ =
  */
 Zlib.RawDeflate.prototype.getTreeSymbols_ =
     function(hlit, litlenLengths, hdist, distLengths) {
-      var src = new ( Uint32Array )(hlit + hdist),
+      var src = new (Uint32Array )(hlit + hdist),
           i, j, runLength, l,
-          result = new ( Uint32Array )(286 + 30),
+          result = new (Uint32Array )(286 + 30),
           nResult,
           rpt,
-          freqs = new ( Uint8Array )(19);
+          freqs = new (Uint8Array )(19);
 
       j = 0;
       for (i = 0; i < hlit; i++) {
@@ -5195,7 +5190,7 @@ Zlib.RawDeflate.prototype.getTreeSymbols_ =
 
       return {
         codes:
-             result.subarray(0, nResult) ,
+            result.subarray(0, nResult) ,
         freqs: freqs
       };
     };
@@ -5213,7 +5208,7 @@ Zlib.RawDeflate.prototype.getLengths_ = function(freqs, limit) {
   /** @type {Zlib.Heap} */
   var heap = new Zlib.Heap(2 * Zlib.RawDeflate.HUFMAX);
   /** @type {!(Array.<number>|Uint8Array)} */
-  var length = new ( Uint8Array )(nSymbols);
+  var length = new (Uint8Array )(nSymbols);
   /** @type {Array} */
   var nodes;
   /** @type {!(Array.<number>|Uint32Array)} */
@@ -5232,7 +5227,7 @@ Zlib.RawDeflate.prototype.getLengths_ = function(freqs, limit) {
     }
   }
   nodes = new Array(heap.length / 2);
-  values = new ( Uint32Array )(heap.length / 2);
+  values = new (Uint32Array )(heap.length / 2);
 
   // 非 0 の要素が一つだけだった場合は、そのシンボルに符号長 1 を割り当てて終了
   if (nodes.length === 1) {
@@ -5263,11 +5258,11 @@ Zlib.RawDeflate.prototype.getLengths_ = function(freqs, limit) {
  */
 Zlib.RawDeflate.prototype.reversePackageMerge_ = function(freqs, symbols, limit) {
   /** @type {!(Array.<number>|Uint16Array)} */
-  var minimumCost = new ( Uint16Array )(limit);
+  var minimumCost = new (Uint16Array )(limit);
   /** @type {!(Array.<number>|Uint8Array)} */
-  var flag = new ( Uint8Array )(limit);
+  var flag = new (Uint8Array )(limit);
   /** @type {!(Array.<number>|Uint8Array)} */
-  var codeLength = new ( Uint8Array )(symbols);
+  var codeLength = new (Uint8Array )(symbols);
   /** @type {Array} */
   var value = new Array(limit);
   /** @type {Array} */
@@ -5383,7 +5378,7 @@ Zlib.RawDeflate.prototype.reversePackageMerge_ = function(freqs, symbols, limit)
  * @private
  */
 Zlib.RawDeflate.prototype.getCodesFromLengths_ = function(lengths) {
-  var codes = new ( Uint16Array )(lengths.length),
+  var codes = new (Uint16Array )(lengths.length),
       count = [],
       startCode = [],
       code = 0, i, il, j, m;
@@ -5425,7 +5420,7 @@ Zlib.Unzip = function(input, opt_params) {
   opt_params = opt_params || {};
   /** @type {!(Array.<number>|Uint8Array)} */
   this.input =
-      ( (input instanceof Array)) ?
+      ((input instanceof Array)) ?
           new Uint8Array(input) : input;
   /** @type {number} */
   this.ip = 0;
@@ -5609,17 +5604,14 @@ Zlib.Unzip.FileHeader.prototype.parse = function() {
   ) >>> 0;
 
   // file name
-  this.filename = String.fromCharCode.apply(null, 
-      input.subarray(ip, ip += this.fileNameLength) 
+  this.filename = String.fromCharCode.apply(null, input.subarray(ip, ip += this.fileNameLength) 
   );
 
   // extra field
-  this.extraField = 
-      input.subarray(ip, ip += this.extraFieldLength) ;
+  this.extraField = input.subarray(ip, ip += this.extraFieldLength) ;
 
   // file comment
-  this.comment = 
-      input.subarray(ip, ip + this.fileCommentLength) ;
+  this.comment = input.subarray(ip, ip + this.fileCommentLength) ;
 
   this.length = ip - this.offset;
 };
@@ -5718,13 +5710,11 @@ Zlib.Unzip.LocalFileHeader.prototype.parse = function() {
   this.extraFieldLength = input[ip++] | (input[ip++] << 8);
 
   // file name
-  this.filename = String.fromCharCode.apply(null, 
-      input.subarray(ip, ip += this.fileNameLength) 
+  this.filename = String.fromCharCode.apply(null, input.subarray(ip, ip += this.fileNameLength) 
   );
 
   // extra field
-  this.extraField = 
-      input.subarray(ip, ip += this.extraFieldLength) ;
+  this.extraField = input.subarray(ip, ip += this.extraFieldLength) ;
 
   this.length = ip - this.offset;
 };
@@ -5796,8 +5786,7 @@ Zlib.Unzip.prototype.parseEndOfCentralDirectoryRecord = function() {
   this.commentLength = input[ip++] | (input[ip++] << 8);
 
   // .ZIP file comment
-  this.comment = 
-      input.subarray(ip, ip + this.commentLength) ;
+  this.comment = input.subarray(ip, ip + this.commentLength) ;
 };
 
 Zlib.Unzip.prototype.parseFileHeader = function() {
@@ -5903,8 +5892,7 @@ Zlib.Unzip.prototype.getFileData = function(index, opt_params) {
 
   switch (localFileHeader.compression) {
     case Zlib.Unzip.CompressionMethod.STORE:
-      buffer = 
-          this.input.subarray(offset, offset + length) ;
+      buffer = this.input.subarray(offset, offset + length) ;
       break;
     case Zlib.Unzip.CompressionMethod.DEFLATE:
       buffer = new Zlib.RawInflate(this.input, {
@@ -6099,9 +6087,9 @@ Zlib.BitStream = function(buffer, bufferPosition) {
   /** @type {number} bit index. */
   this.bitindex = 0;
   /** @type {!(Array|Uint8Array)} bit-stream output buffer. */
-  this.buffer = buffer instanceof ( Uint8Array ) ?
+  this.buffer = buffer instanceof (Uint8Array ) ?
       buffer :
-      new ( Uint8Array )(Zlib.BitStream.DefaultBlockSize);
+      new (Uint8Array )(Zlib.BitStream.DefaultBlockSize);
 
   // 入力された index が足りなかったら拡張するが、倍にしてもダメなら不正とする
   if (this.buffer.length * 2 <= this.index) {
@@ -6129,7 +6117,7 @@ Zlib.BitStream.prototype.expandBuffer = function() {
   var il = oldbuf.length;
   /** @type {!(Array|Uint8Array)} new buffer. */
   var buffer =
-      new ( Uint8Array )(il << 1);
+      new (Uint8Array )(il << 1);
 
   // copy buffer
   {
@@ -6240,7 +6228,7 @@ Zlib.BitStream.ReverseTable = (function(table) {
   return table;
 })((function() {
   /** @type {!(Array|Uint8Array)} reverse table. */
-  var table = new ( Uint8Array )(256);
+  var table = new (Uint8Array )(256);
   /** @type {number} loop counter. */
   var i;
 
@@ -6371,7 +6359,7 @@ Zlib.CRC32.Table_ = [
  * @type {!(Array.<number>|Uint32Array)} CRC-32 Table.
  * @const
  */
-Zlib.CRC32.Table =   new Uint32Array(Zlib.CRC32.Table_) ;
+Zlib.CRC32.Table = new Uint32Array(Zlib.CRC32.Table_) ;
 
 /**
  * @fileoverview Deflate (RFC1951) 実装.
@@ -6389,7 +6377,7 @@ Zlib.Deflate = function(input, opt_params) {
   this.input = input;
   /** @type {!(Array|Uint8Array)} */
   this.output =
-      new ( Uint8Array )(Zlib.Deflate.DefaultBufferSize);
+      new (Uint8Array )(Zlib.Deflate.DefaultBufferSize);
   /** @type {Zlib.Deflate.CompressionType} */
   this.compressionType = Zlib.Deflate.CompressionType.DYNAMIC;
   /** @type {Zlib.RawDeflate} */
@@ -6686,7 +6674,7 @@ if (typeof process === 'object' && typeof window === 'undefined') {
 function parseUri(str) {
 
     var o = options,
-        m = o.parser[ "loose"].exec(str),
+        m = o.parser["loose"].exec(str),
         uri = {},
         i = 14;
 
@@ -7843,14 +7831,14 @@ class SessionController {
         });
 
         // Configure save session modal
-        configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal);
+        configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal);
 
     }
 
 }
 
 
-function configureSaveSessionModal(prefix, JSONProvider, sessionSaveModal) {
+function configureSaveSessionModal$1(prefix, JSONProvider, sessionSaveModal) {
 
     let input = sessionSaveModal.querySelector('input');
 
@@ -8102,7 +8090,7 @@ const createURLModal = (id, title) => {
     return html;
 };
 
-let fileLoadWidget;
+let fileLoadWidget$1;
 
 function createSessionWidgets($rootContainer,
                               igvxhr,
@@ -8134,7 +8122,7 @@ function createSessionWidgets($rootContainer,
             doURL: undefined
         };
 
-    fileLoadWidget = new FileLoadWidget(fileLoadWidgetConfig);
+    fileLoadWidget$1 = new FileLoadWidget(fileLoadWidgetConfig);
 
     const sessionFileLoadConfig =
         {
@@ -8148,16 +8136,16 @@ function createSessionWidgets($rootContainer,
 
     const sessionFileLoad = new SessionFileLoad(sessionFileLoadConfig);
 
-    configureModal(fileLoadWidget, $urlModal.get(0), async fileLoadWidget => {
+    configureModal(fileLoadWidget$1, $urlModal.get(0), async fileLoadWidget => {
         await sessionFileLoad.loadPaths(fileLoadWidget.retrievePaths());
         return true;
     });
 
-    configureSaveSessionModal$1($rootContainer, prefix, JSONProvider, sessionSaveModalId);
+    configureSaveSessionModal($rootContainer, prefix, JSONProvider, sessionSaveModalId);
 
 }
 
-function configureSaveSessionModal$1($rootContainer, prefix, JSONProvider, sessionSaveModalId) {
+function configureSaveSessionModal($rootContainer, prefix, JSONProvider, sessionSaveModalId) {
 
     const modal =
         `<div id="${sessionSaveModalId}" class="modal fade igv-app-file-save-modal">
@@ -8857,7 +8845,7 @@ const createTrackURLModal = id => {
     return html;
 };
 
-let fileLoadWidget$1;
+let fileLoadWidget;
 let multipleTrackFileLoad;
 let encodeModalTables = [];
 let genomeChangeListener;
@@ -8898,9 +8886,9 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
             doURL: true
         };
 
-    fileLoadWidget$1 = new FileLoadWidget(fileLoadWidgetConfig);
+    fileLoadWidget = new FileLoadWidget(fileLoadWidgetConfig);
 
-    configureModal(fileLoadWidget$1, $urlModal.get(0), async fileLoadWidget => {
+    configureModal(fileLoadWidget, $urlModal.get(0), async fileLoadWidget => {
         const paths = fileLoadWidget.retrievePaths();
         await multipleTrackFileLoad.loadPaths(paths);
         return true;
