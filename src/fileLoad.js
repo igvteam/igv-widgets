@@ -20,7 +20,7 @@ class FileLoad {
 
         });
 
-        dropboxButton.addEventListener('click', () => {
+        if (dropboxButton) dropboxButton.addEventListener('click', () => {
 
             const config =
                 {

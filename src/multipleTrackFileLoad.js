@@ -31,7 +31,7 @@ class MultipleTrackFileLoad {
         this.fileLoadHandler = fileLoadHandler
 
         const localFileInput = $localFileInput.get(0)
-        const dropboxButton = $dropboxButton.get(0)
+        const dropboxButton = $dropboxButton ? $dropboxButton.get(0) : undefined
         const googleDriveButton = $googleDriveButton ? $googleDriveButton.get(0) : undefined
 
         localFileInput.addEventListener('change', async () => {
@@ -45,7 +45,7 @@ class MultipleTrackFileLoad {
 
         })
 
-        dropboxButton.addEventListener('click', async () => {
+        if (dropboxButton) dropboxButton.addEventListener('click', async () => {
 
             const obj =
                 {
