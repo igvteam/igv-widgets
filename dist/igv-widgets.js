@@ -8453,7 +8453,7 @@ class FileLoad {
 
         });
 
-        dropboxButton.addEventListener('click', () => {
+        if (dropboxButton) dropboxButton.addEventListener('click', () => {
 
             const config =
                 {
@@ -8538,7 +8538,7 @@ class MultipleTrackFileLoad {
         this.fileLoadHandler = fileLoadHandler;
 
         const localFileInput = $localFileInput.get(0);
-        const dropboxButton = $dropboxButton.get(0);
+        const dropboxButton = $dropboxButton ? $dropboxButton.get(0) : undefined;
         const googleDriveButton = $googleDriveButton ? $googleDriveButton.get(0) : undefined;
 
         localFileInput.addEventListener('change', async () => {
@@ -8552,7 +8552,7 @@ class MultipleTrackFileLoad {
 
         });
 
-        dropboxButton.addEventListener('click', async () => {
+        if (dropboxButton) dropboxButton.addEventListener('click', async () => {
 
             const obj =
                 {
@@ -8649,12 +8649,12 @@ async function doIngestPaths({paths, fileLoadHandler}) {
         if (indexLUT.has(name)) {
 
             const {indexURL, indexFilename} = indexLUT.get(name);
-            configurations.push({url: dataPath, name, indexURL, indexFilename, _derivedName: true });
+            configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true });
 
         } else if (requireIndex.has(getExtension(name))) {
             throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
         } else {
-            configurations.push({ url: dataPath, name, _derivedName: true });
+            configurations.push({ url: dataPath, name, derivedName: true });
         }
 
     }
@@ -9016,7 +9016,7 @@ function createSessionWidgets($rootContainer,
     const sessionFileLoadConfig =
         {
             localFileInput: document.querySelector(`#${localFileInputId}`),
-            dropboxButton: document.querySelector(`#${dropboxButtonId}`),
+            dropboxButton: dropboxButtonId ? document.querySelector(`#${dropboxButtonId}`) : undefined,
             googleEnabled,
             googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),
             loadHandler

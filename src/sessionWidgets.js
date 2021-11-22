@@ -41,7 +41,7 @@ function createSessionWidgets($rootContainer,
     const sessionFileLoadConfig =
         {
             localFileInput: document.querySelector(`#${localFileInputId}`),
-            dropboxButton: document.querySelector(`#${dropboxButtonId}`),
+            dropboxButton: dropboxButtonId ? document.querySelector(`#${dropboxButtonId}`) : undefined,
             googleEnabled,
             googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),
             loadHandler
