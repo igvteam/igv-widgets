@@ -10,6 +10,7 @@ let fileLoadWidget;
 function createSessionWidgets($rootContainer,
                               prefix,
                               localFileInputId,
+                              initializeDropbox,
                               dropboxButtonId,
                               googleDriveButtonId,
                               urlModalId,
@@ -41,6 +42,7 @@ function createSessionWidgets($rootContainer,
     const sessionFileLoadConfig =
         {
             localFileInput: document.querySelector(`#${localFileInputId}`),
+            initializeDropbox,
             dropboxButton: dropboxButtonId ? document.querySelector(`#${dropboxButtonId}`) : undefined,
             googleEnabled,
             googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),

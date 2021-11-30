@@ -8436,7 +8436,7 @@ class FileLoadWidget {
 
 class FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton }) {
+    constructor({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton }) {
 
         localFileInput.addEventListener('change', async () => {
 
@@ -8453,25 +8453,33 @@ class FileLoad {
 
         });
 
-        if (dropboxButton) dropboxButton.addEventListener('click', () => {
+        if (dropboxButton) dropboxButton.addEventListener('click', async () => {
 
-            const config =
-                {
-                    success: async dbFiles => {
-                        try {
-                            await this.loadPaths( dbFiles.map(dbFile => dbFile.link) );
-                        } catch (e) {
-                            console.error(e);
-                            AlertSingleton$1.present(e);
-                        }
-                    },
-                    cancel: () => {},
-                    linkType: 'preview',
-                    multiselect: true,
-                    folderselect: false,
-                };
+            const result = await initializeDropbox();
 
-            Dropbox.choose( config );
+            if (true === result) {
+
+                const config =
+                    {
+                        success: async dbFiles => {
+                            try {
+                                await this.loadPaths( dbFiles.map(dbFile => dbFile.link) );
+                            } catch (e) {
+                                console.error(e);
+                                AlertSingleton$1.present(e);
+                            }
+                        },
+                        cancel: () => {},
+                        linkType: 'preview',
+                        multiselect: true,
+                        folderselect: false,
+                    };
+
+                Dropbox.choose( config );
+
+            } else {
+                AlertSingleton$1.present('Cannot connect to Dropbox');
+            }
 
         });
 
@@ -8533,7 +8541,7 @@ class FileLoad {
 
 class MultipleTrackFileLoad {
 
-    constructor({ $localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
+    constructor({ $localFileInput, initializeDropbox, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
 
         this.fileLoadHandler = fileLoadHandler;
 
@@ -8554,16 +8562,24 @@ class MultipleTrackFileLoad {
 
         if (dropboxButton) dropboxButton.addEventListener('click', async () => {
 
-            const obj =
-                {
-                    success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
-                    cancel: () => { },
-                    linkType: "preview",
-                    multiselect: multipleFileSelection,
-                    folderselect: false,
-                };
+            const result = await initializeDropbox();
 
-            Dropbox.choose(obj);
+            if (true === result) {
+
+                const obj =
+                    {
+                        success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
+                        cancel: () => { },
+                        linkType: "preview",
+                        multiselect: multipleFileSelection,
+                        folderselect: false,
+                    };
+
+                Dropbox.choose(obj);
+
+            } else {
+                AlertSingleton$1.present('Cannot connect to Dropbox');
+            }
         });
 
 
@@ -8688,8 +8704,8 @@ const indexSet = new Set(['fai']);
 
 class GenomeFileLoad extends FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+    constructor({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton });
         this.loadHandler = loadHandler;
     }
 
@@ -8754,8 +8770,8 @@ class GenomeFileLoad extends FileLoad {
 
 class SessionFileLoad extends FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
-        super({ localFileInput, dropboxButton, googleEnabled, googleDriveButton });
+    constructor({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
+        super({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton });
         this.loadHandler = loadHandler;
     }
 
@@ -8985,6 +9001,7 @@ let fileLoadWidget$1;
 function createSessionWidgets($rootContainer,
                               prefix,
                               localFileInputId,
+                              initializeDropbox,
                               dropboxButtonId,
                               googleDriveButtonId,
                               urlModalId,
@@ -9016,6 +9033,7 @@ function createSessionWidgets($rootContainer,
     const sessionFileLoadConfig =
         {
             localFileInput: document.querySelector(`#${localFileInputId}`),
+            initializeDropbox,
             dropboxButton: dropboxButtonId ? document.querySelector(`#${dropboxButtonId}`) : undefined,
             googleEnabled,
             googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),
@@ -16465,6 +16483,7 @@ const defaultCustomModalTableConfig =
 function createTrackWidgetsWithTrackRegistry($igvMain,
                                              $dropdownMenu,
                                              $localFileInput,
+                                             initializeDropbox,
                                              $dropboxButton,
                                              googleEnabled,
                                              $googleDriveButton,
@@ -16504,6 +16523,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
     const multipleTrackFileLoadConfig =
         {
             $localFileInput,
+            initializeDropbox,
             $dropboxButton,
             $googleDriveButton: googleEnabled ? $googleDriveButton : undefined,
             fileLoadHandler: trackLoadHandler,
