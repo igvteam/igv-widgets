@@ -25,6 +25,7 @@ const defaultCustomModalTableConfig =
 function createTrackWidgetsWithTrackRegistry($igvMain,
                                              $dropdownMenu,
                                              $localFileInput,
+                                             initializeDropbox,
                                              $dropboxButton,
                                              googleEnabled,
                                              $googleDriveButton,
@@ -64,6 +65,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
     const multipleTrackFileLoadConfig =
         {
             $localFileInput,
+            initializeDropbox,
             $dropboxButton,
             $googleDriveButton: googleEnabled ? $googleDriveButton : undefined,
             fileLoadHandler: trackLoadHandler,

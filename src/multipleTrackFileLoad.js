@@ -26,7 +26,7 @@ import { FileUtils, URIUtils, GooglePicker, GoogleUtils, GoogleDrive } from "../
 
 class MultipleTrackFileLoad {
 
-    constructor({ $localFileInput, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
+    constructor({ $localFileInput, initializeDropbox, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
 
         this.fileLoadHandler = fileLoadHandler
 
@@ -47,16 +47,24 @@ class MultipleTrackFileLoad {
 
         if (dropboxButton) dropboxButton.addEventListener('click', async () => {
 
-            const obj =
-                {
-                    success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
-                    cancel: () => { },
-                    linkType: "preview",
-                    multiselect: multipleFileSelection,
-                    folderselect: false,
-                };
+            const result = await initializeDropbox()
 
-            Dropbox.choose(obj)
+            if (true === result) {
+
+                const obj =
+                    {
+                        success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
+                        cancel: () => { },
+                        linkType: "preview",
+                        multiselect: multipleFileSelection,
+                        folderselect: false,
+                    };
+
+                Dropbox.choose(obj)
+
+            } else {
+                AlertSingleton.present('Cannot connect to Dropbox')
+            }
         })
 
 

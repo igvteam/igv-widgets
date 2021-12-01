@@ -3,7 +3,7 @@ import { DOMUtils , GooglePicker} from '../node_modules/igv-utils/src/index.js'
 
 class FileLoad {
 
-    constructor({ localFileInput, dropboxButton, googleEnabled, googleDriveButton }) {
+    constructor({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton }) {
 
         localFileInput.addEventListener('change', async () => {
 
@@ -20,25 +20,33 @@ class FileLoad {
 
         });
 
-        if (dropboxButton) dropboxButton.addEventListener('click', () => {
+        if (dropboxButton) dropboxButton.addEventListener('click', async () => {
 
-            const config =
-                {
-                    success: async dbFiles => {
-                        try {
-                            await this.loadPaths( dbFiles.map(dbFile => dbFile.link) )
-                        } catch (e) {
-                            console.error(e);
-                            AlertSingleton.present(e)
-                        }
-                    },
-                    cancel: () => {},
-                    linkType: 'preview',
-                    multiselect: true,
-                    folderselect: false,
-                };
+            const result = await initializeDropbox()
 
-            Dropbox.choose( config );
+            if (true === result) {
+
+                const config =
+                    {
+                        success: async dbFiles => {
+                            try {
+                                await this.loadPaths( dbFiles.map(dbFile => dbFile.link) )
+                            } catch (e) {
+                                console.error(e);
+                                AlertSingleton.present(e)
+                            }
+                        },
+                        cancel: () => {},
+                        linkType: 'preview',
+                        multiselect: true,
+                        folderselect: false,
+                    };
+
+                Dropbox.choose( config );
+
+            } else {
+                AlertSingleton.present('Cannot connect to Dropbox')
+            }
 
         });
 
