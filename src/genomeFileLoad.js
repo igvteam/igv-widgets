@@ -37,7 +37,7 @@ class GenomeFileLoad extends FileLoad {
             }
 
             if (undefined === configuration) {
-                throw new Error('Genome did not load - invalid data and/or index file(s)')
+                throw new Error('Genome requires either a single JSON file or a FASTA file & index file')
             } else {
                 this.loadHandler(configuration)
             }
