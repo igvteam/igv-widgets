@@ -8869,7 +8869,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              urlModalId,
                                              selectModalIdOrUndefined,
                                              GtexUtilsOrUndefined,
-                                             trackRegistryFile,
+                                             trackRegistry,
                                              trackLoadHandler) {
 
     const $urlModal = $(createTrackURLModal(urlModalId));
@@ -8971,7 +8971,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
     genomeChangeListener = {
         receiveEvent: async ({ data }) => {
             const {genomeID} = data;
-            await updateTrackMenus(genomeID, GtexUtilsOrUndefined, supportsGenome(genomeID), encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal);
+            await updateTrackMenus(genomeID, GtexUtilsOrUndefined, supportsGenome(genomeID), encodeModalTables, trackRegistry, $dropdownMenu, $genericSelectModal);
         }
     };
 
@@ -8979,7 +8979,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
 }
 
-async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupported, encodeModalTables, trackRegistryFile, $dropdownMenu, $genericSelectModal) {
+async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupported, encodeModalTables, trackRegistry, $dropdownMenu, $genericSelectModal) {
 
     const id_prefix = 'genome_specific_';
 
@@ -8989,10 +8989,10 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
     const $found = $dropdownMenu.find(searchString);
     $found.remove();
 
-    const paths = await getPathsWithTrackRegistryFile(genomeID, trackRegistryFile);
+    const paths = trackRegistry[genomeID];
 
     if (undefined === paths) {
-        console.warn(`There are no tracks in the track registryy for genome ${genomeID}`);
+        console.warn(`There are no tracks in the track registry for genome ${genomeID}`);
         return;
     }
 
@@ -9115,28 +9115,6 @@ function configureSelectModal($genericSelectModal, buttonConfiguration) {
     if (buttonConfiguration.description) {
         $genericSelectModal.find('#igv-widgets-generic-select-modal-footnotes').html(buttonConfiguration.description);
     }
-
-}
-
-async function getPathsWithTrackRegistryFile(genomeID, trackRegistryFile) {
-
-    let response = undefined;
-    try {
-        response = await fetch(trackRegistryFile);
-    } catch (e) {
-        console.error(e);
-    }
-
-    let trackRegistry = undefined;
-    if (response) {
-        trackRegistry = await response.json();
-    } else {
-        const e = new Error("Error retrieving registry via getPathsWithTrackRegistryFile()");
-        AlertSingleton$1.present(e.message);
-        throw e;
-    }
-
-    return trackRegistry[genomeID]
 
 }
 
