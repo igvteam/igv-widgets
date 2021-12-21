@@ -9001,20 +9001,17 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
         responses = await Promise.all(paths.map(path => fetch(path)));
     } catch (e) {
         AlertSingleton$1.present(e.message);
+        console.error(e);
     }
 
     let jsons = [];
-    let txts = [];
     try {
-        // jsons = await Promise.all(responses.map(response => {
-        //     response.json()
-        // }))
-        txts = await Promise.all(responses.map(response => response.text()));
+        jsons = await Promise.all(responses.map(response => response.json()));
     } catch (e) {
         AlertSingleton$1.present(e.message);
         console.error(e);
     }
-    
+
     let buttonConfigurations = [];
 
     for (let json of jsons) {
