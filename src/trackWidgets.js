@@ -147,7 +147,8 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, encodeIsSupporte
 
     const id_prefix = 'genome_specific_';
 
-    const $divider = $dropdownMenu.find('.dropdown-divider');
+    // const $divider = $dropdownMenu.find('.dropdown-divider');
+    const $divider = $dropdownMenu.find('#hic-annotations-section');
 
     const searchString = '[id^=' + id_prefix + ']';
     const $found = $dropdownMenu.find(searchString);
