@@ -1,6 +1,6 @@
 {
   "name": "igv-widgets",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Various UI modules to support igvteam web apps",
   "files": [
     "dist/**",
