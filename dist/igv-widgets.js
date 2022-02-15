@@ -15433,6 +15433,10 @@ async function loadURL(url, options) {
 
         xhr.open(method, url);
 
+        if(options.timeout) {
+            xhr.timeout = options.timeout;
+        }
+
         if (range) {
             var rangeEnd = range.size ? range.start + range.size - 1 : "";
             xhr.setRequestHeader("Range", "bytes=" + range.start + "-" + rangeEnd);
@@ -16223,7 +16227,18 @@ class ModalTable {
                 result.push(tableData[index]);
             });
             if (typeof this.datasource.rowHandler === 'function') {
-                return result.map(selectedRow => this.datasource.rowHandler(selectedRow));
+
+                const config = result.map(row => {
+                    const thang = this.datasource.rowHandler(row);
+                    const filteredKeys = Object.keys(row).filter(key => this.datasource.columns.includes(key));
+                    thang.metadata = {};
+                    for (let key of filteredKeys) {
+                        thang.metadata[ key ] = row[ key ];
+                    }
+                    return thang
+                });
+
+                return config
             } else {
                 return result;
             }
@@ -16252,7 +16267,7 @@ class ModalTable {
  */
 function encodeTrackDatasourceConfigurator(genomeId, type) {
 
-    const suffix = ('other' === type ? '.other.txt' : ('signals' === type ? '.signals.txt' : undefined));
+    const suffix = ('other' === type ? '.other.txt.gz' : ('signals' === type ? '.signals.txt.gz' : undefined));
 
     return {
         isJSON: false,
