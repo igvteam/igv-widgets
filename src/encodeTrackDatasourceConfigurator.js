@@ -6,7 +6,7 @@
  */
 function encodeTrackDatasourceConfigurator(genomeId, type) {
 
-    const suffix = ('other' === type ? '.other.txt' : ('signals' === type ? '.signals.txt' : undefined));
+    const suffix = ('other' === type ? '.other.txt.gz' : ('signals' === type ? '.signals.txt.gz' : undefined));
 
     return {
         isJSON: false,
