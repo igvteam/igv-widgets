@@ -15885,7 +15885,8 @@ NIL.parent = NIL;
 NIL.left = NIL;
 NIL.right = NIL;
 
-const delimiters = new Set([ '\t', ',' ]);
+const delimiters = new Set(['\t', ',']);
+
 class GenericDataSource {
 
     constructor(config) {
@@ -15911,25 +15912,22 @@ class GenericDataSource {
     }
 
     async tableColumns() {
-        return this.columns;
+        return this.columns
     }
 
     async tableData() {
 
         if (undefined === this.data) {
 
-            let response = undefined;
+            let str = undefined;
             try {
-                const url = this.url;
-                response = await fetch(url);
+                str = await igvxhr.loadString(this.url);
             } catch (e) {
                 console.error(e);
-                return undefined;
+                return undefined
             }
 
-            if (response) {
-
-                const str = await response.text();
+            if (str) {
 
                 let records;
                 if (this.parser) {
@@ -15952,7 +15950,7 @@ class GenericDataSource {
             }
         } else if (Array.isArray(this.data)) {
             return this.data
-        } else if ('json' === GenericDataSource.getExtension(this.data) || delimiters.has( getDelimiter(this.data, this.delimiter) )) {
+        } else if ('json' === GenericDataSource.getExtension(this.data) || delimiters.has(getDelimiter(this.data, this.delimiter))) {
 
             const extension = GenericDataSource.getExtension(this.data);
             const delimiter = getDelimiter(this.data, this.delimiter);
@@ -15960,7 +15958,7 @@ class GenericDataSource {
             let result;
             try {
                 result = 'json' === extension ? await igvxhr.loadJson(this.data) : await igvxhr.loadString(this.data);
-            } catch (e){
+            } catch (e) {
                 console.error(e);
                 return undefined
             }
@@ -15971,9 +15969,11 @@ class GenericDataSource {
                     return result
                 } else if (delimiter) {
 
-                    switch ( delimiter ) {
-                        case '\t'   : return this.parseTabData(result)
-                        case ','    : return parseCSV(result)
+                    switch (delimiter) {
+                        case '\t'   :
+                            return this.parseTabData(result)
+                        case ','    :
+                            return parseCSV(result)
                     }
                 }
 
@@ -16000,7 +16000,7 @@ class GenericDataSource {
 
             const tokens = line.split(`\t`);
             if (tokens.length !== headers.length) {
-                throw Error("Number of values must equal number of headers in file " + this.url);
+                throw Error("Number of values must equal number of headers in file " + this.url)
             }
 
             for (let i = 0; i < headers.length; i++) {
@@ -16013,7 +16013,7 @@ class GenericDataSource {
 
         } // while(line)
 
-        return records;
+        return records
     }
 
     static getExtension(url) {
@@ -16037,15 +16037,18 @@ class GenericDataSource {
 }
 
 function getDelimiter(data, delimiter) {
-    return delimiter || getDelimiterForExtension( GenericDataSource.getExtension(data) )
+    return delimiter || getDelimiterForExtension(GenericDataSource.getExtension(data))
 
 }
 
 function getDelimiterForExtension(extension) {
     switch (extension) {
-        case 'tab' : return '\t'
-        case 'csv' : return ','
-        default: return undefined
+        case 'tab' :
+            return '\t'
+        case 'csv' :
+            return ','
+        default:
+            return undefined
     }
 }
 
@@ -16055,8 +16058,8 @@ function parseCSV(str) {
     const keys = list.shift().split(',').map(key => key.trim());
 
     return list.map(line => {
-        const keyValues = line.split(',').map((value, index) => [ keys[ index ], value.trim() ]);
-        return Object.fromEntries( new Map(keyValues) )
+        const keyValues = line.split(',').map((value, index) => [keys[index], value.trim()]);
+        return Object.fromEntries(new Map(keyValues))
     })
 
 }
