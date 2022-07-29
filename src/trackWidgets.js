@@ -58,7 +58,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         return true;
     });
 
-    if (!googleEnabled) {
+    if ($googleDriveButton && !googleEnabled) {
         $googleDriveButton.parent().hide();
     }
 
