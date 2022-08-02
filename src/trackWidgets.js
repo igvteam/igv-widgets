@@ -222,7 +222,7 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
                 createDropdownButton($divider, 'ENCODE Signals - Other', id_prefix)
                     .on('click', () => encodeModalTables[1].$modal.modal('show'))
 
-                createDropdownButton($divider, 'ENCODE Signals - Chip', id_prefix)
+                createDropdownButton($divider, 'ENCODE Signals - ChIP', id_prefix)
                     .on('click', () => encodeModalTables[0].$modal.modal('show'))
 
             }
