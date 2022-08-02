@@ -169,8 +169,9 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
     for (let json of jsons) {
 
         if (true === supportsGenome(genomeID) && 'ENCODE' === json.type) {
-            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')))
-            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals-chip')))
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals-other')))
+            encodeModalTables[2].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')))
         } else if (GtexUtilsOrUndefined && 'GTEX' === json.type) {
 
             let info = undefined
@@ -212,17 +213,17 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
                 if (buttonConfiguration.description) {
                     encodeModalTables[0].setDescription(buttonConfiguration.description)
                     encodeModalTables[1].setDescription(buttonConfiguration.description)
+                    encodeModalTables[2].setDescription(buttonConfiguration.description)
                 }
 
                 createDropdownButton($divider, 'ENCODE Other', id_prefix)
-                    .on('click', () => {
-                        encodeModalTables[1].$modal.modal('show')
-                    })
+                    .on('click', () => encodeModalTables[2].$modal.modal('show'))
 
-                createDropdownButton($divider, 'ENCODE Signals', id_prefix)
-                    .on('click', () => {
-                        encodeModalTables[0].$modal.modal('show')
-                    })
+                createDropdownButton($divider, 'ENCODE Signals - Other', id_prefix)
+                    .on('click', () => encodeModalTables[1].$modal.modal('show'))
+
+                createDropdownButton($divider, 'ENCODE Signals - ChIP', id_prefix)
+                    .on('click', () => encodeModalTables[0].$modal.modal('show'))
 
             }
 
