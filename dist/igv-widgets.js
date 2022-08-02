@@ -16270,11 +16270,25 @@ class ModalTable {
  */
 function encodeTrackDatasourceConfigurator(genomeId, type) {
 
-    const suffix = ('other' === type ? '.other.txt.gz' : ('signals' === type ? '.signals.txt.gz' : undefined));
+    const root = 'https://s3.amazonaws.com/igv.org.app/encode/';
+    let url;
+
+    switch (type) {
+        case 'signals-chip':
+            url = `${root}${canonicalId(genomeId)}.signals.chip.txt.gz`;
+            break
+        case 'signals-other':
+            url = `${root}${canonicalId(genomeId)}.signals.other.txt.gz`;
+            break
+        case 'other':
+            url = `${root}${canonicalId(genomeId)}.other.txt.gz`;
+            break
+
+    }
 
     return {
         isJSON: false,
-        url: `https://s3.amazonaws.com/igv.org.app/encode/${canonicalId(genomeId)}${suffix}`,
+        url,
         sort: encodeSort,
         columns:
             [
@@ -16534,7 +16548,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         return true;
     });
 
-    if (!googleEnabled) {
+    if ($googleDriveButton && !googleEnabled) {
         $googleDriveButton.parent().hide();
     }
 
@@ -16645,8 +16659,9 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
     for (let json of jsons) {
 
         if (true === supportsGenome(genomeID) && 'ENCODE' === json.type) {
-            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals')));
-            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')));
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals-chip')));
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals-other')));
+            encodeModalTables[2].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')));
         } else if (GtexUtilsOrUndefined && 'GTEX' === json.type) {
 
             let info = undefined;
@@ -16688,17 +16703,17 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
                 if (buttonConfiguration.description) {
                     encodeModalTables[0].setDescription(buttonConfiguration.description);
                     encodeModalTables[1].setDescription(buttonConfiguration.description);
+                    encodeModalTables[2].setDescription(buttonConfiguration.description);
                 }
 
                 createDropdownButton($divider, 'ENCODE Other', id_prefix)
-                    .on('click', () => {
-                        encodeModalTables[1].$modal.modal('show');
-                    });
+                    .on('click', () => encodeModalTables[2].$modal.modal('show'));
 
-                createDropdownButton($divider, 'ENCODE Signals', id_prefix)
-                    .on('click', () => {
-                        encodeModalTables[0].$modal.modal('show');
-                    });
+                createDropdownButton($divider, 'ENCODE Signals - Other', id_prefix)
+                    .on('click', () => encodeModalTables[1].$modal.modal('show'));
+
+                createDropdownButton($divider, 'ENCODE Signals - Chip', id_prefix)
+                    .on('click', () => encodeModalTables[0].$modal.modal('show'));
 
             }
 
