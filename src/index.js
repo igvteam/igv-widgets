@@ -11,6 +11,7 @@ import MultipleTrackFileLoad from "./multipleTrackFileLoad.js";
 import * as Utils from './utils.js';
 import { createSessionWidgets } from "./sessionWidgets.js";
 import { createTrackWidgetsWithTrackRegistry, updateTrackMenus } from './trackWidgets.js'
+import { encodeTrackDatasourceConfigurator, supportsGenome } from './encodeTrackDatasourceConfigurator.js'
 import { createURLModal } from "./urlModal.js";
 import { dropboxButtonImageBase64, googleDriveButtonImageBase64, dropboxDropdownItem, googleDriveDropdownItem } from './markupFactory.js'
 import { createGenericSelectModal } from './genericSelectModal.js'
@@ -48,6 +49,8 @@ export {
     MultipleTrackFileLoad,
     createSessionWidgets,
     createTrackWidgetsWithTrackRegistry,
+    encodeTrackDatasourceConfigurator,
+    supportsGenome,
     updateTrackMenus,
     createURLModal,
     dropboxButtonImageBase64,

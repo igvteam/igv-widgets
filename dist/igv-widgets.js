@@ -16712,7 +16712,7 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
                 createDropdownButton($divider, 'ENCODE Signals - Other', id_prefix)
                     .on('click', () => encodeModalTables[1].$modal.modal('show'));
 
-                createDropdownButton($divider, 'ENCODE Signals - Chip', id_prefix)
+                createDropdownButton($divider, 'ENCODE Signals - ChIP', id_prefix)
                     .on('click', () => encodeModalTables[0].$modal.modal('show'));
 
             }
@@ -16857,4 +16857,4 @@ if(typeof document !== 'undefined') {
     }
 }
 
-export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, googleDriveButtonImageBase64, googleDriveDropdownItem, updateTrackMenus };
+export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, encodeTrackDatasourceConfigurator, googleDriveButtonImageBase64, googleDriveDropdownItem, supportsGenome, updateTrackMenus };
