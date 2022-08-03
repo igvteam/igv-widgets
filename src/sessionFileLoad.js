@@ -1,5 +1,4 @@
-import { igvxhr } from '../node_modules/igv-utils/src/index.js';
-import {FileUtils} from "../node_modules/igv-utils/src/index.js"
+import { igvxhr, FileUtils, GoogleUtils } from '../node_modules/igv-utils/src/index.js';
 import FileLoad from "./fileLoad.js";
 
 class SessionFileLoad extends FileLoad {
@@ -12,7 +11,12 @@ class SessionFileLoad extends FileLoad {
     async loadPaths(paths) {
 
         const path = paths[ 0 ];
-        if ('json' === FileUtils.getExtension(path)) {
+
+        if (true === GoogleUtils.isGoogleURL(path)) {
+
+            this.loadHandler({ url: path })
+        } else if ('json' === FileUtils.getExtension(path)) {
+
             const json = await igvxhr.loadJson((path.google_url || path));
             this.loadHandler(json);
         } else if ('xml' === FileUtils.getExtension(path)) {
