@@ -8779,13 +8779,13 @@ class SessionFileLoad extends FileLoad {
 
         const path = paths[ 0 ];
 
-        if (true === isGoogleURL$1(path)) {
-
-            this.loadHandler({ url: path });
-        } else if ('json' === getExtension(path)) {
+        if ('json' === getExtension(path)) {
 
             const json = await igvxhr$1.loadJson((path.google_url || path));
             this.loadHandler(json);
+        } else if (true === isGoogleURL$1(path)) {
+
+            this.loadHandler({ url: path });
         } else if ('xml' === getExtension(path)) {
 
             const key = true === isFilePath(path) ? 'file' : 'url';

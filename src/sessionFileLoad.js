@@ -12,13 +12,13 @@ class SessionFileLoad extends FileLoad {
 
         const path = paths[ 0 ];
 
-        if (true === GoogleUtils.isGoogleURL(path)) {
-
-            this.loadHandler({ url: path })
-        } else if ('json' === FileUtils.getExtension(path)) {
+        if ('json' === FileUtils.getExtension(path)) {
 
             const json = await igvxhr.loadJson((path.google_url || path));
             this.loadHandler(json);
+        } else if (true === GoogleUtils.isGoogleURL(path)) {
+
+            this.loadHandler({ url: path })
         } else if ('xml' === FileUtils.getExtension(path)) {
 
             const key = true === FileUtils.isFilePath(path) ? 'file' : 'url';
