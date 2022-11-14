@@ -115,9 +115,9 @@ async function ingestPaths({ paths, fileLoadHandler }) {
     }
 }
 
-const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai'])
+const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai', 'fai'])
 
-const requireIndex = new Set(['bam', 'cram'])
+const requireIndex = new Set(['bam', 'cram', 'fa', 'fasta'])
 
 async function doIngestPaths({paths, fileLoadHandler}) {
 
