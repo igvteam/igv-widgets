@@ -1286,21 +1286,7 @@ encodings$1.set(" ", "%20");
 
 // Convenience functions for the gapi oAuth library.
 
-function isInitialized$1() {
-    return undefined !== google.igv
-}
-
-/**
- * Return the current access token if the user is signed in, or undefined otherwise.  This function does not
- * attempt a signIn or request any specfic scopes.
- *
- * @returns access_token || undefined
- */
-function getCurrentAccessToken$1() {
-    return (isInitialized$1() && google.igv.tokenResponse && Date.now() < google.igv.tokenExpiresAt) ?
-        google.igv.tokenResponse.access_token :
-        undefined
-}
+let googleTokens;
 
 
 /**
@@ -1311,46 +1297,13 @@ function getCurrentAccessToken$1() {
  */
 async function getAccessToken$1(scope) {
 
-    if (!isInitialized$1()) {
+    {
         throw Error("Google oAuth has not been initialized")
-    }
-
-    if (google.igv.tokenResponse &&
-        Date.now() < google.igv.tokenExpiresAt &&
-        google.accounts.oauth2.hasGrantedAllScopes(google.igv.tokenResponse, scope)) {
-        return google.igv.tokenResponse
-    } else {
-        const tokenClient = google.igv.tokenClient;
-        return new Promise((resolve, reject) => {
-            try {
-                // Settle this promise in the response callback for requestAccessToken()
-                tokenClient.callback = (tokenResponse) => {
-                    if (tokenResponse.error !== undefined) {
-                        reject(tokenResponse);
-                    }
-                    google.igv.tokenResponse = tokenResponse;
-                    google.igv.tokenExpiresAt = Date.now() + tokenResponse.expires_in * 1000;
-                    resolve(tokenResponse);
-                };
-                tokenClient.requestAccessToken({scope});
-            } catch (err) {
-            }
-        })
-    }
-}
-
-function getScopeForURL$1(url) {
-    if (isGoogleDriveURL$1(url)) {
-        return "https://www.googleapis.com/auth/drive.file"
-    } else if (isGoogleStorageURL$1(url)) {
-        return "https://www.googleapis.com/auth/devstorage.read_only"
-    } else {
-        return 'https://www.googleapis.com/auth/userinfo.profile'
     }
 }
 
 function getApiKey() {
-    return google.igv.apiKey
+    return googleTokens.apiKey
 }
 
 /**
@@ -1363,14 +1316,11 @@ async function getDriveFileInfo(googleDriveURL) {
 
     const id = getGoogleDriveFileID$1(googleDriveURL);
     let endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true";
-    const apiKey = getApiKey();
-    if (apiKey) {
-        endPoint += "&key=" + apiKey;
-    }
+    getApiKey();
     const response = await fetch(endPoint);
     let json = await response.json();
     if (json.error && json.error.code === 404) {
-        const {access_token} = await getAccessToken$1("https://www.googleapis.com/auth/drive.readonly");
+        const {access_token} = await getAccessToken$1();
         if (access_token) {
             const response = await fetch(endPoint, {
                 headers: {
@@ -1556,7 +1506,7 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
         await init();
     }
 
-    const {access_token} = await getAccessToken$1('https://www.googleapis.com/auth/drive.file');
+    const {access_token} = await getAccessToken$1();
     if (access_token) {
 
         const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
@@ -9068,11 +9018,7 @@ function getOauthToken$1(url) {
  * @returns the oauth token
  */
 async function fetchGoogleAccessToken$1(url) {
-    if (isInitialized$1()) {
-        const scope = getScopeForURL$1(url);
-        const tokenResponse = await getAccessToken$1(scope);
-        return tokenResponse ? tokenResponse.access_token : undefined
-    } else {
+    {
         throw Error(
             `Authorization is required, but Google oAuth has not been initalized. Contact your site administrator for assistance.`)
     }
@@ -9083,10 +9029,7 @@ async function fetchGoogleAccessToken$1(url) {
  * @returns {undefined|access_token}
  */
 function getCurrentGoogleAccessToken$1() {
-    if (isInitialized$1()) {
-        const googleToken = getCurrentAccessToken$1();
-        return googleToken ? googleToken.access_token : undefined
-    } else {
+    {
         return undefined
     }
 }
