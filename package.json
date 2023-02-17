@@ -26,8 +26,8 @@
   "homepage": "https://github.com/igvteam/igv-widgets#readme",
   "devDependencies": {
     "@rollup/plugin-strip": "^2.1.0",
-    "igv-utils": "github:igvteam/igv-utils#master",
     "data-modal": "github:igvteam/data-modal#v1.3.1",
+    "igv-utils": "github:igvteam/igv-utils#v2.3.16",
     "rollup": "^2.67.2"
   }
 }
