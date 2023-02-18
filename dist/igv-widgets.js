@@ -1241,50 +1241,6 @@ function parseBucketName$1(url) {
 
 }
 
-function driveDownloadURL$1(link) {
-    // Return a google drive download url for the sharable link
-    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    var id = getGoogleDriveFileID$1(link);
-    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
-}
-
-function getGoogleDriveFileID$1(link) {
-
-    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
-    //https://www.googleapis.com/drive/v3/files/1w-tvo6p1SH4p1OaQSVxpkV_EJgGIstWF?alt=media&supportsTeamDrives=true"
-
-    if (link.includes("/open?id=")) {
-        const i1 = link.indexOf("/open?id=") + 9;
-        const i2 = link.indexOf("&");
-        if (i1 > 0 && i2 > i1) {
-            return link.substring(i1, i2)
-        } else if (i1 > 0) {
-            return link.substring(i1);
-        }
-
-    } else if (link.includes("/file/d/")) {
-        const i1 = link.indexOf("/file/d/") + 8;
-        const i2 = link.lastIndexOf("/");
-        return link.substring(i1, i2);
-
-    } else if (link.startsWith("https://www.googleapis.com/drive")) {
-        let i1 = link.indexOf("/files/");
-        const i2 = link.indexOf("?");
-        if (i1 > 0) {
-            i1 += 7;
-            return i2 > 0 ?
-                link.substring(i1, i2) :
-                link.substring(i1)
-        }
-    }
-
-    throw Error("Unknown Google Drive url format: " + link);
-
-
-}
-
-
 /**
  * Percent a GCS object name.  See https://cloud.google.com/storage/docs/request-endpoints
  * Specific characters to encode:
@@ -1330,120 +1286,41 @@ encodings$1.set(" ", "%20");
 
 // Convenience functions for the gapi oAuth library.
 
-const FIVE_MINUTES$1 = 5 * 60 * 1000;
+let googleTokens;
 
-function isInitialized$1() {
-    return typeof gapi !== "undefined" && gapi.auth2 && gapi.auth2.getAuthInstance();
-}
-
-let inProgress$1 = false;
-
-async function getAccessToken$1(scope) {
-
-    if (typeof gapi === "undefined") {
-        throw Error("Google authentication requires the 'gapi' library")
-    }
-    if (!gapi.auth2) {
-        throw Error("Google 'auth2' has not been initialized")
-    }
-
-    if (inProgress$1) {
-        return new Promise(function (resolve, reject) {
-            let intervalID;
-            const checkForToken = () => {    // Wait for inProgress to equal "false"
-                try {
-                    if (inProgress$1 === false) {
-                        //console.log("Delayed resolution for " + scope);
-                        resolve(getAccessToken$1(scope));
-                        clearInterval(intervalID);
-                    }
-                } catch (e) {
-                    clearInterval(intervalID);
-                    reject(e);
-                }
-            };
-            intervalID = setInterval(checkForToken, 100);
-        })
-    } else {
-        inProgress$1 = true;
-        try {
-            let currentUser = gapi.auth2.getAuthInstance().currentUser.get();
-            let token;
-            if (currentUser.isSignedIn()) {
-                if (!currentUser.hasGrantedScopes(scope)) {
-                    await currentUser.grant({scope});
-                }
-                const {access_token, expires_at} = currentUser.getAuthResponse();
-                if (Date.now() < (expires_at - FIVE_MINUTES$1)) {
-                    token = {access_token, expires_at};
-                } else {
-                    const {access_token, expires_at} = currentUser.reloadAuthResponse();
-                    token = {access_token, expires_at};
-                }
-            } else {
-                currentUser = await signIn$1(scope);
-                const {access_token, expires_at} = currentUser.getAuthResponse();
-                token = {access_token, expires_at};
-            }
-            return token;
-        } finally {
-            inProgress$1 = false;
-        }
-    }
-}
 
 /**
- * Return the current access token if the user is signed in, or undefined otherwise.  This function does not
- * attempt a signIn or request any specfic scopes.
+ * Return a promise for an access token for the given scope.  If the user hasn't authorized the scope request it
  *
- * @returns access_token || undefined
+ * @param scope
+ * @returns {Promise<unknown>}
  */
-function getCurrentAccessToken$1() {
+async function getAccessToken$1(scope) {
 
-    let currentUser = gapi.auth2.getAuthInstance().currentUser.get();
-    if (currentUser && currentUser.isSignedIn()) {
-        const {access_token, expires_at} = currentUser.getAuthResponse();
-        return {access_token, expires_at};
-    } else {
-        return undefined;
-    }
-
-}
-
-async function signIn$1(scope) {
-
-    const options = new gapi.auth2.SigninOptionsBuilder();
-    options.setPrompt('select_account');
-    options.setScope(scope);
-    return gapi.auth2.getAuthInstance().signIn(options)
-}
-
-function getScopeForURL$1(url) {
-    if (isGoogleDriveURL$1(url)) {
-        return "https://www.googleapis.com/auth/drive.file";
-    } else if (isGoogleStorageURL$1(url)) {
-        return "https://www.googleapis.com/auth/devstorage.read_only";
-    } else {
-        return 'https://www.googleapis.com/auth/userinfo.profile';
+    {
+        throw Error("Google oAuth has not been initialized")
     }
 }
 
 function getApiKey() {
-    return gapi.apiKey;
+    return googleTokens.apiKey
 }
 
+/**
+ * Return information about a specific google drive URL
+ *
+ * @param googleDriveURL
+ * @returns {Promise<any>}
+ */
 async function getDriveFileInfo(googleDriveURL) {
 
     const id = getGoogleDriveFileID$1(googleDriveURL);
     let endPoint = "https://www.googleapis.com/drive/v3/files/" + id + "?supportsTeamDrives=true";
-    const apiKey = getApiKey();
-    if (apiKey) {
-        endPoint += "&key=" + apiKey;
-    }
+    getApiKey();
     const response = await fetch(endPoint);
     let json = await response.json();
     if (json.error && json.error.code === 404) {
-        const {access_token} = await getAccessToken$1("https://www.googleapis.com/auth/drive.readonly");
+        const {access_token} = await getAccessToken$1();
         if (access_token) {
             const response = await fetch(endPoint, {
                 headers: {
@@ -1459,6 +1336,50 @@ async function getDriveFileInfo(googleDriveURL) {
         }
     }
     return json;
+}
+
+
+function getDriveDownloadURL(link) {
+    // Return a google drive download url for the sharable link
+    //https://drive.google.com/open?id=0B-lleX9c2pZFbDJ4VVRxakJzVGM
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    var id = getGoogleDriveFileID$1(link);
+    return id ? "https://www.googleapis.com/drive/v3/files/" + id + "?alt=media&supportsTeamDrives=true" : link;
+}
+
+function getGoogleDriveFileID$1(link) {
+
+    //https://drive.google.com/file/d/1_FC4kCeO8E3V4dJ1yIW7A0sn1yURKIX-/view?usp=sharing
+    //https://www.googleapis.com/drive/v3/files/1w-tvo6p1SH4p1OaQSVxpkV_EJgGIstWF?alt=media&supportsTeamDrives=true"
+
+    if (link.includes("/open?id=")) {
+        const i1 = link.indexOf("/open?id=") + 9;
+        const i2 = link.indexOf("&");
+        if (i1 > 0 && i2 > i1) {
+            return link.substring(i1, i2)
+        } else if (i1 > 0) {
+            return link.substring(i1);
+        }
+
+    } else if (link.includes("/file/d/")) {
+        const i1 = link.indexOf("/file/d/") + 8;
+        const i2 = link.lastIndexOf("/");
+        return link.substring(i1, i2);
+
+    } else if (link.startsWith("https://www.googleapis.com/drive")) {
+        let i1 = link.indexOf("/files/");
+        const i2 = link.indexOf("?");
+        if (i1 > 0) {
+            i1 += 7;
+            return i2 > 0 ?
+                link.substring(i1, i2) :
+                link.substring(i1)
+        }
+    }
+
+    throw Error("Unknown Google Drive url format: " + link);
+
+
 }
 
 if (typeof process === 'object' && typeof window === 'undefined') {
@@ -1585,7 +1506,7 @@ async function createDropdownButtonPicker(multipleFileSelection, filePickerHandl
         await init();
     }
 
-    const {access_token} = await getAccessToken$1('https://www.googleapis.com/auth/drive.file');
+    const {access_token} = await getAccessToken$1();
     if (access_token) {
 
         const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
@@ -8853,7 +8774,7 @@ async function load$1(url, options) {
             }
         } else {
             if (url.startsWith("https://drive.google.com")) {
-                url = driveDownloadURL$1(url);
+                url = getDriveDownloadURL(url);
             }
             if (isGoogleDriveURL$1(url) || url.startsWith("https://www.dropbox.com")) {
                 return googleThrottle$1.add(async function () {
@@ -9097,11 +9018,7 @@ function getOauthToken$1(url) {
  * @returns the oauth token
  */
 async function fetchGoogleAccessToken$1(url) {
-    if (isInitialized$1()) {
-        const scope = getScopeForURL$1(url);
-        const googleToken = await getAccessToken$1(scope);
-        return googleToken ? googleToken.access_token : undefined
-    } else {
+    {
         throw Error(
             `Authorization is required, but Google oAuth has not been initalized. Contact your site administrator for assistance.`)
     }
@@ -9112,10 +9029,7 @@ async function fetchGoogleAccessToken$1(url) {
  * @returns {undefined|access_token}
  */
 function getCurrentGoogleAccessToken$1() {
-    if (isInitialized$1()) {
-        const googleToken = getCurrentAccessToken$1();
-        return googleToken ? googleToken.access_token : undefined
-    } else {
+    {
         return undefined
     }
 }
@@ -9159,7 +9073,7 @@ function mapUrl$1(url) {
     if (url.includes("//www.dropbox.com")) {
         return url.replace("//www.dropbox.com", "//dl.dropboxusercontent.com")
     } else if (url.includes("//drive.google.com")) {
-        return driveDownloadURL$1(url)
+        return getDriveDownloadURL(url)
     } else if (url.includes("//www.broadinstitute.org/igvdata")) {
         return url.replace("//www.broadinstitute.org/igvdata", "//data.broadinstitute.org/igvdata")
     } else if (url.includes("//igvdata.broadinstitute.org")) {
