@@ -11,13 +11,13 @@ function encodeTrackDatasourceConfigurator(genomeId, type) {
 
     switch (type) {
         case 'signals-chip':
-            url = `${root}${canonicalId(genomeId)}.signals.chip.txt.gz`
+            url = `${root}${canonicalId(genomeId)}.signals.chip.txt`
             break
         case 'signals-other':
-            url = `${root}${canonicalId(genomeId)}.signals.other.txt.gz`
+            url = `${root}${canonicalId(genomeId)}.signals.other.txt`
             break
         case 'other':
-            url = `${root}${canonicalId(genomeId)}.other.txt.gz`
+            url = `${root}${canonicalId(genomeId)}.other.txt`
             break
 
     }

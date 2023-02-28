@@ -1,4 +1,4 @@
-import { igvxhr, FileUtils, GoogleUtils } from '../node_modules/igv-utils/src/index.js';
+import {FileUtils, GoogleUtils, igvxhr } from '../node_modules/igv-utils/src/index.js';
 import FileLoad from "./fileLoad.js";
 
 class SessionFileLoad extends FileLoad {

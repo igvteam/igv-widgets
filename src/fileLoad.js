@@ -1,5 +1,7 @@
 import AlertSingleton from './alertSingleton.js'
-import { DOMUtils , GooglePicker} from '../node_modules/igv-utils/src/index.js'
+import * as DOMUtils from "./utils/dom-utils.js"
+import {  GooglePicker} from '../node_modules/igv-utils/src/index.js'
+
 
 class FileLoad {
 
