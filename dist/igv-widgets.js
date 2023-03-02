@@ -1174,7 +1174,7 @@ class AlertDialog {
     constructor(parent) {
 
         // container
-        this.container = div({class: "igv-ui-alert-dialog-container"});
+        this.container = div({class: "igv-widgets-alert-dialog-container"});
         parent.appendChild(this.container);
         this.container.setAttribute('tabIndex', '-1');
 
@@ -1187,11 +1187,11 @@ class AlertDialog {
         this.errorHeadline.textContent = '';
 
         // body container
-        let bodyContainer = div({id: 'igv-ui-alert-dialog-body'});
+        let bodyContainer = div({id: 'igv-widgets-alert-dialog-body'});
         this.container.appendChild(bodyContainer);
 
         // body copy
-        this.body = div({id: 'igv-ui-alert-dialog-body-copy'});
+        this.body = div({id: 'igv-widgets-alert-dialog-body-copy'});
         bodyContainer.appendChild(this.body);
 
         // ok container
