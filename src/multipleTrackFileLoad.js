@@ -22,11 +22,20 @@
  */
 
 import AlertSingleton from './alertSingleton.js'
-import { FileUtils, URIUtils, GooglePicker, GoogleUtils, GoogleDrive } from "../node_modules/igv-utils/src/index.js"
+import {FileUtils, URIUtils} from "../node_modules/igv-utils/src/index.js"
+import {createDropdownButtonPicker} from "./utils/googleFilePicker.js"
+
 
 class MultipleTrackFileLoad {
 
-    constructor({ $localFileInput, initializeDropbox, $dropboxButton, $googleDriveButton, fileLoadHandler, multipleFileSelection }) {
+    constructor({
+                    $localFileInput,
+                    initializeDropbox,
+                    $dropboxButton,
+                    $googleDriveButton,
+                    fileLoadHandler,
+                    multipleFileSelection
+                }) {
 
         this.fileLoadHandler = fileLoadHandler
 
@@ -37,7 +46,7 @@ class MultipleTrackFileLoad {
         localFileInput.addEventListener('change', async () => {
 
             if (true === MultipleTrackFileLoad.isValidLocalFileInput(localFileInput)) {
-                const { files } = localFileInput
+                const {files} = localFileInput
                 const paths = Array.from(files)
                 localFileInput.value = ''
                 await this.loadPaths(paths)
@@ -54,11 +63,12 @@ class MultipleTrackFileLoad {
                 const obj =
                     {
                         success: dbFiles => this.loadPaths(dbFiles.map(({link}) => link)),
-                        cancel: () => { },
+                        cancel: () => {
+                        },
                         linkType: "preview",
                         multiselect: multipleFileSelection,
                         folderselect: false,
-                    };
+                    }
 
                 Dropbox.choose(obj)
 
@@ -71,7 +81,11 @@ class MultipleTrackFileLoad {
         if (googleDriveButton) {
 
             googleDriveButton.addEventListener('click', () => {
-                GooglePicker.createDropdownButtonPicker(multipleFileSelection, async responses => await this.loadPaths(responses.map(({ name, url }) => url)))
+                createDropdownButtonPicker(multipleFileSelection,
+                    async responses => await this.loadPaths(responses.map(({
+                                                                               name,
+                                                                               url
+                                                                           }) => url)))
             })
 
         }
@@ -79,14 +93,14 @@ class MultipleTrackFileLoad {
     }
 
     async loadPaths(paths) {
-        await ingestPaths({ paths, fileLoadHandler: this.fileLoadHandler })
+        await ingestPaths({paths, fileLoadHandler: this.fileLoadHandler})
     }
 
     static isValidLocalFileInput(input) {
         return (input.files && input.files.length > 0)
     }
 
-    static async getFilename(path ){
+    static async getFilename(path) {
 
         if (path instanceof File) {
             return path.name
@@ -95,23 +109,23 @@ class MultipleTrackFileLoad {
             return info.name || info.originalFileName
         } else {
             const result = URIUtils.parseUri(path)
-            return result.file;
+            return result.file
         }
 
     }
 
     static isGoogleDrivePath(path) {
-        return path instanceof File ? false : GoogleUtils.isGoogleDriveURL( path )
+        return path instanceof File ? false : GoogleUtils.isGoogleDriveURL(path)
     }
 
 }
 
-async function ingestPaths({ paths, fileLoadHandler }) {
+async function ingestPaths({paths, fileLoadHandler}) {
     try {
         await doIngestPaths({paths, fileLoadHandler})
     } catch (e) {
         console.error(e)
-        AlertSingleton.present(e.message);
+        AlertSingleton.present(e.message)
     }
 }
 
@@ -122,10 +136,10 @@ const requireIndex = new Set(['bam', 'cram', 'fa', 'fasta'])
 async function doIngestPaths({paths, fileLoadHandler}) {
 
     // Search for index files  (.bai, .csi, .tbi, .idx)
-    const indexLUT = new Map();
+    const indexLUT = new Map()
 
-    const dataPaths = [];
-    for(let path of paths) {
+    const dataPaths = []
+    for (let path of paths) {
 
         const name = await MultipleTrackFileLoad.getFilename(path)
         const extension = FileUtils.getExtension(name)
@@ -134,28 +148,31 @@ async function doIngestPaths({paths, fileLoadHandler}) {
 
             // key is the data file name
             const key = createIndexLUTKey(name, extension)
-            indexLUT.set(key, { indexURL: path, indexFilename: MultipleTrackFileLoad.isGoogleDrivePath( path ) ? name : undefined });
+            indexLUT.set(key, {
+                indexURL: path,
+                indexFilename: MultipleTrackFileLoad.isGoogleDrivePath(path) ? name : undefined
+            })
         } else {
-            dataPaths.push(path);
+            dataPaths.push(path)
         }
 
     }
 
-    const configurations = [];
+    const configurations = []
 
-    for(let dataPath of dataPaths) {
+    for (let dataPath of dataPaths) {
 
         const name = await MultipleTrackFileLoad.getFilename(dataPath)
 
         if (indexLUT.has(name)) {
 
             const {indexURL, indexFilename} = indexLUT.get(name)
-            configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true })
+            configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true})
 
         } else if (requireIndex.has(FileUtils.getExtension(name))) {
-            throw new Error(`Unable to load track file ${ name } - you must select both ${ name } and its corresponding index file`)
+            throw new Error(`Unable to load track file ${name} - you must select both ${name} and its corresponding index file`)
         } else {
-            configurations.push({ url: dataPath, name, derivedName: true })
+            configurations.push({url: dataPath, name, derivedName: true})
         }
 
     }
@@ -174,14 +191,14 @@ const createIndexLUTKey = (name, extension) => {
     // <data>.bam.bai
     // <data>.bai - we will support this one
 
-    if('bai' === extension && !key.endsWith('bam')) {
-        return `${ key }.bam`
-    } else if('crai' === extension && !key.endsWith('cram')) {
-        return `${ key }.cram`
+    if ('bai' === extension && !key.endsWith('bam')) {
+        return `${key}.bam`
+    } else if ('crai' === extension && !key.endsWith('cram')) {
+        return `${key}.cram`
     } else {
         return key
     }
 
 }
 
-export default MultipleTrackFileLoad;
+export default MultipleTrackFileLoad
