@@ -22,9 +22,8 @@
  */
 
 import AlertSingleton from './alertSingleton.js'
-import {FileUtils, URIUtils} from "../node_modules/igv-utils/src/index.js"
+import {FileUtils, URIUtils, GoogleUtils, GoogleDrive} from "../node_modules/igv-utils/src/index.js"
 import {createDropdownButtonPicker} from "./utils/googleFilePicker.js"
-
 
 class MultipleTrackFileLoad {
 
