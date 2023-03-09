@@ -8839,7 +8839,7 @@ class IGVXhr {
 
         options = options || {};
 
-        let oauthToken = options.oauthToken || this._getOauthToken(url);
+        let oauthToken = options.oauthToken || this.getOauthToken(url);
         if (oauthToken) {
             oauthToken = await (typeof oauthToken === 'function' ? oauthToken() : oauthToken);
         }
@@ -9040,7 +9040,7 @@ class IGVXhr {
         this.oauth.setToken(token, host);
     }
 
-    _getOauthToken(url) {
+    getOauthToken(url) {
 
         // Google is the default provider, don't try to parse host for google URLs
         const host = isGoogleURL(url) ?
@@ -9931,7 +9931,52 @@ class MultipleTrackFileLoad {
 
 async function ingestPaths({paths, fileLoadHandler}) {
     try {
-        await doIngestPaths({paths, fileLoadHandler});
+        // Search for index files  (.bai, .csi, .tbi, .idx)
+        const indexLUT = new Map();
+
+        const dataPaths = [];
+        for (let path of paths) {
+
+            const name = await MultipleTrackFileLoad.getFilename(path);
+            const extension = getExtension(name);
+
+            if (indexExtensions.has(extension)) {
+
+                // key is the data file name
+                const key = createIndexLUTKey(name, extension);
+                indexLUT.set(key, {
+                    indexURL: path,
+                    indexFilename: MultipleTrackFileLoad.isGoogleDrivePath(path) ? name : undefined
+                });
+            } else {
+                dataPaths.push(path);
+            }
+
+        }
+
+        const configurations = [];
+
+        for (let dataPath of dataPaths) {
+
+            const name = await MultipleTrackFileLoad.getFilename(dataPath);
+
+            if (indexLUT.has(name)) {
+
+                const {indexURL, indexFilename} = indexLUT.get(name);
+                configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true});
+
+            } else if (requireIndex.has(getExtension(name))) {
+                throw new Error(`Unable to load track file ${name} - you must select both ${name} and its corresponding index file`)
+            } else {
+                configurations.push({url: dataPath, name, derivedName: true});
+            }
+
+        }
+
+        if (configurations) {
+            fileLoadHandler(configurations);
+        }
+
     } catch (e) {
         console.error(e);
         AlertSingleton$1.present(e.message);
@@ -9941,56 +9986,6 @@ async function ingestPaths({paths, fileLoadHandler}) {
 const indexExtensions = new Set(['bai', 'csi', 'tbi', 'idx', 'crai', 'fai']);
 
 const requireIndex = new Set(['bam', 'cram', 'fa', 'fasta']);
-
-async function doIngestPaths({paths, fileLoadHandler}) {
-
-    // Search for index files  (.bai, .csi, .tbi, .idx)
-    const indexLUT = new Map();
-
-    const dataPaths = [];
-    for (let path of paths) {
-
-        const name = await MultipleTrackFileLoad.getFilename(path);
-        const extension = getExtension(name);
-
-        if (indexExtensions.has(extension)) {
-
-            // key is the data file name
-            const key = createIndexLUTKey(name, extension);
-            indexLUT.set(key, {
-                indexURL: path,
-                indexFilename: MultipleTrackFileLoad.isGoogleDrivePath(path) ? name : undefined
-            });
-        } else {
-            dataPaths.push(path);
-        }
-
-    }
-
-    const configurations = [];
-
-    for (let dataPath of dataPaths) {
-
-        const name = await MultipleTrackFileLoad.getFilename(dataPath);
-
-        if (indexLUT.has(name)) {
-
-            const {indexURL, indexFilename} = indexLUT.get(name);
-            configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true});
-
-        } else if (requireIndex.has(getExtension(name))) {
-            throw new Error(`Unable to load track file ${name} - you must select both ${name} and its corresponding index file`)
-        } else {
-            configurations.push({url: dataPath, name, derivedName: true});
-        }
-
-    }
-
-    if (configurations) {
-        fileLoadHandler(configurations);
-    }
-
-}
 
 const createIndexLUTKey = (name, extension) => {
 
