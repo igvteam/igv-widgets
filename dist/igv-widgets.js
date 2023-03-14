@@ -8479,7 +8479,7 @@ encodings.set(" ", "%20");
 // Convenience functions for the gapi oAuth library.
 
 function isInitialized() {
-    return undefined !== google.igv
+    return window.google && window.google.igv
 }
 
 /**
