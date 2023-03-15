@@ -9958,17 +9958,17 @@ async function ingestPaths({paths, fileLoadHandler}) {
 
         for (let dataPath of dataPaths) {
 
-            const name = await MultipleTrackFileLoad.getFilename(dataPath);
+            const filename = await MultipleTrackFileLoad.getFilename(dataPath);
 
-            if (indexLUT.has(name)) {
+            if (indexLUT.has(filename)) {
 
-                const {indexURL, indexFilename} = indexLUT.get(name);
-                configurations.push({url: dataPath, name, indexURL, indexFilename, derivedName: true});
+                const {indexURL, indexFilename} = indexLUT.get(filename);
+                configurations.push({url: dataPath, filename, indexURL, indexFilename, name: filename,  _derivedName: true});
 
-            } else if (requireIndex.has(getExtension(name))) {
-                throw new Error(`Unable to load track file ${name} - you must select both ${name} and its corresponding index file`)
+            } else if (requireIndex.has(getExtension(filename))) {
+                throw new Error(`Unable to load track file ${filename} - you must select both ${filename} and its corresponding index file`)
             } else {
-                configurations.push({url: dataPath, name, derivedName: true});
+                configurations.push({url: dataPath, filename, name: filename,  _derivedName: true});
             }
 
         }
