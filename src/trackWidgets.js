@@ -146,7 +146,7 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
     const paths = await getPathsWithTrackRegistryFile(genomeID, trackRegistryFile);
 
     if (undefined === paths) {
-        console.warn(`There are no tracks in the track registryy for genome ${genomeID}`);
+        console.warn(`There are no tracks in the track registry for genome ${genomeID}`);
         return;
     }
 

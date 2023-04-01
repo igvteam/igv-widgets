@@ -1,6 +1,6 @@
 import AlertSingleton from './alertSingleton.js'
 import * as DOMUtils from "./utils/dom-utils.js"
-import {createDropdownButtonPicker} from "./utils/googleFilePicker.js"
+import {GooglePicker} from "../node_modules/igv-utils/src/index.js"
 
 class FileLoad {
 
@@ -59,7 +59,7 @@ class FileLoad {
         if (true === googleEnabled && googleDriveButton) {
 
             googleDriveButton.addEventListener('click', () => {
-                createDropdownButtonPicker(true, async responses => {
+                GooglePicker.createDropdownButtonPicker(true, async responses => {
 
                     try {
                         await this.loadPaths(responses.map(({ url }) => url))

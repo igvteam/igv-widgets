@@ -8538,7 +8538,7 @@ async function getAccessToken(scope) {
 
 function getScopeForURL(url) {
     if (isGoogleDriveURL(url)) {
-        return "https://www.googleapis.com/auth/drive.file"
+        return "https://www.googleapis.com/auth/drive.readonly"
     } else if (isGoogleStorageURL(url)) {
         return "https://www.googleapis.com/auth/devstorage.read_only"
     } else {
@@ -8567,7 +8567,8 @@ async function getDriveFileInfo(googleDriveURL) {
     const response = await fetch(endPoint);
     let json = await response.json();
     if (json.error && json.error.code === 404) {
-        const access_token = await getAccessToken("https://www.googleapis.com/auth/drive.readonly");
+        let scope = "https://www.googleapis.com/auth/drive.readonly";
+        const access_token = await getAccessToken(scope);
         if (access_token) {
             const response = await fetch(endPoint, {
                 headers: {
@@ -9047,28 +9048,40 @@ class IGVXhr {
         this.oauth.setToken(token, host);
     }
 
+    /**
+     * Return an oauth token for the URL if we have one.  This method does not force sign-in, and the token may
+     * or may not be valid.  Sign-in is triggered on request failure.
+     * *
+     * @param url
+     * @returns {*}
+     */
     getOauthToken(url) {
 
         // Google is the default provider, don't try to parse host for google URLs
         const host = isGoogleURL(url) ?
             undefined :
             parseUri(url).host;
+
+        // First check the explicit settings (i.e. token set through the API)
         let token = this.oauth.getToken(host);
         if (token) {
             return token
         } else if (host === undefined) {
+            // Now try Google oauth tokens previously obtained.  This will return undefined if google oauth is not
+            // configured.
             const googleToken = getCurrentGoogleAccessToken();
             if (googleToken && googleToken.expires_at > Date.now()) {
                 return googleToken.access_token
             }
         }
     }
-
 }
 
 function isGoogleStorageSigned(url) {
     return url.indexOf("X-Goog-Signature") > -1
 }
+
+
 
 /**
  * Return a Google oAuth token, triggering a sign in if required.   This method should not be called until we know
@@ -9271,6 +9284,88 @@ NIL.color = BLACK;
 NIL.parent = NIL;
 NIL.left = NIL;
 NIL.right = NIL;
+
+/*
+ *  Author: Jim Robinson, 2020
+ *
+ * Wrapper functions for the Google picker API
+ *
+ * PREQUISITES
+ *    gapi loaded
+ *    oauth2 loaded and initialized
+ *
+ * This wrapper is stateless -- this is important as multiple copies of igv-utils might be present
+ * in an application.  All state is held in the gapi library itself.
+ */
+
+async function init() {
+    return new Promise(function (resolve, reject) {
+        gapi.load("picker", {
+            callback: resolve,
+            onerror: reject
+        });
+    })
+}
+
+async function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
+
+
+    if(typeof gapi === "undefined") {
+        throw Error("Google authentication requires the 'gapi' library")
+    }
+
+    if(typeof google === "undefined" || !google.picker) {
+        await init();
+    }
+
+    // We fetch the "drive.readonly" scope because it is neccessary to enable downloading the file
+    const access_token = await getAccessToken('https://www.googleapis.com/auth/drive.readonly');
+    if (access_token) {
+
+        const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
+        view.setIncludeFolders(true);
+
+        const teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
+        teamView.setEnableTeamDrives(true);
+        teamView.setIncludeFolders(true);
+
+        let picker;
+        if (multipleFileSelection) {
+            picker = new google.picker.PickerBuilder()
+                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                .setOAuthToken(access_token)
+                .addView(view)
+                .addView(teamView)
+                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                .setCallback(function (data) {
+                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                    }
+                })
+                .build();
+
+        } else {
+            picker = new google.picker.PickerBuilder()
+                .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
+                .setOAuthToken(access_token)
+                .addView(view)
+                .addView(teamView)
+                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
+                .setCallback(function (data) {
+                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
+                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
+                    }
+                })
+                .build();
+
+        }
+
+        picker.setVisible(true);
+
+    } else {
+        throw Error("Sign into Google before using picker");
+    }
+}
 
 /*
  * The MIT License (MIT)
@@ -9656,87 +9751,6 @@ class FileLoadWidget {
 
     }
 
-}
-
-/*
- *  Author: Jim Robinson, 2020
- *
- * Wrapper functions for the Google picker API
- *
- * PREQUISITES
- *    gapi loaded
- *    oauth2 loaded and initialized
- *
- * This wrapper is stateless -- this is important as multiple copies of igv-utils might be present
- * in an application.  All state is held in the gapi library itself.
- */
-
-async function init() {
-    return new Promise(function (resolve, reject) {
-        gapi.load("picker", {
-            callback: resolve,
-            onerror: reject
-        });
-    })
-}
-
-async function createDropdownButtonPicker(multipleFileSelection, filePickerHandler) {
-
-
-    if(typeof gapi === "undefined") {
-        throw Error("Google authentication requires the 'gapi' library")
-    }
-
-    if(typeof google === "undefined" || !google.picker) {
-        await init();
-    }
-
-    const access_token = await getAccessToken('https://www.googleapis.com/auth/drive.file');
-    if (access_token) {
-
-        const view = new google.picker.DocsView(google.picker.ViewId.DOCS);
-        view.setIncludeFolders(true);
-
-        const teamView = new google.picker.DocsView(google.picker.ViewId.DOCS);
-        teamView.setEnableTeamDrives(true);
-        teamView.setIncludeFolders(true);
-
-        let picker;
-        if (multipleFileSelection) {
-            picker = new google.picker.PickerBuilder()
-                .enableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                .setOAuthToken(access_token)
-                .addView(view)
-                .addView(teamView)
-                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
-                .setCallback(function (data) {
-                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
-                    }
-                })
-                .build();
-
-        } else {
-            picker = new google.picker.PickerBuilder()
-                .disableFeature(google.picker.Feature.MULTISELECT_ENABLED)
-                .setOAuthToken(access_token)
-                .addView(view)
-                .addView(teamView)
-                .enableFeature(google.picker.Feature.SUPPORT_TEAM_DRIVES)
-                .setCallback(function (data) {
-                    if (data[google.picker.Response.ACTION] === google.picker.Action.PICKED) {
-                        filePickerHandler(data[google.picker.Response.DOCUMENTS]);
-                    }
-                })
-                .build();
-
-        }
-
-        picker.setVisible(true);
-
-    } else {
-        throw Error("Sign into Google before using picker");
-    }
 }
 
 class FileLoad {
@@ -11342,7 +11356,7 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
     const paths = await getPathsWithTrackRegistryFile(genomeID, trackRegistryFile);
 
     if (undefined === paths) {
-        console.warn(`There are no tracks in the track registryy for genome ${genomeID}`);
+        console.warn(`There are no tracks in the track registry for genome ${genomeID}`);
         return;
     }
 
