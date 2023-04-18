@@ -11405,12 +11405,13 @@ async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFil
 
         if (buttonConfiguration.type && 'custom-data-modal' === buttonConfiguration.type) {
 
-            if (buttonConfiguration.description) {
-                customModalTable.setDescription(buttonConfiguration.description);
-            }
-
             createDropdownButton($divider, buttonConfiguration.label, id_prefix)
                 .on('click', () => {
+
+                    if (buttonConfiguration.description) {
+                        customModalTable.setDescription(buttonConfiguration.description);
+                    }
+
                     customModalTable.setDatasource(new GenericDataSource(buttonConfiguration));
                     customModalTable.setTitle(buttonConfiguration.label);
                     customModalTable.$modal.modal('show');
