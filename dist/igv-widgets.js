@@ -8836,8 +8836,8 @@ class IGVXhr {
     async _loadURL(url, options) {
 
         const self = this;
+        const _url = url;   // The unmodified URL, needed in case of an oAuth retry
 
-        //console.log(`${Date.now()}   ${url}`)
         url = mapUrl(url);
 
         options = options || {};
@@ -8872,13 +8872,6 @@ class IGVXhr {
             }
             const range = options.range;
 
-            // const isChrome = navigator.userAgent.indexOf('Chrome') > -1
-            // const isSafari = navigator.vendor.indexOf("Apple") === 0 && /\sSafari\//.test(navigator.userAgent)
-            // if (range && isChrome && !isAmazonV4Signed(url) && !isGoogleStorageSigned(url)) {
-            //     // Hack to prevent caching for byte-ranges. Attempt to fix net:err-cache errors in Chrome
-            //     url += url.includes("?") ? "&" : "?"
-            //     url += "someRandomSeed=" + Math.random().toString(36)
-            // }
 
             const xhr = new XMLHttpRequest();
             const sendData = options.sendData || options.body;
@@ -8894,7 +8887,10 @@ class IGVXhr {
             }
 
             if (range) {
-                var rangeEnd = range.size ? range.start + range.size - 1 : "";
+                let rangeEnd = "";
+                if (range.size) {
+                    rangeEnd = range.start + range.size - 1;
+                }
                 xhr.setRequestHeader("Range", "bytes=" + range.start + "-" + rangeEnd);
                 //      xhr.setRequestHeader("Cache-Control", "no-cache");    <= This can cause CORS issues, disabled for now
             }
@@ -8920,20 +8916,34 @@ class IGVXhr {
             }
 
             xhr.onload = async function (event) {
-                // when the url points to a local file, the status is 0 but that is not an error
-                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status <= 300)) {
-                    if (range && xhr.status !== 206 && range.start !== 0) {
-                        // For small files a range starting at 0 can return the whole file => 200
-                        // Provide just the slice we asked for, throw out the rest quietly
-                        // If file is large warn user
-                        if (xhr.response.length > 100000 && !self.RANGE_WARNING_GIVEN) {
-                            alert(`Warning: Range header ignored for URL: ${url}.  This can have severe performance impacts.`);
-                        }
-                        resolve(xhr.response.slice(range.start, range.start + range.size));
 
+                // when the url points to a local file, the status is 0
+                if (xhr.status === 0 || (xhr.status >= 200 && xhr.status <= 300)) {
+                    if ("HEAD" === options.method) {
+                        // Support fetching specific headers.  Attempting to fetch all headers can be problematic with CORS
+                        const headers = options.requestedHeaders || ['content-length'];
+                        const headerMap = {};
+                        for (let h of headers) {
+                            headerMap[h] = xhr.getResponseHeader(h);
+                        }
+                        resolve(headerMap);
                     } else {
-                        resolve(xhr.response);
+                        // Assume "GET" or "POST"
+                        if (range && xhr.status !== 206 && range.start !== 0) {
+
+                            // For small files a range starting at 0 can return the whole file => 200
+                            // Provide just the slice we asked for, throw out the rest quietly
+                            // If file is large warn user
+                            if (xhr.response.length > 100000 && !self.RANGE_WARNING_GIVEN) {
+                                alert(`Warning: Range header ignored for URL: ${url}.  This can have severe performance impacts.`);
+                            }
+                            resolve(xhr.response.slice(range.start, range.start + range.size));
+                        } else {
+                            resolve(xhr.response);
+                        }
                     }
+                } else if (xhr.status === 416) {
+                    handleError(Error(`416 Unsatisfiable Range`));
                 } else if ((typeof gapi !== "undefined") &&
                     ((xhr.status === 404 || xhr.status === 401 || xhr.status === 403) &&
                         isGoogleURL(url)) &&
@@ -8943,14 +8953,12 @@ class IGVXhr {
                 } else {
                     if (xhr.status === 403) {
                         handleError("Access forbidden: " + url);
-                    } else if (xhr.status === 416) {
-                        //  Tried to read off the end of the file.   This shouldn't happen, but if it does return an
-                        handleError("Unsatisfiable range");
                     } else {
                         handleError(xhr.status);
                     }
                 }
             };
+
 
             xhr.onerror = function (event) {
                 if (isGoogleURL(url) && !options.retries) {
@@ -8989,10 +8997,10 @@ class IGVXhr {
 
             async function tryGoogleAuth() {
                 try {
-                    const accessToken = await fetchGoogleAccessToken(url);
+                    const accessToken = await fetchGoogleAccessToken(_url);
                     options.retries = 1;
                     options.oauthToken = accessToken;
-                    const response = await self.load(url, options);
+                    const response = await self.load(_url, options);
                     resolve(response);
                 } catch (e) {
                     if (e.error) {
@@ -9075,12 +9083,29 @@ class IGVXhr {
             }
         }
     }
+
+    /**
+     * This method should only be called when it is known the server supports HEAD requests.  It is used to recover
+     * from 416 errors from out-of-spec WRT range request servers.  Notably Globus.
+     * * *
+     * @param url
+     * @param options
+     * @returns {Promise<unknown>}
+     */
+    async getContentLength(url, options) {
+        options = options || {};
+        options.method = 'HEAD';
+        options.requestedHeaders = ['content-length'];
+        const headerMap = await this._loadURL(url, options);
+        const contentLengthString = headerMap['content-length'];
+        return contentLengthString ? Number.parseInt(contentLengthString) : 0
+    }
+
 }
 
 function isGoogleStorageSigned(url) {
     return url.indexOf("X-Goog-Signature") > -1
 }
-
 
 
 /**
@@ -9240,6 +9265,7 @@ function getGlobalObject() {
         return window
     }
 }
+
 
 const igvxhr = new IGVXhr();
 
