@@ -17,9 +17,6 @@ class SessionFileLoad extends FileLoad {
 
             const json = await igvxhr.loadJson((path.google_url || path));
             this.loadHandler(json);
-        } else if (true === GoogleUtils.isGoogleURL(path)) {
-
-            this.loadHandler({ url: path })
         } else if ('xml' === FileUtils.getExtension(path)) {
 
             const key = true === FileUtils.isFilePath(path) ? 'file' : 'url';
@@ -27,6 +24,9 @@ class SessionFileLoad extends FileLoad {
             o[ key ] = path;
 
             this.loadHandler(o);
+        } else if (true === GoogleUtils.isGoogleURL(path)) {
+
+            this.loadHandler({ url: path })
         } else {
             throw new Error('Session file did not load - invalid format')
         }
