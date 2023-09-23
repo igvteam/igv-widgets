@@ -1,5 +1,3 @@
-import {FileUtils, igvxhr } from '../node_modules/igv-utils/src/index.js';
-import {GoogleUtils } from '../node_modules/igv-utils/src/index.js';
 import FileLoad from "./fileLoad.js";
 
 class SessionFileLoad extends FileLoad {
@@ -13,24 +11,12 @@ class SessionFileLoad extends FileLoad {
 
         const path = paths[ 0 ];
 
-        if ('json' === FileUtils.getExtension(path)) {
-
-            const json = await igvxhr.loadJson((path.google_url || path));
-            this.loadHandler(json);
-        } else if ('xml' === FileUtils.getExtension(path)) {
-
-            const key = true === FileUtils.isFilePath(path) ? 'file' : 'url';
-            const o = {};
-            o[ key ] = path;
-
-            this.loadHandler(o);
-        } else if (true === GoogleUtils.isGoogleURL(path)) {
-
+        try {
             this.loadHandler({ url: path })
-        } else {
-            throw new Error('Session file did not load - invalid format')
-        }
 
+        } catch ( e) {
+            throw new Error('Session file did not load' + e.message)
+        }
     };
 
 }

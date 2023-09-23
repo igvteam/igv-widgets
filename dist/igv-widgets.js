@@ -1270,6 +1270,15 @@ class AlertSingleton {
 
 var AlertSingleton$1 = new AlertSingleton();
 
+/**
+ * Covers string literals and String objects
+ * @param x
+ * @returns {boolean}
+ */
+function isString(x) {
+    return typeof x === "string" || x instanceof String
+}
+
 function getExtension(url) {
 
     if (undefined === url) {
@@ -8836,8 +8845,8 @@ class IGVXhr {
     async _loadURL(url, options) {
 
         const self = this;
-        const _url = url;   // The unmodified URL, needed in case of an oAuth retry
 
+        //console.log(`${Date.now()}   ${url}`)
         url = mapUrl(url);
 
         options = options || {};
@@ -8872,6 +8881,13 @@ class IGVXhr {
             }
             const range = options.range;
 
+            // const isChrome = navigator.userAgent.indexOf('Chrome') > -1
+            // const isSafari = navigator.vendor.indexOf("Apple") === 0 && /\sSafari\//.test(navigator.userAgent)
+            // if (range && isChrome && !isAmazonV4Signed(url) && !isGoogleStorageSigned(url)) {
+            //     // Hack to prevent caching for byte-ranges. Attempt to fix net:err-cache errors in Chrome
+            //     url += url.includes("?") ? "&" : "?"
+            //     url += "someRandomSeed=" + Math.random().toString(36)
+            // }
 
             const xhr = new XMLHttpRequest();
             const sendData = options.sendData || options.body;
@@ -8887,10 +8903,7 @@ class IGVXhr {
             }
 
             if (range) {
-                let rangeEnd = "";
-                if (range.size) {
-                    rangeEnd = range.start + range.size - 1;
-                }
+                var rangeEnd = range.size ? range.start + range.size - 1 : "";
                 xhr.setRequestHeader("Range", "bytes=" + range.start + "-" + rangeEnd);
                 //      xhr.setRequestHeader("Cache-Control", "no-cache");    <= This can cause CORS issues, disabled for now
             }
@@ -8916,34 +8929,20 @@ class IGVXhr {
             }
 
             xhr.onload = async function (event) {
-
-                // when the url points to a local file, the status is 0
+                // when the url points to a local file, the status is 0 but that is not an error
                 if (xhr.status === 0 || (xhr.status >= 200 && xhr.status <= 300)) {
-                    if ("HEAD" === options.method) {
-                        // Support fetching specific headers.  Attempting to fetch all headers can be problematic with CORS
-                        const headers = options.requestedHeaders || ['content-length'];
-                        const headerMap = {};
-                        for (let h of headers) {
-                            headerMap[h] = xhr.getResponseHeader(h);
+                    if (range && xhr.status !== 206 && range.start !== 0) {
+                        // For small files a range starting at 0 can return the whole file => 200
+                        // Provide just the slice we asked for, throw out the rest quietly
+                        // If file is large warn user
+                        if (xhr.response.length > 100000 && !self.RANGE_WARNING_GIVEN) {
+                            alert(`Warning: Range header ignored for URL: ${url}.  This can have severe performance impacts.`);
                         }
-                        resolve(headerMap);
-                    } else {
-                        // Assume "GET" or "POST"
-                        if (range && xhr.status !== 206 && range.start !== 0) {
+                        resolve(xhr.response.slice(range.start, range.start + range.size));
 
-                            // For small files a range starting at 0 can return the whole file => 200
-                            // Provide just the slice we asked for, throw out the rest quietly
-                            // If file is large warn user
-                            if (xhr.response.length > 100000 && !self.RANGE_WARNING_GIVEN) {
-                                alert(`Warning: Range header ignored for URL: ${url}.  This can have severe performance impacts.`);
-                            }
-                            resolve(xhr.response.slice(range.start, range.start + range.size));
-                        } else {
-                            resolve(xhr.response);
-                        }
+                    } else {
+                        resolve(xhr.response);
                     }
-                } else if (xhr.status === 416) {
-                    handleError(Error(`416 Unsatisfiable Range`));
                 } else if ((typeof gapi !== "undefined") &&
                     ((xhr.status === 404 || xhr.status === 401 || xhr.status === 403) &&
                         isGoogleURL(url)) &&
@@ -8953,12 +8952,14 @@ class IGVXhr {
                 } else {
                     if (xhr.status === 403) {
                         handleError("Access forbidden: " + url);
+                    } else if (xhr.status === 416) {
+                        //  Tried to read off the end of the file.   This shouldn't happen, but if it does return an
+                        handleError("Unsatisfiable range");
                     } else {
                         handleError(xhr.status);
                     }
                 }
             };
-
 
             xhr.onerror = function (event) {
                 if (isGoogleURL(url) && !options.retries) {
@@ -8997,10 +8998,10 @@ class IGVXhr {
 
             async function tryGoogleAuth() {
                 try {
-                    const accessToken = await fetchGoogleAccessToken(_url);
+                    const accessToken = await fetchGoogleAccessToken(url);
                     options.retries = 1;
                     options.oauthToken = accessToken;
-                    const response = await self.load(_url, options);
+                    const response = await self.load(url, options);
                     resolve(response);
                 } catch (e) {
                     if (e.error) {
@@ -9083,29 +9084,12 @@ class IGVXhr {
             }
         }
     }
-
-    /**
-     * This method should only be called when it is known the server supports HEAD requests.  It is used to recover
-     * from 416 errors from out-of-spec WRT range request servers.  Notably Globus.
-     * * *
-     * @param url
-     * @param options
-     * @returns {Promise<unknown>}
-     */
-    async getContentLength(url, options) {
-        options = options || {};
-        options.method = 'HEAD';
-        options.requestedHeaders = ['content-length'];
-        const headerMap = await this._loadURL(url, options);
-        const contentLengthString = headerMap['content-length'];
-        return contentLengthString ? Number.parseInt(contentLengthString) : 0
-    }
-
 }
 
 function isGoogleStorageSigned(url) {
     return url.indexOf("X-Goog-Signature") > -1
 }
+
 
 
 /**
@@ -9265,7 +9249,6 @@ function getGlobalObject() {
         return window
     }
 }
-
 
 const igvxhr = new IGVXhr();
 
@@ -10054,13 +10037,10 @@ const createIndexLUTKey = (name, extension) => {
 
 };
 
-const singleSet = new Set([ 'json' ]);
-const indexSet = new Set(['fai']);
-
 class GenomeFileLoad extends FileLoad {
 
-    constructor({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton, loadHandler }) {
-        super({ localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton });
+    constructor({localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton, loadHandler}) {
+        super({localFileInput, initializeDropbox, dropboxButton, googleEnabled, googleDriveButton});
         this.loadHandler = loadHandler;
     }
 
@@ -10069,22 +10049,26 @@ class GenomeFileLoad extends FileLoad {
         const status = await GenomeFileLoad.isGZip(paths);
 
         if (true === status) {
-            throw new Error('Genome did not load - gzip file is not allowed')
+            throw new Error('Genome did not load - gzip files are not supported')
         } else {
-
-            // If one of the paths is .json, unpack and send to loader
-            const single = paths.filter(path => singleSet.has( getExtension(path) ));
 
             let configuration = undefined;
 
-            if (single.length >= 1) {
-                configuration = await igvxhr.loadJson(single[ 0 ]);
+            const jsonFiles = paths.filter(path => 'json' === getExtension(path));
+            const hubFiles = paths.filter(path => isString(path) && path.endsWith("/hub.txt"));
+
+            // If one of the paths is .json, unpack and send to loader
+            // TODO -- what if multiple json files are selected?  This is surely an error
+            if (jsonFiles.length >= 1) {
+                configuration = await igvxhr.loadJson(jsonFiles[0]);
+            } else if (hubFiles.length >= 1) {
+                configuration = {url: hubFiles[0]};
             } else if (2 === paths.length) {
-                const [ _0, _1 ] = await GenomeFileLoad.getExtension(paths);
-                if (indexSet.has(_0)) {
-                    configuration = { fastaURL: paths[ 1 ], indexURL: paths[ 0 ] };
-                } else if (indexSet.has(_1)) {
-                    configuration = { fastaURL: paths[ 0 ], indexURL: paths[ 1 ] };
+                const [_0, _1] = await GenomeFileLoad.getExtension(paths);
+                if ('fai' ===_0) {
+                    configuration = {fastaURL: paths[1], indexURL: paths[0]};
+                } else if ('fai'=== _1) {
+                    configuration = {fastaURL: paths[0], indexURL: paths[1]};
                 }
             }
 
@@ -10113,8 +10097,8 @@ class GenomeFileLoad extends FileLoad {
 
     static async getExtension(paths) {
 
-        const a = await MultipleTrackFileLoad.getFilename(paths[ 0 ]);
-        const b = await MultipleTrackFileLoad.getFilename(paths[ 1 ]);
+        const a = await MultipleTrackFileLoad.getFilename(paths[0]);
+        const b = await MultipleTrackFileLoad.getFilename(paths[1]);
 
         return [a, b].map(name => getExtension(name))
 
@@ -10134,24 +10118,12 @@ class SessionFileLoad extends FileLoad {
 
         const path = paths[ 0 ];
 
-        if ('json' === getExtension(path)) {
-
-            const json = await igvxhr.loadJson((path.google_url || path));
-            this.loadHandler(json);
-        } else if (true === isGoogleURL(path)) {
-
+        try {
             this.loadHandler({ url: path });
-        } else if ('xml' === getExtension(path)) {
 
-            const key = true === isFilePath(path) ? 'file' : 'url';
-            const o = {};
-            o[ key ] = path;
-
-            this.loadHandler(o);
-        } else {
-            throw new Error('Session file did not load - invalid format')
+        } catch ( e) {
+            throw new Error('Session file did not load' + e.message)
         }
-
     };
 
 }
