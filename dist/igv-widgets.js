@@ -11341,6 +11341,93 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
 
 }
 
+async function updateTrackMenusWithTrackConfigurations(genomeID, GtexUtilsOrUndefined, trackConfigurations, $dropdownMenu) {
+
+    const id_prefix = 'genome_specific_';
+
+    const $divider = $dropdownMenu.find('.dropdown-divider');
+
+    const searchString = '[id^=' + id_prefix + ']';
+    const $found = $dropdownMenu.find(searchString);
+    $found.remove();
+
+    let buttonConfigurations = [];
+
+    for (const trackConfiguration of trackConfigurations) {
+
+        if (true === supportsGenome(genomeID) && 'ENCODE' === trackConfiguration.type) {
+            encodeModalTables[0].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals-chip')));
+            encodeModalTables[1].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'signals-other')));
+            encodeModalTables[2].setDatasource(new GenericDataSource(encodeTrackDatasourceConfigurator(genomeID, 'other')));
+        } else if (GtexUtilsOrUndefined && 'GTEX' === trackConfiguration.type) {
+
+            let info = undefined;
+            try {
+                info = await GtexUtilsOrUndefined.getTissueInfo(trackConfiguration.datasetId);
+            } catch (e) {
+                AlertSingleton$1.present(e.message);
+            }
+
+            if (info) {
+                trackConfiguration.tracks = info.tissueInfo.map(tissue => GtexUtilsOrUndefined.trackConfiguration(tissue));
+            }
+
+        }
+
+        buttonConfigurations.push(trackConfiguration);
+
+    } // for(jsons)
+
+    for (let buttonConfiguration of buttonConfigurations.reverse()) {
+
+        if (buttonConfiguration.type && 'custom-data-modal' === buttonConfiguration.type) {
+
+            createDropdownButton($divider, buttonConfiguration.label, id_prefix)
+                .on('click', () => {
+
+                    if (buttonConfiguration.description) {
+                        customModalTable.setDescription(buttonConfiguration.description);
+                    }
+
+                    customModalTable.setDatasource(new GenericDataSource(buttonConfiguration));
+                    customModalTable.setTitle(buttonConfiguration.label);
+                    customModalTable.$modal.modal('show');
+                });
+
+        } else if (buttonConfiguration.type && 'ENCODE' === buttonConfiguration.type) {
+
+            if (true === supportsGenome(genomeID)) {
+
+                if (buttonConfiguration.description) {
+                    encodeModalTables[0].setDescription(buttonConfiguration.description);
+                    encodeModalTables[1].setDescription(buttonConfiguration.description);
+                    encodeModalTables[2].setDescription(buttonConfiguration.description);
+                }
+
+                createDropdownButton($divider, 'ENCODE Other', id_prefix)
+                    .on('click', () => encodeModalTables[2].$modal.modal('show'));
+
+                createDropdownButton($divider, 'ENCODE Signals - Other', id_prefix)
+                    .on('click', () => encodeModalTables[1].$modal.modal('show'));
+
+                createDropdownButton($divider, 'ENCODE Signals - ChIP', id_prefix)
+                    .on('click', () => encodeModalTables[0].$modal.modal('show'));
+
+            }
+
+        } else if ($genericSelectModal) {
+
+            createDropdownButton($divider, buttonConfiguration.label, id_prefix)
+                .on('click', () => {
+                    configureSelectModal($genericSelectModal, buttonConfiguration);
+                    $genericSelectModal.modal('show');
+                });
+
+        }
+    } // for (buttonConfigurations)
+
+}
+
 async function updateTrackMenus(genomeID, GtexUtilsOrUndefined, trackRegistryFile, $dropdownMenu) {
 
     const id_prefix = 'genome_specific_';
@@ -11500,8 +11587,28 @@ async function getPathsWithTrackRegistryFile(genomeID, trackRegistryFile) {
         throw e;
     }
 
-    return trackRegistry[genomeID]
+    // Paths to JSON files
+    const JSONFilePaths = trackRegistry[genomeID];
 
+    if (undefined === JSONFilePaths) {
+        return undefined
+    }
+
+    let responses = [];
+    try {
+        responses = await Promise.all(JSONFilePaths.map(path => fetch(path)));
+    } catch (e) {
+        AlertSingleton$1.present(e.message);
+    }
+
+    let trackConfigurations = [];
+    try {
+        trackConfigurations = await Promise.all(responses.map(response => response.json()));
+    } catch (e) {
+        AlertSingleton$1.present(e.message);
+    }
+
+    return trackConfigurations
 }
 
 const dropboxButtonImageLiteral =
@@ -11576,4 +11683,4 @@ if(typeof document !== 'undefined') {
     }
 }
 
-export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, encodeTrackDatasourceConfigurator, googleDriveButtonImageBase64, googleDriveDropdownItem, supportsGenome, updateTrackMenus };
+export { AlertSingleton$1 as AlertSingleton, EventBus, FileLoad, FileLoadManager, FileLoadWidget, GenomeFileLoad, MultipleTrackFileLoad, QRCode, SessionController, SessionFileLoad, utils as Utils, createGenericSelectModal, createSessionWidgets, createTrackURLModal, createTrackWidgetsWithTrackRegistry, createURLModal, dropboxButtonImageBase64, dropboxDropdownItem, encodeTrackDatasourceConfigurator, getPathsWithTrackRegistryFile, googleDriveButtonImageBase64, googleDriveDropdownItem, supportsGenome, updateTrackMenus, updateTrackMenusWithTrackConfigurations };
