@@ -11300,44 +11300,54 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
     customModalTable = new ModalTable({ id: 'igv-custom-modal', title: 'UNTITLED', okHandler: trackLoadHandler, ...defaultCustomModalTableConfig });
 
     if (selectModalIdOrUndefined) {
+        createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler);
+    }
 
-        $genericSelectModal = $(createGenericSelectModal(selectModalIdOrUndefined, `${selectModalIdOrUndefined}-select`));
+}
 
-        $igvMain.append($genericSelectModal);
-        const $select = $genericSelectModal.find('select');
+function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler) {
 
-        const $dismiss = $genericSelectModal.find('.modal-footer button:nth-child(1)');
-        $dismiss.on('click', () => $genericSelectModal.modal('hide'));
+    $genericSelectModal = $(createGenericSelectModal(selectModalIdOrUndefined, `${selectModalIdOrUndefined}-select`));
 
-        const $ok = $genericSelectModal.find('.modal-footer button:nth-child(2)');
+    $igvMain.append($genericSelectModal);
+    const $select = $genericSelectModal.find('select');
 
-        const okHandler = () => {
+    const $dismiss = $genericSelectModal.find('.modal-footer button:nth-child(1)');
+    $dismiss.on('click', () => $genericSelectModal.modal('hide'));
 
-            const configurations = [];
-            const $selectedOptions = $select.find('option:selected');
-            $selectedOptions.each(function () {
-                //console.log(`You selected ${$(this).val()}`);
-                configurations.push($(this).data('track'));
-                $(this).removeAttr('selected');
-            });
+    const $ok = $genericSelectModal.find('.modal-footer button:nth-child(2)');
 
-            if (configurations.length > 0) {
-                trackLoadHandler(configurations);
-            }
+    const okHandler = () => {
 
-            $genericSelectModal.modal('hide');
-
-        };
-
-        $ok.on('click', okHandler);
-
-        $genericSelectModal.get(0).addEventListener('keypress', event => {
-            if ('Enter' === event.key) {
-                okHandler();
-            }
+        const configurations = [];
+        const $selectedOptions = $select.find('option:selected');
+        $selectedOptions.each(function () {
+            configurations.push($(this).data('track'));
+            $(this).removeAttr('selected');
         });
 
-    }
+        if (configurations.length > 0) {
+            trackLoadHandler(configurations);
+        }
+
+        $genericSelectModal.modal('hide');
+
+    };
+
+    $ok.on('click', okHandler);
+
+    $genericSelectModal.get(0).addEventListener('keypress', event => {
+        if ('Enter' === event.key) {
+            okHandler();
+        }
+    });
+
+    $genericSelectModal.on('show.bs.modal', () => {
+    });
+
+    $genericSelectModal.on('shown.bs.modal', () => {
+    });
+
 
 }
 
