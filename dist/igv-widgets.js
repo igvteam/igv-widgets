@@ -11242,7 +11242,8 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              selectModalIdOrUndefined,
                                              GtexUtilsOrUndefined,
                                              trackRegistryFile,
-                                             trackLoadHandler) {
+                                             trackLoadHandler,
+                                             trackMenuHandler) {
 
     const urlModal = createTrackURLModal(urlModalId);
     $igvMain.get(0).appendChild(urlModal);
@@ -11300,12 +11301,12 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
     customModalTable = new ModalTable({ id: 'igv-custom-modal', title: 'UNTITLED', okHandler: trackLoadHandler, ...defaultCustomModalTableConfig });
 
     if (selectModalIdOrUndefined) {
-        createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler);
+        createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler, trackMenuHandler);
     }
 
 }
 
-function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler) {
+function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler, trackMenuHandler) {
 
     $genericSelectModal = $(createGenericSelectModal(selectModalIdOrUndefined, `${selectModalIdOrUndefined}-select`));
 
@@ -11322,6 +11323,7 @@ function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trac
         const configurations = [];
         const $selectedOptions = $select.find('option:selected');
         $selectedOptions.each(function () {
+            // console.log(`${ $(this).val() } was selected`)
             configurations.push($(this).data('track'));
             $(this).removeAttr('selected');
         });
@@ -11343,9 +11345,16 @@ function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trac
     });
 
     $genericSelectModal.on('show.bs.modal', () => {
-    });
 
-    $genericSelectModal.on('shown.bs.modal', () => {
+        const urlList = [];
+        $genericSelectModal.find('select').find('option').each(function () {
+
+            const { url } = $(this).data('track');
+            urlList.push({ element: $(this).get(0), url });
+        });
+
+        trackMenuHandler(urlList);
+
     });
 
 

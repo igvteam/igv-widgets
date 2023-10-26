@@ -34,7 +34,8 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
                                              selectModalIdOrUndefined,
                                              GtexUtilsOrUndefined,
                                              trackRegistryFile,
-                                             trackLoadHandler) {
+                                             trackLoadHandler,
+                                             trackMenuHandler) {
 
     const urlModal = createTrackURLModal(urlModalId)
     $igvMain.get(0).appendChild(urlModal);
@@ -92,17 +93,17 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
     customModalTable = new ModalTable({ id: 'igv-custom-modal', title: 'UNTITLED', okHandler: trackLoadHandler, ...defaultCustomModalTableConfig })
 
     if (selectModalIdOrUndefined) {
-        createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler)
+        createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler, trackMenuHandler)
     }
 
 }
 
-function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler) {
+function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trackLoadHandler, trackMenuHandler) {
 
     $genericSelectModal = $(createGenericSelectModal(selectModalIdOrUndefined, `${selectModalIdOrUndefined}-select`));
 
     $igvMain.append($genericSelectModal);
-    const $select = $genericSelectModal.find('select');
+    const $select = $genericSelectModal.find('select')
 
     const $dismiss = $genericSelectModal.find('.modal-footer button:nth-child(1)');
     $dismiss.on('click', () => $genericSelectModal.modal('hide'));
@@ -114,7 +115,7 @@ function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trac
         const configurations = []
         const $selectedOptions = $select.find('option:selected')
         $selectedOptions.each(function () {
-            console.log(`${ $(this).val() } was selected`)
+            // console.log(`${ $(this).val() } was selected`)
             configurations.push($(this).data('track'))
             $(this).removeAttr('selected')
         })
@@ -136,11 +137,16 @@ function createGenericSelectModalWidget($igvMain, selectModalIdOrUndefined, trac
     })
 
     $genericSelectModal.on('show.bs.modal', () => {
-        console.log('Generic Select Modal WILL BE shown')
-    })
 
-    $genericSelectModal.on('shown.bs.modal', () => {
-        console.log('Generic Select Modal HAS BEEN shown')
+        const urlList = []
+        $genericSelectModal.find('select').find('option').each(function () {
+
+            const { url } = $(this).data('track')
+            urlList.push({ element: $(this).get(0), url })
+        })
+
+        trackMenuHandler(urlList)
+
     })
 
 
