@@ -26,7 +26,7 @@
  *
  */
 
-import { ModalTable, GenericDataSource } from '../../node_modules/data-modal/dist/data-modal.js'
+import { ModalTable, GenericDataSource } from '../../node_modules/data-modal/src/index.js'
 import { encodeTrackDatasourceConfigurator } from '../../src/encodeTrackDatasourceConfigurator.js'
 
 const encodeModalConfig =
@@ -51,7 +51,7 @@ $("#genome-select").change(function (e) {
 
         const genomeId = this.value
 
-        const datasource = new GenericDataSource(encodeTrackDatasourceConfigurator(genomeId, 'signals'))
+        const datasource = new GenericDataSource(encodeTrackDatasourceConfigurator(genomeId, 'signals-chip'))
         // const datasource = new EncodeTrackDatasource(encodeTrackDatasourceSignalConfigurator(genomeId))
         // const datasource = new EncodeTrackDatasource(encodeTrackDatasourceOtherConfigurator(genomeId))
 
