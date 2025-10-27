@@ -22,8 +22,10 @@ function createSessionWidgets($rootContainer,
     const urlModal = createURLModal(urlModalId, 'Session URL');
     $rootContainer.get(0).appendChild(urlModal);
 
-    if (!googleEnabled) {
-        $(`#${googleDriveButtonId}`).parent().hide();
+    if (false === googleEnabled) {
+        if (googleDriveButtonId) {
+            $(`#${googleDriveButtonId}`).parent().hide();
+        }
     }
 
     const fileLoadWidgetConfig =
@@ -39,13 +41,17 @@ function createSessionWidgets($rootContainer,
 
     fileLoadWidget = new FileLoadWidget(fileLoadWidgetConfig);
 
+    let googleDriveButton
+    if (googleDriveButtonId) {
+        googleDriveButton  = document.querySelector(`#${googleDriveButtonId}`)
+    }
     const sessionFileLoadConfig =
         {
             localFileInput: document.querySelector(`#${localFileInputId}`),
             initializeDropbox,
             dropboxButton: dropboxButtonId ? document.querySelector(`#${dropboxButtonId}`) : undefined,
             googleEnabled,
-            googleDriveButton: document.querySelector(`#${googleDriveButtonId}`),
+            googleDriveButton,
             loadHandler
         };
 
