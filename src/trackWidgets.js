@@ -59,7 +59,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
         return true;
     });
 
-    if ($googleDriveButton && !googleEnabled) {
+    if ($googleDriveButton && false === googleEnabled) {
         $googleDriveButton.parent().hide();
     }
 
@@ -68,7 +68,7 @@ function createTrackWidgetsWithTrackRegistry($igvMain,
             $localFileInput,
             initializeDropbox,
             $dropboxButton,
-            $googleDriveButton: googleEnabled ? $googleDriveButton : undefined,
+            $googleDriveButton: true === googleEnabled ? $googleDriveButton : undefined,
             fileLoadHandler: trackLoadHandler,
             multipleFileSelection: true
         };

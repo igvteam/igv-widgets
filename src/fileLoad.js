@@ -53,7 +53,7 @@ class FileLoad {
 
 
         if (false === googleEnabled) {
-            DOMUtils.hide(googleDriveButton.parentElement);
+            if (googleDriveButton) DOMUtils.hide(googleDriveButton.parentElement);
         }
 
         if (true === googleEnabled && googleDriveButton) {
